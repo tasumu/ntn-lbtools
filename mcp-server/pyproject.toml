@@ -1,0 +1,21 @@
+[project]
+name = "ntn-lbtools-mcp-server"
+version = "0.1.0"
+description = "MCP server gateway for the link budget calculator backend."
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp",
+    "httpx",
+    "pydantic",
+    "pydantic-settings",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[tool.uv]
+dev-dependencies = ["pytest", "pytest-asyncio", "ruff"]
