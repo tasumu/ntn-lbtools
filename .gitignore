@@ -1,0 +1,50 @@
+# Environments & secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# UV cache
+.uv-cache/
+..uv-cache/
+
+# Codex & Specify
+.codex/
+.specify/
+specs/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node/JS artifacts
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Bundles and outputs
+dist/
+build/
+*.log
+
+# Database & Alembic
+alembic.ini
+*.db
+*.sqlite
+
+# Editor/system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.tmp
+
+# Temporary files
+mcp-server/fix_req
