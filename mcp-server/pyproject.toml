@@ -16,6 +16,16 @@ dev = [
     "pytest-asyncio",
     "ruff",
 ]
+agents = [
+    "ntn-agents",
+]
 
 [tool.uv]
-dev-dependencies = ["pytest", "pytest-asyncio", "ruff"]
+dev-dependencies = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[tool.uv.sources]
+ntn-agents = { path = "../agents", editable = true }
