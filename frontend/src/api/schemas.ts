@@ -2,20 +2,22 @@ import { z } from "zod";
 
 export const waveformStrategySchema = z.enum(["DVB_S2X"]);
 export const transponderTypeSchema = z.enum(["TRANSPARENT", "REGENERATIVE"]);
-export const scenarioStatusSchema = z.enum(["Draft", "Saved", "Archived"]);
 
-export const interferenceSchema = z.object({
+const interferenceSchema = z.object({
   adjacent_sat_ci_db: z.number().optional().nullable(),
   cross_polar_ci_db: z.number().optional().nullable(),
   other_carrier_ci_db: z.number().optional().nullable(),
   applied: z.boolean().default(false),
   notes: z
-    .preprocess((v) => (v === null || v === "" ? undefined : v), z.string().optional())
+    .preprocess(
+      (v) => (v === null || v === "" ? undefined : v),
+      z.string().optional(),
+    )
     .optional()
     .nullable(),
 });
 
-export const intermodulationSchema = z.object({
+const intermodulationSchema = z.object({
   input_backoff_db: z.number().min(0).optional().nullable(),
   output_backoff_db: z.number().min(0).optional().nullable(),
   saturation_power_dbw: z.number().optional().nullable(),
@@ -23,12 +25,15 @@ export const intermodulationSchema = z.object({
   reference_bandwidth_hz: z.number().positive().optional().nullable(),
   applied: z.boolean().default(false),
   notes: z
-    .preprocess((v) => (v === null || v === "" ? undefined : v), z.string().optional())
+    .preprocess(
+      (v) => (v === null || v === "" ? undefined : v),
+      z.string().optional(),
+    )
     .optional()
     .nullable(),
 });
 
-export const directionRuntimeParametersSchema = z.object({
+const directionRuntimeParametersSchema = z.object({
   frequency_hz: z.number().positive(),
   bandwidth_hz: z.number().positive().optional().nullable(),
   elevation_deg: z.number().min(-90).max(90).optional().nullable(),
@@ -51,39 +56,21 @@ export const runtimeParametersSchema = z.object({
   intermodulation: intermodulationSchema.optional().nullable(),
 });
 
-export const mitigationSchema = z
-  .object({
-    uplink_db: z.number().optional().nullable(),
-    downlink_db: z.number().optional().nullable(),
-    notes: z.string().optional().nullable(),
-  })
-  .optional()
-  .nullable();
-
-export const satelliteOverridesSchema = z
+const satelliteOverridesSchema = z
   .object({
     eirp_dbw: z.number().optional().nullable(),
     gt_db_per_k: z.number().optional().nullable(),
   })
   .optional();
 
-export const earthStationOverridesSchema = z
-  .object({
-    eirp_dbw: z.number().optional().nullable(),
-    tx_power_dbw: z.number().optional().nullable(),
-    antenna_gain_db: z.number().optional().nullable(),
-    gt_db_per_k: z.number().optional().nullable(),
-  })
-  .optional();
-
-export const calculationOverridesSchema = z
+const calculationOverridesSchema = z
   .object({
     satellite: satelliteOverridesSchema,
   })
   .optional()
   .nullable();
 
-export const calculationResultSchema = z.object({
+const calculationResultSchema = z.object({
   direction: z.string(),
   fspl_db: z.number(),
   rain_loss_db: z.number(),
@@ -108,7 +95,7 @@ export const calculationResultSchema = z.object({
   warnings: z.array(z.string()).optional().nullable(),
 });
 
-export const combinedCalculationResultSchema = z.object({
+const combinedCalculationResultSchema = z.object({
   cn_db: z.number(),
   cn0_dbhz: z.number(),
   cni_db: z.number().nullable().optional(),
@@ -119,13 +106,13 @@ export const combinedCalculationResultSchema = z.object({
   clean_cn_db: z.number().nullable().optional(),
 });
 
-export const calculationResultsSchema = z.object({
+const calculationResultsSchema = z.object({
   uplink: calculationResultSchema,
   downlink: calculationResultSchema,
   combined: combinedCalculationResultSchema.optional(),
 });
 
-export const modcodEntrySchema = z.object({
+const modcodEntrySchema = z.object({
   id: z.string(),
   modulation: z.string(),
   code_rate: z.string(),
@@ -136,14 +123,7 @@ export const modcodEntrySchema = z.object({
   pilots: z.boolean().optional(),
 });
 
-export const modcodTableSchema = z.object({
-  waveform: z.string(),
-  version: z.string(),
-  description: z.string().optional(),
-  entries: z.array(modcodEntrySchema),
-});
-
-export const satelliteSnapshotSchema = z.object({
+const satelliteSnapshotSchema = z.object({
   id: z.string().uuid().optional().nullable(),
   name: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -157,7 +137,7 @@ export const satelliteSnapshotSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
-export const earthStationSnapshotSchema = z.object({
+const earthStationSnapshotSchema = z.object({
   id: z.string().uuid().optional().nullable(),
   name: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -170,13 +150,13 @@ export const earthStationSnapshotSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
-export const entitySnapshotSchema = z.object({
+const entitySnapshotSchema = z.object({
   satellite: satelliteSnapshotSchema.optional().nullable(),
   earth_station_tx: earthStationSnapshotSchema.optional().nullable(),
   earth_station_rx: earthStationSnapshotSchema.optional().nullable(),
 });
 
-export const staticSnapshotSchema = z.object({
+const staticSnapshotSchema = z.object({
   modcod_table_id: z.string().uuid().optional().nullable(),
   modcod_table_version: z.string().optional().nullable(),
   modcod_entries: z.array(modcodEntrySchema).optional().nullable(),
@@ -189,12 +169,12 @@ export const staticSnapshotSchema = z.object({
   itu_constants: z.record(z.any()).default({}),
 });
 
-export const strategySnapshotSchema = z.object({
+const strategySnapshotSchema = z.object({
   waveform_strategy: waveformStrategySchema,
   transponder_type: transponderTypeSchema,
 });
 
-export const scenarioMetadataSchema = z.object({
+const scenarioMetadataSchema = z.object({
   schema_version: z.string().default("1.1.0"),
   computed_at: z.string().datetime().optional().nullable(),
   modcod_table_id: z.string().uuid().optional().nullable(),
@@ -206,59 +186,108 @@ export const scenarioMetadataSchema = z.object({
   earth_station_rx_id: z.string().uuid().optional().nullable(),
 });
 
-export const scenarioPayloadSchema = z.object({
-  static: staticSnapshotSchema.default({}),
-  entity: entitySnapshotSchema.default({}),
-  runtime: runtimeParametersSchema,
-  strategy: strategySnapshotSchema,
-  metadata: scenarioMetadataSchema.default({}),
-  overrides: calculationOverridesSchema,
-}).strict();
+export const scenarioPayloadSchema = z
+  .object({
+    static: staticSnapshotSchema.default({}),
+    entity: entitySnapshotSchema.default({}),
+    runtime: runtimeParametersSchema,
+    strategy: strategySnapshotSchema,
+    metadata: scenarioMetadataSchema.default({}),
+    overrides: calculationOverridesSchema,
+  })
+  .strict();
 
-const cleanStringId = (value: unknown) => (value === null || value === "" ? undefined : value);
+const cleanStringId = (value: unknown) =>
+  value === null || value === "" ? undefined : value;
 
-export const calculationRequestBaseSchema = z.object({
-  waveform_strategy: z.preprocess((v) => (v === null ? undefined : v), waveformStrategySchema),
-  transponder_type: z.preprocess((v) => (v === null ? undefined : v), transponderTypeSchema),
+const calculationRequestBaseSchema = z.object({
+  waveform_strategy: z.preprocess(
+    (v) => (v === null ? undefined : v),
+    waveformStrategySchema,
+  ),
+  transponder_type: z.preprocess(
+    (v) => (v === null ? undefined : v),
+    transponderTypeSchema,
+  ),
   modcod_table_id: z.preprocess(cleanStringId, z.string().uuid().optional()),
-  uplink_modcod_table_id: z.preprocess(cleanStringId, z.string().uuid().optional()),
-  downlink_modcod_table_id: z.preprocess(cleanStringId, z.string().uuid().optional()),
+  uplink_modcod_table_id: z.preprocess(
+    cleanStringId,
+    z.string().uuid().optional(),
+  ),
+  downlink_modcod_table_id: z.preprocess(
+    cleanStringId,
+    z.string().uuid().optional(),
+  ),
   satellite_id: z.preprocess(cleanStringId, z.string().uuid()),
-  earth_station_tx_id: z.preprocess(cleanStringId, z.string().uuid().optional()),
-  earth_station_rx_id: z.preprocess(cleanStringId, z.string().uuid().optional()),
+  earth_station_tx_id: z.preprocess(
+    cleanStringId,
+    z.string().uuid().optional(),
+  ),
+  earth_station_rx_id: z.preprocess(
+    cleanStringId,
+    z.string().uuid().optional(),
+  ),
   runtime: runtimeParametersSchema,
   overrides: calculationOverridesSchema,
   include_snapshot: z.boolean().optional(),
 });
 
-const addCalcRequestRules = <T extends typeof calculationRequestBaseSchema>(schema: T) =>
+const addCalcRequestRules = <T extends typeof calculationRequestBaseSchema>(
+  schema: T,
+) =>
   schema.superRefine((data, ctx) => {
     if (data.transponder_type === "TRANSPARENT") {
       if (!data.modcod_table_id) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ModCod table is required", path: ["modcod_table_id"] });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "ModCod table is required",
+          path: ["modcod_table_id"],
+        });
       }
       if (!data.runtime?.bandwidth_hz) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Channel bandwidth is required", path: ["runtime", "bandwidth_hz"] });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Channel bandwidth is required",
+          path: ["runtime", "bandwidth_hz"],
+        });
       }
     } else {
       if (!data.uplink_modcod_table_id) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Uplink ModCod table is required", path: ["uplink_modcod_table_id"] });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Uplink ModCod table is required",
+          path: ["uplink_modcod_table_id"],
+        });
       }
       if (!data.downlink_modcod_table_id) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Downlink ModCod table is required", path: ["downlink_modcod_table_id"] });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Downlink ModCod table is required",
+          path: ["downlink_modcod_table_id"],
+        });
       }
       if (!data.runtime?.uplink?.bandwidth_hz) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Uplink bandwidth is required", path: ["runtime", "uplink", "bandwidth_hz"] });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Uplink bandwidth is required",
+          path: ["runtime", "uplink", "bandwidth_hz"],
+        });
       }
       if (!data.runtime?.downlink?.bandwidth_hz) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Downlink bandwidth is required", path: ["runtime", "downlink", "bandwidth_hz"] });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Downlink bandwidth is required",
+          path: ["runtime", "downlink", "bandwidth_hz"],
+        });
       }
     }
   });
 
-export const calculationRequestSchema = addCalcRequestRules(calculationRequestBaseSchema);
+export const calculationRequestSchema = addCalcRequestRules(
+  calculationRequestBaseSchema,
+);
 
-export const selectedModcodSchema = z.object({
+const selectedModcodSchema = z.object({
   id: z.string(),
   modulation: z.string().optional().nullable(),
   code_rate: z.string().optional().nullable(),
@@ -270,7 +299,7 @@ export const selectedModcodSchema = z.object({
   pilots: z.boolean().optional().nullable(),
 });
 
-export const selectedModcodByDirectionSchema = z.object({
+const selectedModcodByDirectionSchema = z.object({
   uplink: selectedModcodSchema.nullable().optional(),
   downlink: selectedModcodSchema.nullable().optional(),
 });
@@ -282,40 +311,13 @@ export const calculationResponseSchema = z.object({
   combined_link_margin_db: z.number().nullable().optional(),
   combined_cn_db: z.number().nullable().optional(),
   combined_cn0_dbhz: z.number().nullable().optional(),
-  modcod_selected: z.union([selectedModcodSchema, selectedModcodByDirectionSchema]).nullable(),
+  modcod_selected: z
+    .union([selectedModcodSchema, selectedModcodByDirectionSchema])
+    .nullable(),
   runtime_echo: runtimeParametersSchema,
   payload_snapshot: scenarioPayloadSchema.optional().nullable(),
 });
 
-export const scenarioBaseSchema = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  waveform_strategy: waveformStrategySchema,
-  transponder_type: transponderTypeSchema,
-  modcod_table_id: z.string().uuid(),
-  satellite_id: z.string().uuid().optional(),
-  earth_station_tx_id: z.string().uuid().optional(),
-  earth_station_rx_id: z.string().uuid().optional(),
-  schema_version: z.string().default("1.1.0"),
-  status: scenarioStatusSchema.default("Draft"),
-  payload_snapshot: scenarioPayloadSchema,
-}).strict();
-
-export const scenarioReadSchema = scenarioBaseSchema.extend({
-  id: z.string().uuid(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-});
-
-export type WaveformStrategy = z.infer<typeof waveformStrategySchema>;
-export type TransponderType = z.infer<typeof transponderTypeSchema>;
-export type ScenarioStatus = z.infer<typeof scenarioStatusSchema>;
-export type RuntimeParameters = z.infer<typeof runtimeParametersSchema>;
-export type DirectionRuntimeParameters = z.infer<typeof directionRuntimeParametersSchema>;
-export type Interference = z.infer<typeof interferenceSchema>;
-export type Intermodulation = z.infer<typeof intermodulationSchema>;
 export type CalculationRequest = z.infer<typeof calculationRequestSchema>;
 export type CalculationResponse = z.infer<typeof calculationResponseSchema>;
-export type CalculationOverrides = z.infer<typeof calculationOverridesSchema>;
 export type ScenarioPayload = z.infer<typeof scenarioPayloadSchema>;
-export type ScenarioRead = z.infer<typeof scenarioReadSchema>;
