@@ -16,6 +16,8 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { request } from "../../api/client";
+import type { ModcodTableAsset } from "../../api/types";
+import { formatError } from "../../lib/formatters";
 
 const entrySchema = z
   .object({
@@ -42,7 +44,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function ModcodManager() {
   const client = useQueryClient();
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selected, setSelected] = useState<ModcodTableAsset | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -85,7 +87,7 @@ export function ModcodManager() {
     },
   });
 
-  const deleteMutation = useMutation<void, any, string>({
+  const deleteMutation = useMutation<void, unknown, string>({
     mutationFn: (id) =>
       request({ method: "DELETE", url: `/assets/modcod-tables/${id}` }),
     onSuccess: () => {
@@ -95,7 +97,11 @@ export function ModcodManager() {
   });
   const deletingId = deleteMutation.variables as string | undefined;
 
-  const { data = [] } = useQuery<any[]>({
+  const {
+    data = [],
+    isLoading,
+    error: queryError,
+  } = useQuery<ModcodTableAsset[]>({
     queryKey: ["modcod-tables"],
     queryFn: () => request({ method: "GET", url: "/assets/modcod-tables" }),
   });
@@ -131,7 +137,7 @@ export function ModcodManager() {
                       code_rate: "",
                       required_cn0_dbhz: undefined,
                       required_ebno_db: undefined,
-                      info_bits_per_symbol: undefined as any,
+                      info_bits_per_symbol: 0,
                     })
                   }
                 >
@@ -219,21 +225,25 @@ export function ModcodManager() {
           <Group justify="space-between" align="center">
             <Text fw={600}>Saved ModCod Tables</Text>
           </Group>
+          {queryError && (
+            <Alert color="red">Failed to load: {formatError(queryError)}</Alert>
+          )}
           {mutation.error && (
             <Alert color="red">
-              Save failed:{" "}
-              {String((mutation.error as any)?.detail ?? mutation.error)}
+              Save failed: {formatError(mutation.error)}
             </Alert>
           )}
-          {deleteMutation.error && (
+          {deleteMutation.error != null && (
             <Alert color="red">
-              Delete failed:{" "}
-              {String(
-                (deleteMutation.error as any)?.detail ?? deleteMutation.error,
-              )}
+              Delete failed: {formatError(deleteMutation.error)}
             </Alert>
           )}
-          {data.map((table: any) => (
+          {isLoading && (
+            <Text size="sm" c="dimmed">
+              Loading...
+            </Text>
+          )}
+          {data.map((table) => (
             <Card key={table.id} withBorder>
               <Group justify="space-between" align="flex-start">
                 <div>

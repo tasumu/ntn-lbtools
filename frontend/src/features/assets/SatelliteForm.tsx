@@ -15,12 +15,8 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { request } from "../../api/client";
-
-const optionalNumber = z.preprocess(
-  (value) =>
-    value === "" || value === null || value === undefined ? undefined : value,
-  z.number().optional(),
-);
+import { optionalNumber } from "../../api/schemas";
+import { formatError } from "../../lib/formatters";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -36,6 +32,18 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const SATELLITE_DEFAULTS: FormValues = {
+  name: "",
+  description: "",
+  orbit_type: "GEO",
+  frequency_band: "Ku",
+  longitude_deg: undefined,
+  inclination_deg: undefined,
+  transponder_bandwidth_mhz: undefined,
+  eirp_dbw: undefined,
+  gt_db_per_k: undefined,
+};
+
 type Props = {
   initial?: (FormValues & { id?: string }) | null;
   onSaved?: () => void;
@@ -49,11 +57,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
   );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      name: "",
-      orbit_type: "GEO",
-      frequency_band: "Ku",
-    },
+    defaultValues: SATELLITE_DEFAULTS,
   });
 
   useEffect(() => {
@@ -72,17 +76,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
         frequency_band: rest.frequency_band ?? "Ku",
       });
     } else {
-      form.reset({
-        name: "",
-        description: "",
-        orbit_type: "GEO",
-        frequency_band: "Ku",
-        longitude_deg: undefined,
-        inclination_deg: undefined,
-        transponder_bandwidth_mhz: undefined,
-        eirp_dbw: undefined,
-        gt_db_per_k: undefined,
-      });
+      form.reset(SATELLITE_DEFAULTS);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial, form.reset]);
@@ -100,12 +94,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
       client.invalidateQueries({ queryKey: ["satellites"] });
       setEditingId(null);
       onSaved?.();
-      form.reset({
-        name: "",
-        description: "",
-        orbit_type: "GEO",
-        frequency_band: "Ku",
-      });
+      form.reset(SATELLITE_DEFAULTS);
     },
     onError: () => {
       // keep form values for user correction
@@ -120,10 +109,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
     >
       <Stack>
         {mutation.error && (
-          <Alert color="red">
-            Save failed:{" "}
-            {String((mutation.error as any)?.detail ?? mutation.error)}
-          </Alert>
+          <Alert color="red">Save failed: {formatError(mutation.error)}</Alert>
         )}
         <TextInput
           label="Name"
@@ -210,12 +196,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
               onClick={() => {
                 setEditingId(null);
                 onCancelEdit?.();
-                form.reset({
-                  name: "",
-                  description: "",
-                  orbit_type: "GEO",
-                  frequency_band: "Ku",
-                });
+                form.reset(SATELLITE_DEFAULTS);
               }}
             >
               Cancel

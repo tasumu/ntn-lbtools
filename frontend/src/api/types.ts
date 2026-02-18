@@ -27,12 +27,21 @@ export interface EarthStationAsset {
   notes?: string;
 }
 
+export interface ModcodEntry {
+  id: string;
+  modulation: string;
+  code_rate: string;
+  required_cn0_dbhz?: number;
+  required_ebno_db?: number;
+  info_bits_per_symbol: number;
+}
+
 export interface ModcodTableAsset {
   id: string;
   waveform: string;
   version: string;
   description?: string;
-  entries?: unknown[];
+  entries?: ModcodEntry[];
   published_at?: string;
 }
 
@@ -44,6 +53,8 @@ export interface ScenarioSummary {
   transponder_type?: string;
   satellite_id?: string;
   modcod_table_id?: string;
+  uplink_modcod_table_id?: string;
+  downlink_modcod_table_id?: string;
   earth_station_tx_id?: string;
   earth_station_rx_id?: string;
   payload_snapshot?: Record<string, unknown>;

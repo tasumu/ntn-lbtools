@@ -14,12 +14,8 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { request } from "../../api/client";
-
-const optionalNumber = z.preprocess(
-  (value) =>
-    value === "" || value === null || value === undefined ? undefined : value,
-  z.number().optional(),
-);
+import { optionalNumber } from "../../api/schemas";
+import { formatError } from "../../lib/formatters";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -37,6 +33,20 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const EARTH_STATION_DEFAULTS: FormValues = {
+  name: "",
+  description: "",
+  antenna_diameter_m: undefined,
+  antenna_gain_tx_db: undefined,
+  antenna_gain_rx_db: undefined,
+  noise_temperature_k: undefined,
+  eirp_dbw: undefined,
+  tx_power_dbw: undefined,
+  gt_db_per_k: undefined,
+  polarization: "",
+  notes: "",
+};
+
 type Props = {
   initial?: (FormValues & { id?: string }) | null;
   onSaved?: () => void;
@@ -50,19 +60,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
   );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      name: "",
-      description: "",
-      antenna_diameter_m: undefined,
-      antenna_gain_tx_db: undefined,
-      antenna_gain_rx_db: undefined,
-      noise_temperature_k: undefined,
-      eirp_dbw: undefined,
-      tx_power_dbw: undefined,
-      gt_db_per_k: undefined,
-      polarization: "",
-      notes: "",
-    },
+    defaultValues: EARTH_STATION_DEFAULTS,
   });
 
   useEffect(() => {
@@ -71,7 +69,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
       const { id: _ignore, ...rest } = initial;
       form.reset({
         name: rest.name ?? "",
-        description: (rest as any).description ?? "",
+        description: rest.description ?? "",
         antenna_diameter_m: rest.antenna_diameter_m,
         antenna_gain_tx_db: rest.antenna_gain_tx_db,
         antenna_gain_rx_db: rest.antenna_gain_rx_db,
@@ -83,19 +81,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
         notes: rest.notes,
       });
     } else {
-      form.reset({
-        name: "",
-        description: "",
-        antenna_diameter_m: undefined,
-        antenna_gain_tx_db: undefined,
-        antenna_gain_rx_db: undefined,
-        noise_temperature_k: undefined,
-        eirp_dbw: undefined,
-        tx_power_dbw: undefined,
-        gt_db_per_k: undefined,
-        polarization: "",
-        notes: "",
-      });
+      form.reset(EARTH_STATION_DEFAULTS);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial, form.reset]);
@@ -117,19 +103,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
       client.invalidateQueries({ queryKey: ["earth-stations"] });
       setEditingId(null);
       onSaved?.();
-      form.reset({
-        name: "",
-        description: "",
-        antenna_diameter_m: undefined,
-        antenna_gain_tx_db: undefined,
-        antenna_gain_rx_db: undefined,
-        noise_temperature_k: undefined,
-        eirp_dbw: undefined,
-        tx_power_dbw: undefined,
-        gt_db_per_k: undefined,
-        polarization: "",
-        notes: "",
-      });
+      form.reset(EARTH_STATION_DEFAULTS);
     },
     onError: () => {
       // keep form values for user correction
@@ -144,10 +118,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
     >
       <Stack>
         {mutation.error && (
-          <Alert color="red">
-            Save failed:{" "}
-            {String((mutation.error as any)?.detail ?? mutation.error)}
-          </Alert>
+          <Alert color="red">Save failed: {formatError(mutation.error)}</Alert>
         )}
         <TextInput
           label="Name"
@@ -262,19 +233,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
               onClick={() => {
                 setEditingId(null);
                 onCancelEdit?.();
-                form.reset({
-                  name: "",
-                  description: "",
-                  antenna_diameter_m: undefined,
-                  antenna_gain_tx_db: undefined,
-                  antenna_gain_rx_db: undefined,
-                  noise_temperature_k: undefined,
-                  eirp_dbw: undefined,
-                  tx_power_dbw: undefined,
-                  gt_db_per_k: undefined,
-                  polarization: "",
-                  notes: "",
-                });
+                form.reset(EARTH_STATION_DEFAULTS);
               }}
             >
               Cancel

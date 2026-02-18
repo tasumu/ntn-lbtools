@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const optionalNumber = z.preprocess(
+  (value) =>
+    value === "" || value === null || value === undefined ? undefined : value,
+  z.number().optional(),
+);
+
 export const waveformStrategySchema = z.enum(["DVB_S2X"]);
 export const transponderTypeSchema = z.enum(["TRANSPARENT", "REGENERATIVE"]);
 

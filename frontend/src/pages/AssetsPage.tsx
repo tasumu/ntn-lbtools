@@ -14,6 +14,7 @@ import { useState } from "react";
 
 import { request } from "../api/client";
 import type { EarthStationAsset, SatelliteAsset } from "../api/types";
+import { formatError } from "../lib/formatters";
 import { EarthStationForm } from "../features/assets/EarthStationForm";
 import { SatelliteForm } from "../features/assets/SatelliteForm";
 import { ModcodManager } from "../features/modcod/ModcodManager";
@@ -34,15 +35,7 @@ export function AssetsPage() {
   const [selectedEarthStation, setSelectedEarthStation] =
     useState<EarthStationAsset | null>(null);
 
-  const formatError = (error: unknown) => {
-    if (!error) return "";
-    if (typeof error === "string") return error;
-    if (error instanceof Error) return error.message;
-    if ((error as any).detail) return String((error as any).detail);
-    return "Unknown error";
-  };
-
-  const deleteSatellite = useMutation<void, any, string>({
+  const deleteSatellite = useMutation<void, unknown, string>({
     mutationFn: (id) =>
       request({ method: "DELETE", url: `/assets/satellites/${id}` }),
     onSuccess: (_, id) => {
@@ -51,7 +44,7 @@ export function AssetsPage() {
     },
   });
 
-  const deleteEarthStation = useMutation<void, any, string>({
+  const deleteEarthStation = useMutation<void, unknown, string>({
     mutationFn: (id) =>
       request({ method: "DELETE", url: `/assets/earth-stations/${id}` }),
     onSuccess: (_, id) => {
