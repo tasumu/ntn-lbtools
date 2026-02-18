@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Group, NumberInput, Stack } from "@mantine/core";
+import { Accordion, Alert, Button, Grid, Group, NumberInput, Stack } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch, FieldErrors } from "react-hook-form";
 
@@ -9,7 +9,9 @@ import {
   transponderTypeSchema,
   waveformStrategySchema,
 } from "../../api/schemas";
+import type { EarthStationAsset, SatelliteAsset } from "../../api/types";
 import { AssetSelectors } from "./form/AssetSelectors";
+import { AssetSummaryCard } from "./form/AssetSummaryCard";
 import { LinkSection } from "./form/LinkSection";
 import { InterferenceSection } from "./form/InterferenceSection";
 import { IntermodulationSection } from "./form/IntermodulationSection";
@@ -24,6 +26,8 @@ type Props = {
   satelliteLoading?: boolean;
   earthStationLoading?: boolean;
   initialValues?: CalculationRequest | null;
+  satellites?: SatelliteAsset[];
+  earthStations?: EarthStationAsset[];
 };
 
 const formSchema = calculationRequestSchema.refine(
@@ -41,6 +45,8 @@ export function CalculationForm({
   satelliteLoading = false,
   earthStationLoading = false,
   initialValues,
+  satellites = [],
+  earthStations = [],
 }: Props) {
   const [uplinkMitigationDb, setUplinkMitigationDb] = useState<number | undefined>(undefined);
   const [downlinkMitigationDb, setDownlinkMitigationDb] = useState<number | undefined>(undefined);
@@ -234,6 +240,14 @@ export function CalculationForm({
           modcodLoading={modcodLoading}
           satelliteLoading={satelliteLoading}
           earthStationLoading={earthStationLoading}
+          satellites={satellites}
+          earthStations={earthStations}
+        />
+        <AssetSummaryCard
+          control={control}
+          errors={errors}
+          satellites={satellites}
+          earthStations={earthStations}
         />
         <Group grow>
           <Controller
@@ -259,15 +273,46 @@ export function CalculationForm({
             />
           </Group>
         )}
-        <LinkSection control={control} errors={errors} direction="uplink"
-          transponderType={transponderType} filteredModcodOptions={filteredModcodOptions} modcodLoading={modcodLoading} />
-        <LinkSection control={control} errors={errors} direction="downlink"
-          transponderType={transponderType} filteredModcodOptions={filteredModcodOptions} modcodLoading={modcodLoading} />
-        <InterferenceSection control={control} errors={errors} direction="uplink"
-          mitigationDb={uplinkMitigationDb} onMitigationChange={setUplinkMitigationDb} />
-        <InterferenceSection control={control} errors={errors} direction="downlink"
-          mitigationDb={downlinkMitigationDb} onMitigationChange={setDownlinkMitigationDb} />
-        <IntermodulationSection control={control} errors={errors} />
+
+        {/* Uplink / Downlink side by side */}
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <LinkSection control={control} errors={errors} direction="uplink"
+              transponderType={transponderType} filteredModcodOptions={filteredModcodOptions} modcodLoading={modcodLoading} />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <LinkSection control={control} errors={errors} direction="downlink"
+              transponderType={transponderType} filteredModcodOptions={filteredModcodOptions} modcodLoading={modcodLoading} />
+          </Grid.Col>
+        </Grid>
+
+        {/* Interference / Intermodulation in Accordion */}
+        <Accordion multiple variant="separated">
+          <Accordion.Item value="interference">
+            <Accordion.Control>Interference (Uplink / Downlink)</Accordion.Control>
+            <Accordion.Panel>
+              <Grid>
+                <Grid.Col span={{ base: 12, md: 6 }}>
+                  <InterferenceSection control={control} errors={errors} direction="uplink"
+                    mitigationDb={uplinkMitigationDb} onMitigationChange={setUplinkMitigationDb} />
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, md: 6 }}>
+                  <InterferenceSection control={control} errors={errors} direction="downlink"
+                    mitigationDb={downlinkMitigationDb} onMitigationChange={setDownlinkMitigationDb} />
+                </Grid.Col>
+              </Grid>
+            </Accordion.Panel>
+          </Accordion.Item>
+          {transponderType === transponderTypeSchema.enum.TRANSPARENT && (
+            <Accordion.Item value="intermodulation">
+              <Accordion.Control>Intermodulation (Transparent transponder)</Accordion.Control>
+              <Accordion.Panel>
+                <IntermodulationSection control={control} errors={errors} />
+              </Accordion.Panel>
+            </Accordion.Item>
+          )}
+        </Accordion>
+
         <Group mt="md">
           <Button type="submit" loading={loading}>Calculate</Button>
         </Group>

@@ -1,4 +1,4 @@
-import { Group, Loader, NumberInput, Select, Text } from "@mantine/core";
+import { Group, Loader, NumberInput, Select, SimpleGrid, Stack, Text } from "@mantine/core";
 import { Controller } from "react-hook-form";
 
 import { transponderTypeSchema } from "../../../api/schemas";
@@ -21,13 +21,13 @@ export function LinkSection({
 }: Props) {
   const isUplink = direction === "uplink";
   const label = isUplink ? "Uplink" : "Downlink";
-  const dirLabel = isUplink ? "earth → satellite" : "satellite → earth";
+  const dirLabel = isUplink ? "earth \u2192 satellite" : "satellite \u2192 earth";
   const dirErrors = isUplink ? errors.runtime?.uplink : errors.runtime?.downlink;
   const modcodFieldName = isUplink ? "uplink_modcod_table_id" as const : "downlink_modcod_table_id" as const;
   const modcodError = isUplink ? errors.uplink_modcod_table_id : errors.downlink_modcod_table_id;
 
   return (
-    <>
+    <Stack gap="xs">
       <Text size="sm" fw={600}>
         {label} ({dirLabel})
       </Text>
@@ -87,7 +87,7 @@ export function LinkSection({
           />
         )}
       </Group>
-      <Group grow>
+      <SimpleGrid cols={{ base: 1, sm: 3 }}>
         <Controller
           name={`runtime.${direction}.ground_lat_deg`}
           control={control}
@@ -129,7 +129,7 @@ export function LinkSection({
             />
           )}
         />
-      </Group>
+      </SimpleGrid>
       <Group grow>
         <Controller
           name={`runtime.${direction}.rain_rate_mm_per_hr`}
@@ -144,6 +144,6 @@ export function LinkSection({
           )}
         />
       </Group>
-    </>
+    </Stack>
   );
 }

@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../api/client";
-import type { EarthStationAsset, ModcodTableAsset, SatelliteAsset } from "../api/types";
+import type {
+  EarthStationAsset,
+  ModcodTableAsset,
+  SatelliteAsset,
+} from "../api/types";
 
 export function useCalculationAssets() {
   const satellitesQuery = useQuery<SatelliteAsset[]>({
@@ -52,6 +56,8 @@ export function useCalculationAssets() {
     modcodOptions,
     satelliteOptions,
     earthStationOptions,
+    satellites: satellitesQuery.data ?? [],
+    earthStations: earthStationsQuery.data ?? [],
     modcodLoading: modcodTablesQuery.isLoading,
     satelliteLoading: satellitesQuery.isLoading,
     earthStationLoading: earthStationsQuery.isLoading,

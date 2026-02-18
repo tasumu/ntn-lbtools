@@ -1,4 +1,4 @@
-import { Divider, Group, NumberInput, Switch, TextInput } from "@mantine/core";
+import { Group, NumberInput, Stack, Switch, TextInput } from "@mantine/core";
 import { Controller } from "react-hook-form";
 
 import type { FormSectionProps } from "./types";
@@ -16,15 +16,13 @@ export function InterferenceSection({
   mitigationDb,
   onMitigationChange,
 }: Props) {
-  const label = direction === "uplink" ? "Uplink" : "Downlink";
   const dirErrors =
     direction === "uplink"
       ? errors.runtime?.uplink?.interference
       : errors.runtime?.downlink?.interference;
 
   return (
-    <>
-      <Divider label={`Interference (${label})`} />
+    <Stack gap="xs">
       <Group grow>
         <Controller
           name={`runtime.${direction}.interference.applied`}
@@ -70,7 +68,7 @@ export function InterferenceSection({
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Adjacent Satellite Interference C/I (dB)"
+              label="Adjacent Satellite C/I (dB)"
               value={field.value ?? undefined}
               onChange={(value) => field.onChange(value === "" ? undefined : value)}
               error={dirErrors?.adjacent_sat_ci_db?.message}
@@ -82,7 +80,7 @@ export function InterferenceSection({
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Cross-Polarization Interference C/I (dB)"
+              label="Cross-Pol C/I (dB)"
               value={field.value ?? undefined}
               onChange={(value) => field.onChange(value === "" ? undefined : value)}
               error={dirErrors?.cross_polar_ci_db?.message}
@@ -94,7 +92,7 @@ export function InterferenceSection({
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Other interference C/I (dB)"
+              label="Other C/I (dB)"
               value={field.value ?? undefined}
               onChange={(value) => field.onChange(value === "" ? undefined : value)}
               error={dirErrors?.other_carrier_ci_db?.message}
@@ -102,6 +100,6 @@ export function InterferenceSection({
           )}
         />
       </Group>
-    </>
+    </Stack>
   );
 }

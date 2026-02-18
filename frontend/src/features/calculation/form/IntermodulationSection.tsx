@@ -1,4 +1,4 @@
-import { Divider, Group, NumberInput, Switch } from "@mantine/core";
+import { Group, NumberInput, Stack, Switch } from "@mantine/core";
 import { Controller } from "react-hook-form";
 
 import type { FormSectionProps } from "./types";
@@ -7,8 +7,7 @@ export function IntermodulationSection({ control, errors }: FormSectionProps) {
   const imErrors = errors.runtime?.intermodulation;
 
   return (
-    <>
-      <Divider label="Intermodulation (Transparent transponder)" />
+    <Stack gap="xs">
       <Group grow>
         <Controller
           name="runtime.intermodulation.applied"
@@ -90,6 +89,6 @@ export function IntermodulationSection({ control, errors }: FormSectionProps) {
           )}
         />
       </Group>
-    </>
+    </Stack>
   );
 }

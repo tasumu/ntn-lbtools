@@ -1,7 +1,9 @@
-import { Group, Loader, Select } from "@mantine/core";
+import { Group, Loader, Select, SelectProps, Stack, Text } from "@mantine/core";
+import { useMemo } from "react";
 import { Controller } from "react-hook-form";
 
 import { transponderTypeSchema } from "../../../api/schemas";
+import type { EarthStationAsset, SatelliteAsset } from "../../../api/types";
 import type { FormSectionProps } from "./types";
 
 type Props = FormSectionProps & {
@@ -13,7 +15,27 @@ type Props = FormSectionProps & {
   modcodLoading: boolean;
   satelliteLoading: boolean;
   earthStationLoading: boolean;
+  satellites: SatelliteAsset[];
+  earthStations: EarthStationAsset[];
 };
+
+function formatSatelliteSpec(sat: SatelliteAsset): string {
+  const parts: string[] = [];
+  if (sat.orbit_type) parts.push(sat.orbit_type);
+  if (sat.longitude_deg != null) parts.push(`${sat.longitude_deg}°E`);
+  if (sat.frequency_band) parts.push(sat.frequency_band);
+  if (sat.eirp_dbw != null) parts.push(`EIRP ${sat.eirp_dbw} dBW`);
+  return parts.join(" | ");
+}
+
+function formatEarthStationSpec(es: EarthStationAsset): string {
+  const parts: string[] = [];
+  if (es.antenna_diameter_m != null) parts.push(`${es.antenna_diameter_m}m`);
+  if (es.eirp_dbw != null) parts.push(`EIRP ${es.eirp_dbw} dBW`);
+  if (es.gt_db_per_k != null) parts.push(`G/T ${es.gt_db_per_k} dB/K`);
+  if (es.polarization) parts.push(es.polarization);
+  return parts.join(" | ");
+}
 
 export function AssetSelectors({
   control,
@@ -26,7 +48,48 @@ export function AssetSelectors({
   modcodLoading,
   satelliteLoading,
   earthStationLoading,
+  satellites,
+  earthStations,
 }: Props) {
+  const satelliteMap = useMemo(
+    () => new Map(satellites.map((s) => [s.id, s])),
+    [satellites],
+  );
+  const earthStationMap = useMemo(
+    () => new Map(earthStations.map((e) => [e.id, e])),
+    [earthStations],
+  );
+
+  const renderSatelliteOption: SelectProps["renderOption"] = ({ option }) => {
+    const sat = satelliteMap.get(option.value);
+    const spec = sat ? formatSatelliteSpec(sat) : "";
+    return (
+      <Stack gap={0}>
+        <Text size="sm">{option.label}</Text>
+        {spec && (
+          <Text size="xs" c="dimmed">
+            {spec}
+          </Text>
+        )}
+      </Stack>
+    );
+  };
+
+  const renderEarthStationOption: SelectProps["renderOption"] = ({ option }) => {
+    const es = earthStationMap.get(option.value);
+    const spec = es ? formatEarthStationSpec(es) : "";
+    return (
+      <Stack gap={0}>
+        <Text size="sm">{option.label}</Text>
+        {spec && (
+          <Text size="xs" c="dimmed">
+            {spec}
+          </Text>
+        )}
+      </Stack>
+    );
+  };
+
   return (
     <>
       <Group grow>
@@ -102,6 +165,7 @@ export function AssetSelectors({
               disabled={satelliteLoading}
               rightSection={satelliteLoading ? <Loader size="xs" /> : undefined}
               nothingFoundMessage={satelliteLoading ? "Loading..." : "No satellites found"}
+              renderOption={renderSatelliteOption}
               value={field.value || null}
               onChange={(value) => field.onChange(value ?? "")}
               name={field.name}
@@ -125,6 +189,7 @@ export function AssetSelectors({
               disabled={earthStationLoading}
               rightSection={earthStationLoading ? <Loader size="xs" /> : undefined}
               nothingFoundMessage={earthStationLoading ? "Loading..." : "No earth stations found"}
+              renderOption={renderEarthStationOption}
               value={field.value || null}
               onChange={(value) => field.onChange(value ?? undefined)}
               name={field.name}
@@ -146,6 +211,7 @@ export function AssetSelectors({
               disabled={earthStationLoading}
               rightSection={earthStationLoading ? <Loader size="xs" /> : undefined}
               nothingFoundMessage={earthStationLoading ? "Loading..." : "No earth stations found"}
+              renderOption={renderEarthStationOption}
               value={field.value || null}
               onChange={(value) => field.onChange(value ?? undefined)}
               name={field.name}
