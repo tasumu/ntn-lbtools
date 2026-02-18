@@ -1,5 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Group, NumberInput, Select, Stack, TextInput, Textarea } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Group,
+  NumberInput,
+  Select,
+  Stack,
+  TextInput,
+  Textarea,
+} from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -8,7 +17,8 @@ import { z } from "zod";
 import { request } from "../../api/client";
 
 const optionalNumber = z.preprocess(
-  (value) => (value === "" || value === null || value === undefined ? undefined : value),
+  (value) =>
+    value === "" || value === null || value === undefined ? undefined : value,
   z.number().optional(),
 );
 
@@ -34,7 +44,9 @@ type Props = {
 
 export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
   const client = useQueryClient();
-  const [editingId, setEditingId] = useState<string | null>(initial?.id ?? null);
+  const [editingId, setEditingId] = useState<string | null>(
+    initial?.id ?? null,
+  );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -72,12 +84,17 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
         gt_db_per_k: undefined,
       });
     }
-  }, [initial, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial, form.reset]);
 
   const mutation = useMutation({
     mutationFn: ({ values, id }: { values: FormValues; id?: string | null }) =>
       id
-        ? request({ method: "PUT", url: `/assets/satellites/${id}`, data: values })
+        ? request({
+            method: "PUT",
+            url: `/assets/satellites/${id}`,
+            data: values,
+          })
         : request({ method: "POST", url: "/assets/satellites", data: values }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["satellites"] });
@@ -96,12 +113,23 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
   });
 
   return (
-    <form onSubmit={form.handleSubmit((values) => mutation.mutate({ values, id: editingId }))}>
+    <form
+      onSubmit={form.handleSubmit((values) =>
+        mutation.mutate({ values, id: editingId }),
+      )}
+    >
       <Stack>
         {mutation.error && (
-          <Alert color="red">Save failed: {String((mutation.error as any)?.detail ?? mutation.error)}</Alert>
+          <Alert color="red">
+            Save failed:{" "}
+            {String((mutation.error as any)?.detail ?? mutation.error)}
+          </Alert>
         )}
-        <TextInput label="Name" {...form.register("name")} error={form.formState.errors.name?.message} />
+        <TextInput
+          label="Name"
+          {...form.register("name")}
+          error={form.formState.errors.name?.message}
+        />
         <Textarea label="Description" {...form.register("description")} />
         <Group grow>
           <Controller
@@ -111,7 +139,10 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
               <Select label="Orbit" data={["GEO", "HAPS", "LEO"]} {...field} />
             )}
           />
-          <TextInput label="Frequency band" {...form.register("frequency_band")} />
+          <TextInput
+            label="Frequency band"
+            {...form.register("frequency_band")}
+          />
         </Group>
         <Group grow>
           <Controller
@@ -128,7 +159,9 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
           <Controller
             name="inclination_deg"
             control={form.control}
-            render={({ field }) => <NumberInput label="Inclination (deg)" {...field} />}
+            render={({ field }) => (
+              <NumberInput label="Inclination (deg)" {...field} />
+            )}
           />
         </Group>
         <Group grow>

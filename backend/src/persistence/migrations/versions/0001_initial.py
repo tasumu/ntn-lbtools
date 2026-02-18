@@ -436,12 +436,14 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(f"DELETE FROM scenarios WHERE id = '{SAMPLE_SCENARIO_ID}'")
+    op.execute(sa.text("DELETE FROM scenarios WHERE id = :id").bindparams(id=SAMPLE_SCENARIO_ID))
     op.execute(
-        f"DELETE FROM earth_stations WHERE id IN ('{SAMPLE_TX_ID}', '{SAMPLE_RX_ID}')"
+        sa.text("DELETE FROM earth_stations WHERE id IN (:tx_id, :rx_id)").bindparams(
+            tx_id=SAMPLE_TX_ID, rx_id=SAMPLE_RX_ID,
+        ),
     )
-    op.execute(f"DELETE FROM satellites WHERE id = '{SAMPLE_SAT_ID}'")
-    op.execute(f"DELETE FROM modcod_tables WHERE id = '{SAMPLE_MODCOD_ID}'")
+    op.execute(sa.text("DELETE FROM satellites WHERE id = :id").bindparams(id=SAMPLE_SAT_ID))
+    op.execute(sa.text("DELETE FROM modcod_tables WHERE id = :id").bindparams(id=SAMPLE_MODCOD_ID))
     op.drop_table("scenarios")
     op.drop_index("ix_modcod_tables_waveform", table_name="modcod_tables")
     op.drop_table("modcod_tables")

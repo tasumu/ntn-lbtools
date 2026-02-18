@@ -1,25 +1,38 @@
-import { Alert, Button, Card, Container, Group, Stack, Tabs, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Card,
+  Container,
+  Group,
+  Stack,
+  Tabs,
+  Text,
+  Title,
+} from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { request } from "../api/client";
+import type { EarthStationAsset, SatelliteAsset } from "../api/types";
 import { EarthStationForm } from "../features/assets/EarthStationForm";
 import { SatelliteForm } from "../features/assets/SatelliteForm";
 import { ModcodManager } from "../features/modcod/ModcodManager";
 
 export function AssetsPage() {
   const client = useQueryClient();
-  const satellitesQuery = useQuery<any[]>({
+  const satellitesQuery = useQuery<SatelliteAsset[]>({
     queryKey: ["satellites"],
     queryFn: () => request({ method: "GET", url: "/assets/satellites" }),
   });
-  const earthStationsQuery = useQuery<any[]>({
+  const earthStationsQuery = useQuery<EarthStationAsset[]>({
     queryKey: ["earth-stations"],
     queryFn: () => request({ method: "GET", url: "/assets/earth-stations" }),
   });
 
-  const [selectedSatellite, setSelectedSatellite] = useState<any | null>(null);
-  const [selectedEarthStation, setSelectedEarthStation] = useState<any | null>(null);
+  const [selectedSatellite, setSelectedSatellite] =
+    useState<SatelliteAsset | null>(null);
+  const [selectedEarthStation, setSelectedEarthStation] =
+    useState<EarthStationAsset | null>(null);
 
   const formatError = (error: unknown) => {
     if (!error) return "";
@@ -30,7 +43,8 @@ export function AssetsPage() {
   };
 
   const deleteSatellite = useMutation<void, any, string>({
-    mutationFn: (id) => request({ method: "DELETE", url: `/assets/satellites/${id}` }),
+    mutationFn: (id) =>
+      request({ method: "DELETE", url: `/assets/satellites/${id}` }),
     onSuccess: (_, id) => {
       client.invalidateQueries({ queryKey: ["satellites"] });
       if (selectedSatellite?.id === id) setSelectedSatellite(null);
@@ -38,14 +52,17 @@ export function AssetsPage() {
   });
 
   const deleteEarthStation = useMutation<void, any, string>({
-    mutationFn: (id) => request({ method: "DELETE", url: `/assets/earth-stations/${id}` }),
+    mutationFn: (id) =>
+      request({ method: "DELETE", url: `/assets/earth-stations/${id}` }),
     onSuccess: (_, id) => {
       client.invalidateQueries({ queryKey: ["earth-stations"] });
       if (selectedEarthStation?.id === id) setSelectedEarthStation(null);
     },
   });
   const deletingSatelliteId = deleteSatellite.variables as string | undefined;
-  const deletingEarthStationId = deleteEarthStation.variables as string | undefined;
+  const deletingEarthStationId = deleteEarthStation.variables as
+    | string
+    | undefined;
 
   return (
     <Container size="lg" py="xl">
@@ -80,20 +97,29 @@ export function AssetsPage() {
                       <div>
                         <Text fw={600}>{sat.name}</Text>
                         <Text size="xs" c="dimmed">
-                          {sat.orbit_type} {sat.frequency_band ? `| ${sat.frequency_band}` : ""}
+                          {sat.orbit_type}{" "}
+                          {sat.frequency_band ? `| ${sat.frequency_band}` : ""}
                         </Text>
                       </div>
                       <Group gap="xs">
-                        <Button size="xs" variant="light" onClick={() => setSelectedSatellite(sat)}>
+                        <Button
+                          size="xs"
+                          variant="light"
+                          onClick={() => setSelectedSatellite(sat)}
+                        >
                           Edit
                         </Button>
                         <Button
                           size="xs"
                           color="red"
                           variant="subtle"
-                          loading={deleteSatellite.isPending && deletingSatelliteId === sat.id}
+                          loading={
+                            deleteSatellite.isPending &&
+                            deletingSatelliteId === sat.id
+                          }
                           onClick={() => {
-                            if (!window.confirm("Delete this satellite?")) return;
+                            if (!window.confirm("Delete this satellite?"))
+                              return;
                             deleteSatellite.mutate(sat.id);
                           }}
                         >
@@ -130,17 +156,26 @@ export function AssetsPage() {
                         <Text fw={600}>{es.name}</Text>
                         <Text size="xs" c="dimmed">
                           {[
-                            es.eirp_dbw != null ? `EIRP ${es.eirp_dbw} dBW` : null,
-                            es.gt_db_per_k != null ? `G/T ${es.gt_db_per_k} dB/K` : null,
+                            es.eirp_dbw != null
+                              ? `EIRP ${es.eirp_dbw} dBW`
+                              : null,
+                            es.gt_db_per_k != null
+                              ? `G/T ${es.gt_db_per_k} dB/K`
+                              : null,
                           ]
                             .filter(Boolean)
                             .join(" | ")}
                         </Text>
-                        {(es.antenna_gain_tx_db != null || es.antenna_gain_rx_db != null) && (
+                        {(es.antenna_gain_tx_db != null ||
+                          es.antenna_gain_rx_db != null) && (
                           <Text size="xs" c="dimmed">
                             {[
-                              es.antenna_gain_tx_db != null ? `Tx Gain: ${es.antenna_gain_tx_db} dBi` : null,
-                              es.antenna_gain_rx_db != null ? `Rx Gain: ${es.antenna_gain_rx_db} dBi` : null,
+                              es.antenna_gain_tx_db != null
+                                ? `Tx Gain: ${es.antenna_gain_tx_db} dBi`
+                                : null,
+                              es.antenna_gain_rx_db != null
+                                ? `Rx Gain: ${es.antenna_gain_rx_db} dBi`
+                                : null,
                             ]
                               .filter(Boolean)
                               .join(" | ")}
@@ -163,16 +198,24 @@ export function AssetsPage() {
                         )}
                       </div>
                       <Group gap="xs">
-                        <Button size="xs" variant="light" onClick={() => setSelectedEarthStation(es)}>
+                        <Button
+                          size="xs"
+                          variant="light"
+                          onClick={() => setSelectedEarthStation(es)}
+                        >
                           Edit
                         </Button>
                         <Button
                           size="xs"
                           color="red"
                           variant="subtle"
-                          loading={deleteEarthStation.isPending && deletingEarthStationId === es.id}
+                          loading={
+                            deleteEarthStation.isPending &&
+                            deletingEarthStationId === es.id
+                          }
                           onClick={() => {
-                            if (!window.confirm("Delete this earth station?")) return;
+                            if (!window.confirm("Delete this earth station?"))
+                              return;
                             deleteEarthStation.mutate(es.id);
                           }}
                         >

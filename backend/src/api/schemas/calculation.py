@@ -156,7 +156,9 @@ class EarthStationSnapshot(BaseModel):
     name: str | None = None
     description: str | None = None
     antenna_diameter_m: float | None = None
-    antenna_gain_db: float | None = None
+    antenna_gain_tx_db: float | None = None
+    antenna_gain_rx_db: float | None = None
+    noise_temperature_k: float | None = None
     eirp_dbw: float | None = None
     tx_power_dbw: float | None = None
     gt_db_per_k: float | None = None

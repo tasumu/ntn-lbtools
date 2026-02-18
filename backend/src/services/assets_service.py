@@ -40,7 +40,7 @@ class AssetsService:
         await self.sat_repo.session.refresh(sat)
         return sat
 
-    async def list_satellites(self):
+    async def list_satellites(self) -> list[Satellite]:
         return await self.sat_repo.list_all()
 
     async def create_earth_station(self, data: dict) -> EarthStation:
@@ -71,5 +71,5 @@ class AssetsService:
         await self.es_repo.session.refresh(es)
         return es
 
-    async def list_earth_stations(self):
+    async def list_earth_stations(self) -> list[EarthStation]:
         return await self.es_repo.list_all()

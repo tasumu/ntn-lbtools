@@ -12,10 +12,18 @@ class Settings(BaseSettings):
     database_url: str = Field(default="postgresql+asyncpg://user:pass@localhost:5432/ntn_lbtools")
     log_level: str = Field(default="info")
 
-    cors_origins: list[AnyHttpUrl] = Field(default_factory=list)
+    api_key: str | None = Field(default=None, repr=False)
+
+    cors_origins: list[AnyHttpUrl] = Field(
+        default_factory=lambda: ["http://localhost:5173", "http://localhost:8000"],
+    )
     cors_allow_credentials: bool = Field(default=True)
-    cors_allow_methods: list[str] = Field(default_factory=lambda: ["*"])
-    cors_allow_headers: list[str] = Field(default_factory=lambda: ["*"])
+    cors_allow_methods: list[str] = Field(
+        default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    )
+    cors_allow_headers: list[str] = Field(
+        default_factory=lambda: ["Content-Type", "Authorization", "X-API-Key"],
+    )
 
     @property
     def is_dev(self) -> bool:

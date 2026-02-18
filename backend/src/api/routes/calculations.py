@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.limiter import limiter
 from src.api.schemas.calculation import CalculationRequest, CalculationResponse
 from src.config.deps import get_db_session
-from src.persistence.repositories.modcod import ModcodRepository
 from src.persistence.repositories.assets import EarthStationRepository, SatelliteRepository
+from src.persistence.repositories.modcod import ModcodRepository
 from src.services.calculation_service import CalculationService
 
 router = APIRouter(prefix="/link-budgets", tags=["calculations"])
@@ -15,7 +16,12 @@ router = APIRouter(prefix="/link-budgets", tags=["calculations"])
     response_model=CalculationResponse,
     operation_id="calculate_link_budget",
 )
-async def calculate(body: CalculationRequest, session: AsyncSession = Depends(get_db_session)):  # noqa: B008
+@limiter.limit("30/minute")
+async def calculate(
+    request: Request,
+    body: CalculationRequest,
+    session: AsyncSession = Depends(get_db_session),  # noqa: B008
+):
     service = CalculationService(
         modcod_repo=ModcodRepository(session),
         satellite_repo=SatelliteRepository(session),

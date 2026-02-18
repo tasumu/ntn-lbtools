@@ -16,6 +16,7 @@ dependencies = [
   "scipy>=1.11.0",
   "itur>=0.2.0",
   "skyfield>=1.46",
+  "slowapi>=0.1.9",
 ]
 
 [project.optional-dependencies]

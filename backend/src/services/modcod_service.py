@@ -27,7 +27,7 @@ class ModcodService:
         await self.repo.session.refresh(table)
         return table
 
-    async def list(self, waveform: str | None = None):
+    async def list(self, waveform: str | None = None) -> list[ModcodTable]:
         if waveform:
             return await self.repo.list_versions(waveform)
         return await self.repo.list()

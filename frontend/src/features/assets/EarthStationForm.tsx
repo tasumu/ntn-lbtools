@@ -1,5 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Group, NumberInput, Stack, TextInput, Textarea } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Group,
+  NumberInput,
+  Stack,
+  TextInput,
+  Textarea,
+} from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -8,7 +16,8 @@ import { z } from "zod";
 import { request } from "../../api/client";
 
 const optionalNumber = z.preprocess(
-  (value) => (value === "" || value === null || value === undefined ? undefined : value),
+  (value) =>
+    value === "" || value === null || value === undefined ? undefined : value,
   z.number().optional(),
 );
 
@@ -36,7 +45,9 @@ type Props = {
 
 export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
   const client = useQueryClient();
-  const [editingId, setEditingId] = useState<string | null>(initial?.id ?? null);
+  const [editingId, setEditingId] = useState<string | null>(
+    initial?.id ?? null,
+  );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -86,13 +97,22 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
         notes: "",
       });
     }
-  }, [initial, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial, form.reset]);
 
   const mutation = useMutation({
     mutationFn: ({ values, id }: { values: FormValues; id?: string | null }) =>
       id
-        ? request({ method: "PUT", url: `/assets/earth-stations/${id}`, data: values })
-        : request({ method: "POST", url: "/assets/earth-stations", data: values }),
+        ? request({
+            method: "PUT",
+            url: `/assets/earth-stations/${id}`,
+            data: values,
+          })
+        : request({
+            method: "POST",
+            url: "/assets/earth-stations",
+            data: values,
+          }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["earth-stations"] });
       setEditingId(null);
@@ -117,12 +137,23 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
   });
 
   return (
-    <form onSubmit={form.handleSubmit((values) => mutation.mutate({ values, id: editingId }))}>
+    <form
+      onSubmit={form.handleSubmit((values) =>
+        mutation.mutate({ values, id: editingId }),
+      )}
+    >
       <Stack>
         {mutation.error && (
-          <Alert color="red">Save failed: {String((mutation.error as any)?.detail ?? mutation.error)}</Alert>
+          <Alert color="red">
+            Save failed:{" "}
+            {String((mutation.error as any)?.detail ?? mutation.error)}
+          </Alert>
         )}
-        <TextInput label="Name" {...form.register("name")} error={form.formState.errors.name?.message} />
+        <TextInput
+          label="Name"
+          {...form.register("name")}
+          error={form.formState.errors.name?.message}
+        />
         <Textarea
           label="Description"
           minRows={2}
@@ -154,7 +185,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
           />
         </Group>
         <Group grow>
-           <Controller
+          <Controller
             name="antenna_gain_tx_db"
             control={form.control}
             render={({ field }) => (
@@ -200,7 +231,17 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
               />
             )}
           />
-          <Controller name="gt_db_per_k" control={form.control} render={({ field }) => <NumberInput label="G/T (dB/K)" description="If empty, computed from RxGain-10log(T)" {...field} />} />
+          <Controller
+            name="gt_db_per_k"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput
+                label="G/T (dB/K)"
+                description="If empty, computed from RxGain-10log(T)"
+                {...field}
+              />
+            )}
+          />
         </Group>
         <Group grow>
           <TextInput

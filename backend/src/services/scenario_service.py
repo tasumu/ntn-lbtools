@@ -70,7 +70,7 @@ class ScenarioService:
         await self.repo.session.refresh(scenario)
         return scenario
 
-    async def list(self, limit: int = 50):
+    async def list(self, limit: int = 50) -> list[Scenario]:
         return await self.repo.list_recent(limit=limit)
 
     async def delete(self, scenario_id: UUID) -> bool:

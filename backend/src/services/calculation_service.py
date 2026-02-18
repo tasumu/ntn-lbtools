@@ -1,18 +1,20 @@
 # ruff: noqa: E501,I001
+import logging
 import math
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from fastapi import HTTPException, status
-
 from src.api.schemas.calculation import TransponderType
 from src.core.models.common import CalculationResult, LinkDirectionParameters, RuntimeParameters
 from src.core.strategies.communication import CommunicationContext, TransparentCommunicationStrategy
 from src.core.strategies.dvbs2x import DvbS2xStrategy, ModcodEntry, _clean_modcod_dict
 from src.persistence.repositories.assets import EarthStationRepository, SatelliteRepository
 from src.persistence.repositories.modcod import ModcodRepository
+
+logger = logging.getLogger(__name__)
 
 
 class CalculationService:
@@ -36,8 +38,12 @@ class CalculationService:
         if self.modcod_repo and modcod_table_id:
             try:
                 table = await self.modcod_repo.get(modcod_table_id)
-            except Exception:
-                return None, None
+            except Exception as exc:
+                logger.exception("Failed to fetch ModCod table %s", modcod_table_id)
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Failed to fetch ModCod table from database",
+                ) from exc
             if table:
                 try:
                     waveform = DvbS2xStrategy(table=table.entries)
@@ -309,12 +315,13 @@ class CalculationService:
         c_im_db, intermod_applied = _estimate_c_im(intermod_block)
 
         def _apply_impairments(
-            result,
+            result: CalculationResult,
             bandwidth_hz: float | None,
             i_over_c: float,
             aggregate_ci_db: float | None,
             interference_flag: bool,
             apply_intermod: bool,
+            c_im_db_value: float | None,
         ) -> CalculationResult:
             if bandwidth_hz:
                 base_cn0 = result.cn0_dbhz
@@ -323,44 +330,51 @@ class CalculationService:
                 thermal_term = 1 / cn_lin
                 interference_term = i_over_c if i_over_c > 0 else 0.0
 
+                updates: dict[str, Any] = {}
+
                 if interference_term > 0:
                     cni_lin = 1 / (thermal_term + interference_term)
-                    result.cni_db = 10 * math.log10(cni_lin)
-                    result.cni0_dbhz = result.cni_db + 10 * math.log10(bandwidth_hz)
+                    updates["cni_db"] = 10 * math.log10(cni_lin)
+                    updates["cni0_dbhz"] = updates["cni_db"] + 10 * math.log10(bandwidth_hz)
                 else:
-                    result.cni_db = base_cn
-                    result.cni0_dbhz = base_cn0
+                    updates["cni_db"] = base_cn
+                    updates["cni0_dbhz"] = base_cn0
 
                 intermod_term = 0.0
-                if apply_intermod and c_im_db:
-                    cim_lin = 10 ** (c_im_db / 10)
+                if apply_intermod and c_im_db_value:
+                    cim_lin = 10 ** (c_im_db_value / 10)
                     if cim_lin > 0:
                         intermod_term = 1 / cim_lin
-                        result.c_im_db = c_im_db
-                        result.intermod_applied = True
+                        updates["c_im_db"] = c_im_db_value
+                        updates["intermod_applied"] = True
 
                 total_term = thermal_term + interference_term + intermod_term
                 if total_term > 0:
                     cn_lin_effective = 1 / total_term
                     cn_db_effective = 10 * math.log10(cn_lin_effective)
                     cn0_effective = cn_db_effective + 10 * math.log10(bandwidth_hz)
-                    result.cn_db = cn_db_effective
-                    result.cn0_dbhz = cn0_effective
+                    updates["cn_db"] = cn_db_effective
+                    updates["cn0_dbhz"] = cn0_effective
                     delta = cn_db_effective - base_cn
                     if result.link_margin_db is not None:
-                        result.link_margin_db = result.link_margin_db + delta
+                        updates["link_margin_db"] = result.link_margin_db + delta
 
-                result.interference_applied = interference_flag or interference_term > 0
-                if result.warnings is None:
-                    result.warnings = []
-                if result.interference_applied and aggregate_ci_db is not None and result.cni_db is not None:
-                    result.warnings.append(
-                        f"Interference applied: aggregate C/I={aggregate_ci_db:.2f} dB, C/(N+I) degraded by {base_cn - result.cni_db:.2f} dB",
+                updates["interference_applied"] = interference_flag or interference_term > 0
+                warnings = list(result.warnings or [])
+                cni_db_val = updates.get("cni_db", result.cni_db)
+                cn_db_val = updates.get("cn_db", result.cn_db)
+                intermod_flag = updates.get("intermod_applied", result.intermod_applied)
+                c_im_val = updates.get("c_im_db", result.c_im_db)
+                if updates["interference_applied"] and aggregate_ci_db is not None and cni_db_val is not None:
+                    warnings.append(
+                        f"Interference applied: aggregate C/I={aggregate_ci_db:.2f} dB, C/(N+I) degraded by {base_cn - cni_db_val:.2f} dB",
                     )
-                if result.intermod_applied and result.c_im_db is not None and result.cn_db is not None:
-                    result.warnings.append(
-                        f"Intermodulation applied: C/IM={result.c_im_db:.2f} dB, total C/N degraded by {base_cn - result.cn_db:.2f} dB",
+                if intermod_flag and c_im_val is not None and cn_db_val is not None:
+                    warnings.append(
+                        f"Intermodulation applied: C/IM={c_im_val:.2f} dB, total C/N degraded by {base_cn - cn_db_val:.2f} dB",
                     )
+                updates["warnings"] = warnings
+                return replace(result, **updates)
             return result
 
         uplink = _apply_impairments(
@@ -370,6 +384,7 @@ class CalculationService:
             uplink_ci_db,
             uplink_interference_applied,
             False,
+            c_im_db,
         )
         downlink = _apply_impairments(
             downlink,
@@ -378,9 +393,10 @@ class CalculationService:
             downlink_ci_db,
             downlink_interference_applied,
             intermod_applied,
+            c_im_db,
         )
-        uplink.clean_cn_db = ul_clean_cn
-        downlink.clean_cn_db = dl_clean_cn
+        uplink = replace(uplink, clean_cn_db=ul_clean_cn)
+        downlink = replace(downlink, clean_cn_db=dl_clean_cn)
 
         def _runtime_direction_echo(params: LinkDirectionParameters, interference_block: dict[str, Any]) -> dict[str, Any]:
             return {
@@ -483,18 +499,18 @@ class CalculationService:
             total_link_margin = margin
 
             if selected_modcod:
-                uplink.modcod_selected = selected_modcod
-                downlink.modcod_selected = selected_modcod
+                uplink = replace(uplink, modcod_selected=selected_modcod)
+                downlink = replace(downlink, modcod_selected=selected_modcod)
             if required_ebno is not None and bitrate_used:
                 def _link_margin(cn0_dbhz: float) -> float:
                     available_link_ebno = cn0_dbhz - 10 * math.log10(bitrate_used)
                     return available_link_ebno - required_ebno
 
-                uplink.link_margin_db = _link_margin(uplink.cn0_dbhz)
-                downlink.link_margin_db = _link_margin(downlink.cn0_dbhz)
+                uplink = replace(uplink, link_margin_db=_link_margin(uplink.cn0_dbhz))
+                downlink = replace(downlink, link_margin_db=_link_margin(downlink.cn0_dbhz))
             elif margin is not None:
-                uplink.link_margin_db = margin
-                downlink.link_margin_db = margin
+                uplink = replace(uplink, link_margin_db=margin)
+                downlink = replace(downlink, link_margin_db=margin)
 
             combined_results = {
                 "cn_db": combined_cn_db,
@@ -518,29 +534,40 @@ class CalculationService:
                 if not modcod_selection_payload:
                     modcod_selection_payload = {"id": selected_modcod}
         else:
-            def _apply_modcod(result, waveform, table_source):
+            def _apply_modcod(
+                result: CalculationResult,
+                waveform,
+                table_source,
+            ) -> tuple[CalculationResult, Any, Any, Any]:
                 entry, available_ebno, required_ebno, margin, bitrate_used = waveform.select_modcod_with_margin(
                     result.cn0_dbhz,
                     result.bandwidth_hz,
                     rolloff,
                 )
+                updates: dict[str, Any] = {}
                 if entry:
-                    result.modcod_selected = entry.id
+                    updates["modcod_selected"] = entry.id
                 if required_ebno is not None and bitrate_used:
                     available_link_ebno = result.cn0_dbhz - 10 * math.log10(bitrate_used)
-                    result.link_margin_db = available_link_ebno - required_ebno
+                    updates["link_margin_db"] = available_link_ebno - required_ebno
                 elif margin is not None:
-                    result.link_margin_db = margin
-                return entry, table_source, waveform
+                    updates["link_margin_db"] = margin
+                return replace(result, **updates) if updates else result, entry, table_source, waveform
 
-            _apply_modcod(uplink, uplink_waveform, uplink_modcod_table or common_modcod_table)
-            _apply_modcod(downlink, downlink_waveform, downlink_modcod_table or common_modcod_table)
+            uplink, _, _, _ = _apply_modcod(uplink, uplink_waveform, uplink_modcod_table or common_modcod_table)
+            downlink, _, _, _ = _apply_modcod(downlink, downlink_waveform, downlink_modcod_table or common_modcod_table)
             if uplink.link_margin_db is not None:
-                uplink.clean_link_margin_db = uplink.link_margin_db + (ul_clean_cn - uplink.cn_db)
-                uplink.clean_cn_db = ul_clean_cn
+                uplink = replace(
+                    uplink,
+                    clean_link_margin_db=uplink.link_margin_db + (ul_clean_cn - uplink.cn_db),
+                    clean_cn_db=ul_clean_cn,
+                )
             if downlink.link_margin_db is not None:
-                downlink.clean_link_margin_db = downlink.link_margin_db + (dl_clean_cn - downlink.cn_db)
-                downlink.clean_cn_db = dl_clean_cn
+                downlink = replace(
+                    downlink,
+                    clean_link_margin_db=downlink.link_margin_db + (dl_clean_cn - downlink.cn_db),
+                    clean_cn_db=dl_clean_cn,
+                )
             link_margins = [m for m in (uplink.link_margin_db, downlink.link_margin_db) if m is not None]
             total_link_margin = min(link_margins) if link_margins else None
             modcod_selection_payload = {

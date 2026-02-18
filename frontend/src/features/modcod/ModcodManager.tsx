@@ -1,5 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Card, Group, Stack, Text, TextInput, Textarea, NumberInput } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Card,
+  Group,
+  Stack,
+  Text,
+  TextInput,
+  Textarea,
+  NumberInput,
+} from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -17,11 +27,10 @@ const entrySchema = z
     info_bits_per_symbol: z.number().positive(),
   })
   .refine(
-    (v) => v.required_cn0_dbhz !== undefined || v.required_ebno_db !== undefined,
+    (v) =>
+      v.required_cn0_dbhz !== undefined || v.required_ebno_db !== undefined,
     { message: "Required C/N0 or Eb/N0 is needed" },
-  )
-  ;
-
+  );
 const schema = z.object({
   waveform: z.string().default("DVB_S2X"),
   version: z.string().min(1),
@@ -40,11 +49,20 @@ export function ModcodManager() {
       waveform: "DVB_S2X",
       version: "1.0.0",
       entries: [
-        { id: "qpsk-1/4", modulation: "QPSK", code_rate: "1/4", required_cn0_dbhz: 65, info_bits_per_symbol: 0.5 },
+        {
+          id: "qpsk-1/4",
+          modulation: "QPSK",
+          code_rate: "1/4",
+          required_cn0_dbhz: 65,
+          info_bits_per_symbol: 0.5,
+        },
       ],
     },
   });
-  const entriesArray = useFieldArray({ control: form.control, name: "entries" });
+  const entriesArray = useFieldArray({
+    control: form.control,
+    name: "entries",
+  });
 
   useEffect(() => {
     if (selected) {
@@ -55,10 +73,12 @@ export function ModcodManager() {
         entries: selected.entries ?? [],
       });
     }
-  }, [selected, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, form.reset]);
 
   const mutation = useMutation({
-    mutationFn: (values: FormValues) => request({ method: "POST", url: "/assets/modcod-tables", data: values }),
+    mutationFn: (values: FormValues) =>
+      request({ method: "POST", url: "/assets/modcod-tables", data: values }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["modcod-tables"] });
       setSelected(null);
@@ -66,7 +86,8 @@ export function ModcodManager() {
   });
 
   const deleteMutation = useMutation<void, any, string>({
-    mutationFn: (id) => request({ method: "DELETE", url: `/assets/modcod-tables/${id}` }),
+    mutationFn: (id) =>
+      request({ method: "DELETE", url: `/assets/modcod-tables/${id}` }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["modcod-tables"] });
       if (selected?.id) setSelected(null);
@@ -83,13 +104,19 @@ export function ModcodManager() {
     <Stack gap="md">
       <Group grow align="flex-start" wrap="nowrap">
         <div style={{ flex: 1, minWidth: 360 }}>
-          <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+          <form
+            onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+          >
             <Stack>
               <Group grow>
                 <TextInput label="Waveform" {...form.register("waveform")} />
                 <TextInput label="Version" {...form.register("version")} />
               </Group>
-              <Textarea label="Description" minRows={2} {...form.register("description")} />
+              <Textarea
+                label="Description"
+                minRows={2}
+                {...form.register("description")}
+              />
               <Group justify="space-between" align="center">
                 <Text size="sm" fw={600}>
                   Entries
@@ -115,9 +142,21 @@ export function ModcodManager() {
                 {entriesArray.fields.map((field, idx) => (
                   <Card key={field.id} withBorder padding="sm">
                     <Group gap="sm" align="flex-end" wrap="wrap">
-                      <TextInput label="ID" w={140} {...form.register(`entries.${idx}.id`)} />
-                      <TextInput label="Modulation" w={140} {...form.register(`entries.${idx}.modulation`)} />
-                      <TextInput label="Code rate" w={120} {...form.register(`entries.${idx}.code_rate`)} />
+                      <TextInput
+                        label="ID"
+                        w={140}
+                        {...form.register(`entries.${idx}.id`)}
+                      />
+                      <TextInput
+                        label="Modulation"
+                        w={140}
+                        {...form.register(`entries.${idx}.modulation`)}
+                      />
+                      <TextInput
+                        label="Code rate"
+                        w={120}
+                        {...form.register(`entries.${idx}.code_rate`)}
+                      />
                       <Controller
                         name={`entries.${idx}.info_bits_per_symbol`}
                         control={form.control}
@@ -126,7 +165,9 @@ export function ModcodManager() {
                             label="Info bits / symbol"
                             w={150}
                             value={field.value ?? undefined}
-                            onChange={(value) => field.onChange(value ?? undefined)}
+                            onChange={(value) =>
+                              field.onChange(value ?? undefined)
+                            }
                           />
                         )}
                       />
@@ -179,10 +220,18 @@ export function ModcodManager() {
             <Text fw={600}>Saved ModCod Tables</Text>
           </Group>
           {mutation.error && (
-            <Alert color="red">Save failed: {String((mutation.error as any)?.detail ?? mutation.error)}</Alert>
+            <Alert color="red">
+              Save failed:{" "}
+              {String((mutation.error as any)?.detail ?? mutation.error)}
+            </Alert>
           )}
           {deleteMutation.error && (
-            <Alert color="red">Delete failed: {String((deleteMutation.error as any)?.detail ?? deleteMutation.error)}</Alert>
+            <Alert color="red">
+              Delete failed:{" "}
+              {String(
+                (deleteMutation.error as any)?.detail ?? deleteMutation.error,
+              )}
+            </Alert>
           )}
           {data.map((table: any) => (
             <Card key={table.id} withBorder>
@@ -199,14 +248,20 @@ export function ModcodManager() {
                   )}
                 </div>
                 <Group gap="xs">
-                  <Button size="xs" variant="light" onClick={() => setSelected(table)}>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    onClick={() => setSelected(table)}
+                  >
                     Load
                   </Button>
                   <Button
                     size="xs"
                     color="red"
                     variant="subtle"
-                    loading={deleteMutation.isPending && deletingId === table.id}
+                    loading={
+                      deleteMutation.isPending && deletingId === table.id
+                    }
                     onClick={() => {
                       if (!window.confirm("Delete this ModCod table?")) return;
                       deleteMutation.mutate(table.id);

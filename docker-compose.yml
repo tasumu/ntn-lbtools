@@ -35,7 +35,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://ntn:ntnpass@db:5432/ntn_lbtools
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ntn}:${POSTGRES_PASSWORD:-ntnpass}@db:5432/${POSTGRES_DB:-ntn_lbtools}
       UV_CACHE_DIR: /tmp/uv-cache
     ports:
       - "8000:8000"
@@ -109,7 +109,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://ntn:ntnpass@db:5432/ntn_lbtools
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ntn}:${POSTGRES_PASSWORD:-ntnpass}@db:5432/${POSTGRES_DB:-ntn_lbtools}
       UV_CACHE_DIR: /tmp/uv-cache
     depends_on:
       db:
