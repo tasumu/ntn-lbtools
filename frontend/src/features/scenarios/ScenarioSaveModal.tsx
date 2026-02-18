@@ -1,11 +1,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Modal, Stack, TextInput, Textarea } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Modal,
+  Stack,
+  TextInput,
+  Textarea,
+} from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { ScenarioPayload } from "../../api/schemas";
 import { request } from "../../api/client";
+import { formatError } from "../../lib/formatters";
 
 const scenarioSchema = z.object({
   name: z.string().min(1),
@@ -35,7 +43,12 @@ type Props = {
   };
 };
 
-export function ScenarioSaveModal({ opened, onClose, payload_snapshot, metadata }: Props) {
+export function ScenarioSaveModal({
+  opened,
+  onClose,
+  payload_snapshot,
+  metadata,
+}: Props) {
   const client = useQueryClient();
   const form = useForm<FormValues>({
     resolver: zodResolver(scenarioSchema),
@@ -55,7 +68,9 @@ export function ScenarioSaveModal({ opened, onClose, payload_snapshot, metadata 
           payload_snapshot: {
             ...payload_snapshot,
             metadata: {
-              ...(payload_snapshot as any)?.metadata,
+              ...("metadata" in payload_snapshot
+                ? (payload_snapshot.metadata as Record<string, unknown>)
+                : {}),
               schema_version: "1.1.0",
             },
           },
@@ -72,16 +87,16 @@ export function ScenarioSaveModal({ opened, onClose, payload_snapshot, metadata 
     <Modal opened={opened} onClose={onClose} title="Save Scenario">
       <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
         <Stack>
-          {mutation.error && (
+          {mutation.error != null && (
             <Alert color="red">
-              Save failed:{" "}
-              {(() => {
-                const detail = (mutation.error as any)?.detail ?? mutation.error;
-                return typeof detail === "string" ? detail : JSON.stringify(detail);
-              })()}
+              Save failed: {formatError(mutation.error)}
             </Alert>
           )}
-          <TextInput label="Name" {...form.register("name")} error={form.formState.errors.name?.message} />
+          <TextInput
+            label="Name"
+            {...form.register("name")}
+            error={form.formState.errors.name?.message}
+          />
           <Textarea
             label="Description"
             minRows={3}

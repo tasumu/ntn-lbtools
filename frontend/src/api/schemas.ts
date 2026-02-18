@@ -174,7 +174,7 @@ const staticSnapshotSchema = z.object({
   downlink_modcod_table_id: z.string().uuid().optional().nullable(),
   downlink_modcod_table_version: z.string().optional().nullable(),
   downlink_modcod_entries: z.array(modcodEntrySchema).optional().nullable(),
-  itu_constants: z.record(z.any()).default({}),
+  itu_constants: z.record(z.unknown()).default({}),
 });
 
 const strategySnapshotSchema = z.object({

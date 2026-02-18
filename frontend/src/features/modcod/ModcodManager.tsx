@@ -11,7 +11,7 @@ import {
   NumberInput,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -45,6 +45,16 @@ type FormValues = z.infer<typeof schema>;
 export function ModcodManager() {
   const client = useQueryClient();
   const [selected, setSelected] = useState<ModcodTableAsset | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
+    null,
+  );
+  const handleConfirmDelete = useCallback(
+    (id: string, mutate: (id: string) => void) => {
+      mutate(id);
+      setConfirmingDeleteId(null);
+    },
+    [],
+  );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -265,20 +275,39 @@ export function ModcodManager() {
                   >
                     Load
                   </Button>
-                  <Button
-                    size="xs"
-                    color="red"
-                    variant="subtle"
-                    loading={
-                      deleteMutation.isPending && deletingId === table.id
-                    }
-                    onClick={() => {
-                      if (!window.confirm("Delete this ModCod table?")) return;
-                      deleteMutation.mutate(table.id);
-                    }}
-                  >
-                    Delete
-                  </Button>
+                  {confirmingDeleteId === table.id ? (
+                    <Group gap={4}>
+                      <Button
+                        size="xs"
+                        color="red"
+                        variant="filled"
+                        loading={
+                          deleteMutation.isPending && deletingId === table.id
+                        }
+                        onClick={() =>
+                          handleConfirmDelete(table.id, deleteMutation.mutate)
+                        }
+                      >
+                        Confirm
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        onClick={() => setConfirmingDeleteId(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </Group>
+                  ) : (
+                    <Button
+                      size="xs"
+                      color="red"
+                      variant="subtle"
+                      onClick={() => setConfirmingDeleteId(table.id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </Group>
               </Group>
             </Card>

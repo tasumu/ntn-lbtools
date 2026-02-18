@@ -10,7 +10,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { request } from "../api/client";
 import type { EarthStationAsset, SatelliteAsset } from "../api/types";
@@ -34,6 +34,17 @@ export function AssetsPage() {
     useState<SatelliteAsset | null>(null);
   const [selectedEarthStation, setSelectedEarthStation] =
     useState<EarthStationAsset | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
+    null,
+  );
+
+  const confirmDelete = useCallback(
+    (id: string, mutate: (id: string) => void) => {
+      mutate(id);
+      setConfirmingDeleteId(null);
+    },
+    [],
+  );
 
   const deleteSatellite = useMutation<void, unknown, string>({
     mutationFn: (id) =>
@@ -102,22 +113,40 @@ export function AssetsPage() {
                         >
                           Edit
                         </Button>
-                        <Button
-                          size="xs"
-                          color="red"
-                          variant="subtle"
-                          loading={
-                            deleteSatellite.isPending &&
-                            deletingSatelliteId === sat.id
-                          }
-                          onClick={() => {
-                            if (!window.confirm("Delete this satellite?"))
-                              return;
-                            deleteSatellite.mutate(sat.id);
-                          }}
-                        >
-                          Delete
-                        </Button>
+                        {confirmingDeleteId === sat.id ? (
+                          <Group gap={4}>
+                            <Button
+                              size="xs"
+                              color="red"
+                              variant="filled"
+                              loading={
+                                deleteSatellite.isPending &&
+                                deletingSatelliteId === sat.id
+                              }
+                              onClick={() =>
+                                confirmDelete(sat.id, deleteSatellite.mutate)
+                              }
+                            >
+                              Confirm
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="subtle"
+                              onClick={() => setConfirmingDeleteId(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </Group>
+                        ) : (
+                          <Button
+                            size="xs"
+                            color="red"
+                            variant="subtle"
+                            onClick={() => setConfirmingDeleteId(sat.id)}
+                          >
+                            Delete
+                          </Button>
+                        )}
                       </Group>
                     </Group>
                   </Card>
@@ -198,22 +227,40 @@ export function AssetsPage() {
                         >
                           Edit
                         </Button>
-                        <Button
-                          size="xs"
-                          color="red"
-                          variant="subtle"
-                          loading={
-                            deleteEarthStation.isPending &&
-                            deletingEarthStationId === es.id
-                          }
-                          onClick={() => {
-                            if (!window.confirm("Delete this earth station?"))
-                              return;
-                            deleteEarthStation.mutate(es.id);
-                          }}
-                        >
-                          Delete
-                        </Button>
+                        {confirmingDeleteId === es.id ? (
+                          <Group gap={4}>
+                            <Button
+                              size="xs"
+                              color="red"
+                              variant="filled"
+                              loading={
+                                deleteEarthStation.isPending &&
+                                deletingEarthStationId === es.id
+                              }
+                              onClick={() =>
+                                confirmDelete(es.id, deleteEarthStation.mutate)
+                              }
+                            >
+                              Confirm
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="subtle"
+                              onClick={() => setConfirmingDeleteId(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </Group>
+                        ) : (
+                          <Button
+                            size="xs"
+                            color="red"
+                            variant="subtle"
+                            onClick={() => setConfirmingDeleteId(es.id)}
+                          >
+                            Delete
+                          </Button>
+                        )}
                       </Group>
                     </Group>
                   </Card>
