@@ -19,22 +19,47 @@ type Props = {
 
 export function CalculationResultChart({ uplink, downlink }: Props) {
   const lossData = [
-    { name: "Rain", uplink: uplink.rain_loss_db, downlink: downlink.rain_loss_db },
+    {
+      name: "Rain",
+      uplink: uplink.rain_loss_db,
+      downlink: downlink.rain_loss_db,
+    },
     { name: "Gas", uplink: uplink.gas_loss_db, downlink: downlink.gas_loss_db },
-    { name: "Cloud", uplink: uplink.cloud_loss_db, downlink: downlink.cloud_loss_db },
-    { name: "Pointing", uplink: uplink.antenna_pointing_loss_db, downlink: downlink.antenna_pointing_loss_db },
+    {
+      name: "Cloud",
+      uplink: uplink.cloud_loss_db,
+      downlink: downlink.cloud_loss_db,
+    },
+    {
+      name: "Pointing",
+      uplink: uplink.antenna_pointing_loss_db,
+      downlink: downlink.antenna_pointing_loss_db,
+    },
     {
       name: "Total Atm",
       uplink: uplink.rain_loss_db + uplink.gas_loss_db + uplink.cloud_loss_db,
-      downlink: downlink.rain_loss_db + downlink.gas_loss_db + downlink.cloud_loss_db,
+      downlink:
+        downlink.rain_loss_db + downlink.gas_loss_db + downlink.cloud_loss_db,
     },
   ];
 
   const signalData = [
-    { name: "Tx EIRP (dBW)", uplink: uplink.eirp_dbw, downlink: downlink.eirp_dbw },
-    { name: "Rx G/T (dB/K)", uplink: uplink.gt_db_per_k, downlink: downlink.gt_db_per_k },
+    {
+      name: "Tx EIRP (dBW)",
+      uplink: uplink.eirp_dbw,
+      downlink: downlink.eirp_dbw,
+    },
+    {
+      name: "Rx G/T (dB/K)",
+      uplink: uplink.gt_db_per_k,
+      downlink: downlink.gt_db_per_k,
+    },
     { name: "C/N (dB)", uplink: uplink.cn_db, downlink: downlink.cn_db },
-    { name: "Margin (dB)", uplink: uplink.link_margin_db, downlink: downlink.link_margin_db },
+    {
+      name: "Margin (dB)",
+      uplink: uplink.link_margin_db,
+      downlink: downlink.link_margin_db,
+    },
   ];
 
   return (
@@ -44,14 +69,25 @@ export function CalculationResultChart({ uplink, downlink }: Props) {
           Losses (dB)
         </Text>
         <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={lossData} margin={{ top: 8, right: 16, left: 0, bottom: 5 }}>
+          <BarChart
+            data={lossData}
+            margin={{ top: 8, right: 16, left: 0, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip />
             <Legend />
-            <Bar dataKey="uplink" name="Uplink" fill="#2b8a3e" />
-            <Bar dataKey="downlink" name="Downlink" fill="#1c7ed6" />
+            <Bar
+              dataKey="uplink"
+              name="Uplink"
+              fill="var(--mantine-color-uplink-7)"
+            />
+            <Bar
+              dataKey="downlink"
+              name="Downlink"
+              fill="var(--mantine-color-downlink-7)"
+            />
           </BarChart>
         </ResponsiveContainer>
       </Card>
@@ -61,14 +97,25 @@ export function CalculationResultChart({ uplink, downlink }: Props) {
           Signal Metrics
         </Text>
         <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={signalData} margin={{ top: 8, right: 16, left: 0, bottom: 5 }}>
+          <BarChart
+            data={signalData}
+            margin={{ top: 8, right: 16, left: 0, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip />
             <Legend />
-            <Bar dataKey="uplink" name="Uplink" fill="#2b8a3e" />
-            <Bar dataKey="downlink" name="Downlink" fill="#1c7ed6" />
+            <Bar
+              dataKey="uplink"
+              name="Uplink"
+              fill="var(--mantine-color-uplink-7)"
+            />
+            <Bar
+              dataKey="downlink"
+              name="Downlink"
+              fill="var(--mantine-color-downlink-7)"
+            />
           </BarChart>
         </ResponsiveContainer>
       </Card>
