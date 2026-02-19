@@ -16,6 +16,7 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { request } from "../../api/client";
+import { queryKeys } from "../../api/queryKeys";
 import type { ModcodTableAsset } from "../../api/types";
 import { formatError } from "../../lib/formatters";
 
@@ -92,7 +93,7 @@ export function ModcodManager() {
     mutationFn: (values: FormValues) =>
       request({ method: "POST", url: "/assets/modcod-tables", data: values }),
     onSuccess: () => {
-      client.invalidateQueries({ queryKey: ["modcod-tables"] });
+      client.invalidateQueries({ queryKey: queryKeys.modcodTables.all });
       setSelected(null);
     },
   });
@@ -101,7 +102,7 @@ export function ModcodManager() {
     mutationFn: (id) =>
       request({ method: "DELETE", url: `/assets/modcod-tables/${id}` }),
     onSuccess: () => {
-      client.invalidateQueries({ queryKey: ["modcod-tables"] });
+      client.invalidateQueries({ queryKey: queryKeys.modcodTables.all });
       if (selected?.id) setSelected(null);
     },
   });
@@ -112,7 +113,7 @@ export function ModcodManager() {
     isLoading,
     error: queryError,
   } = useQuery<ModcodTableAsset[]>({
-    queryKey: ["modcod-tables"],
+    queryKey: queryKeys.modcodTables.all,
     queryFn: () => request({ method: "GET", url: "/assets/modcod-tables" }),
   });
 

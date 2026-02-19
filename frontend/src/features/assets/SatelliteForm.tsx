@@ -14,7 +14,10 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { notifications } from "@mantine/notifications";
+
 import { request } from "../../api/client";
+import { queryKeys } from "../../api/queryKeys";
 import { optionalNumber } from "../../api/schemas";
 import { formatError } from "../../lib/formatters";
 
@@ -57,6 +60,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
   );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: SATELLITE_DEFAULTS,
   });
 
@@ -91,7 +95,14 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
           })
         : request({ method: "POST", url: "/assets/satellites", data: values }),
     onSuccess: () => {
-      client.invalidateQueries({ queryKey: ["satellites"] });
+      notifications.show({
+        title: "Satellite saved",
+        message: editingId
+          ? "Satellite updated successfully"
+          : "Satellite created successfully",
+        color: "green",
+      });
+      client.invalidateQueries({ queryKey: queryKeys.satellites.all });
       setEditingId(null);
       onSaved?.();
       form.reset(SATELLITE_DEFAULTS);

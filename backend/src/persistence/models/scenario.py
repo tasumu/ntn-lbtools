@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import CheckConstraint, Column, DateTime, String, Text
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from src.persistence.database import Base
@@ -19,6 +19,7 @@ class Scenario(Base):
             name="ck_scenarios_status_valid",
         ),
         CheckConstraint("schema_version <> ''", name="ck_scenarios_schema_version_nonempty"),
+        Index("ix_scenarios_created_at", "created_at"),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -26,10 +27,18 @@ class Scenario(Base):
     description = Column(Text, nullable=True)
     waveform_strategy = Column(String(50), nullable=False)
     transponder_type = Column(String(50), nullable=False)
-    modcod_table_id = Column(UUID(as_uuid=True), nullable=False)
-    satellite_id = Column(UUID(as_uuid=True), nullable=True)
-    earth_station_tx_id = Column(UUID(as_uuid=True), nullable=True)
-    earth_station_rx_id = Column(UUID(as_uuid=True), nullable=True)
+    modcod_table_id = Column(
+        UUID(as_uuid=True), ForeignKey("modcod_tables.id"), nullable=False,
+    )
+    satellite_id = Column(
+        UUID(as_uuid=True), ForeignKey("satellites.id"), nullable=True,
+    )
+    earth_station_tx_id = Column(
+        UUID(as_uuid=True), ForeignKey("earth_stations.id"), nullable=True,
+    )
+    earth_station_rx_id = Column(
+        UUID(as_uuid=True), ForeignKey("earth_stations.id"), nullable=True,
+    )
     schema_version = Column(String(20), nullable=False, default="1.1.0")
     status = Column(String(30), nullable=False, default="Draft")
     payload_snapshot = Column(JSONB, nullable=False)

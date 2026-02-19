@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../api/client";
+import { queryKeys } from "../api/queryKeys";
 import type {
   EarthStationAsset,
   ModcodTableAsset,
@@ -8,15 +9,15 @@ import type {
 
 export function useCalculationAssets() {
   const satellitesQuery = useQuery<SatelliteAsset[]>({
-    queryKey: ["satellites"],
+    queryKey: queryKeys.satellites.all,
     queryFn: () => request({ method: "GET", url: "/assets/satellites" }),
   });
   const earthStationsQuery = useQuery<EarthStationAsset[]>({
-    queryKey: ["earth-stations"],
+    queryKey: queryKeys.earthStations.all,
     queryFn: () => request({ method: "GET", url: "/assets/earth-stations" }),
   });
   const modcodTablesQuery = useQuery<ModcodTableAsset[]>({
-    queryKey: ["modcod-tables"],
+    queryKey: queryKeys.modcodTables.all,
     queryFn: () => request({ method: "GET", url: "/assets/modcod-tables" }),
   });
 

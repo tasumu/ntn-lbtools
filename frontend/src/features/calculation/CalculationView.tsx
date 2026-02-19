@@ -10,9 +10,13 @@ import {
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { notifications } from "@mantine/notifications";
 
 import { CalculationRequest, CalculationResponse } from "../../api/schemas";
 import { request } from "../../api/client";
+import { queryKeys } from "../../api/queryKeys";
 import type { ScenarioSummary } from "../../api/types";
 import { formatModcod, formatError } from "../../lib/formatters";
 import { loadScenario } from "../../lib/scenarioMapper";
@@ -25,25 +29,30 @@ import { ScenarioSaveModal } from "../scenarios/ScenarioSaveModal";
 import { CalculationResultChart } from "./CalculationResultChart";
 import { LinkBudgetWaterfall } from "./LinkBudgetWaterfall";
 
-export function CalculationView() {
+type CalculationViewProps = {
+  initialScenarioId?: string;
+};
+
+export function CalculationView({ initialScenarioId }: CalculationViewProps) {
   const client = useQueryClient();
+  const navigate = useNavigate();
   const [saveOpen, setSaveOpen] = useState(false);
   const [lastRequest, setLastRequest] = useState<CalculationRequest | null>(
     null,
   );
   const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(
-    null,
+    initialScenarioId ?? null,
   );
   const [prefill, setPrefill] = useState<CalculationRequest | null>(null);
 
   const assets = useCalculationAssets();
 
   const scenariosQuery = useQuery<ScenarioSummary[]>({
-    queryKey: ["scenarios"],
+    queryKey: queryKeys.scenarios.all,
     queryFn: () => request({ method: "GET", url: "/scenarios" }),
   });
   const scenarioDetailQuery = useQuery<ScenarioSummary>({
-    queryKey: ["scenario-detail", selectedScenarioId],
+    queryKey: queryKeys.scenarios.detail(selectedScenarioId),
     queryFn: () =>
       request({ method: "GET", url: `/scenarios/${selectedScenarioId}` }),
     enabled: Boolean(selectedScenarioId),
@@ -52,11 +61,17 @@ export function CalculationView() {
     mutationFn: (scenarioId) =>
       request({ method: "DELETE", url: `/scenarios/${scenarioId}` }),
     onSuccess: (_, scenarioId) => {
-      client.invalidateQueries({ queryKey: ["scenarios"] });
+      client.invalidateQueries({ queryKey: queryKeys.scenarios.all });
       if (selectedScenarioId === scenarioId) {
         setSelectedScenarioId(null);
         setPrefill(null);
+        navigate("/", { replace: true });
       }
+      notifications.show({
+        title: "Scenario deleted",
+        message: "Scenario removed successfully",
+        color: "green",
+      });
     },
   });
 
@@ -86,6 +101,13 @@ export function CalculationView() {
         method: "POST",
         url: "/link-budgets/calculate",
         data: { ...payload, include_snapshot: true },
+      });
+    },
+    onSuccess: () => {
+      notifications.show({
+        title: "Calculation complete",
+        message: "Link budget calculated successfully",
+        color: "green",
       });
     },
   });
@@ -173,6 +195,7 @@ export function CalculationView() {
               onSelect={(id, pf) => {
                 setSelectedScenarioId(id);
                 setPrefill(pf);
+                navigate(id ? `/scenarios/${id}` : "/", { replace: true });
               }}
               onDelete={(id) => deleteScenario.mutate(id)}
             />

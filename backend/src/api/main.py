@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +11,8 @@ from src.api.middleware.auth import ApiKeyMiddleware
 from src.api.middleware.logging import logging_middleware
 from src.api.routes import assets, calculations, modcod, scenarios
 from src.config.settings import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def create_app() -> FastAPI:
@@ -22,6 +26,16 @@ def create_app() -> FastAPI:
             status_code=429,
             content={"detail": "Rate limit exceeded"},
         )
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        logger.exception(
+            "Unhandled exception on %s %s",
+            request.method,
+            request.url.path,
+        )
+        detail = str(exc) if settings.is_dev else "Internal server error"
+        return JSONResponse(status_code=500, content={"detail": detail})
 
     app.add_middleware(
         CORSMiddleware,

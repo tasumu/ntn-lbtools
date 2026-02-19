@@ -13,7 +13,10 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { notifications } from "@mantine/notifications";
+
 import { request } from "../../api/client";
+import { queryKeys } from "../../api/queryKeys";
 import { optionalNumber } from "../../api/schemas";
 import { formatError } from "../../lib/formatters";
 
@@ -60,6 +63,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
   );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: EARTH_STATION_DEFAULTS,
   });
 
@@ -100,7 +104,14 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
             data: values,
           }),
     onSuccess: () => {
-      client.invalidateQueries({ queryKey: ["earth-stations"] });
+      notifications.show({
+        title: "Earth station saved",
+        message: editingId
+          ? "Earth station updated successfully"
+          : "Earth station created successfully",
+        color: "green",
+      });
+      client.invalidateQueries({ queryKey: queryKeys.earthStations.all });
       setEditingId(null);
       onSaved?.();
       form.reset(EARTH_STATION_DEFAULTS);

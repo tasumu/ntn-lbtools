@@ -12,7 +12,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
+import { notifications } from "@mantine/notifications";
+
 import { request } from "../api/client";
+import { queryKeys } from "../api/queryKeys";
 import type { EarthStationAsset, SatelliteAsset } from "../api/types";
 import { formatError } from "../lib/formatters";
 import { EarthStationForm } from "../features/assets/EarthStationForm";
@@ -22,11 +25,11 @@ import { ModcodManager } from "../features/modcod/ModcodManager";
 export function AssetsPage() {
   const client = useQueryClient();
   const satellitesQuery = useQuery<SatelliteAsset[]>({
-    queryKey: ["satellites"],
+    queryKey: queryKeys.satellites.all,
     queryFn: () => request({ method: "GET", url: "/assets/satellites" }),
   });
   const earthStationsQuery = useQuery<EarthStationAsset[]>({
-    queryKey: ["earth-stations"],
+    queryKey: queryKeys.earthStations.all,
     queryFn: () => request({ method: "GET", url: "/assets/earth-stations" }),
   });
 
@@ -50,8 +53,13 @@ export function AssetsPage() {
     mutationFn: (id) =>
       request({ method: "DELETE", url: `/assets/satellites/${id}` }),
     onSuccess: (_, id) => {
-      client.invalidateQueries({ queryKey: ["satellites"] });
+      client.invalidateQueries({ queryKey: queryKeys.satellites.all });
       if (selectedSatellite?.id === id) setSelectedSatellite(null);
+      notifications.show({
+        title: "Satellite deleted",
+        message: "Satellite removed successfully",
+        color: "green",
+      });
     },
   });
 
@@ -59,8 +67,13 @@ export function AssetsPage() {
     mutationFn: (id) =>
       request({ method: "DELETE", url: `/assets/earth-stations/${id}` }),
     onSuccess: (_, id) => {
-      client.invalidateQueries({ queryKey: ["earth-stations"] });
+      client.invalidateQueries({ queryKey: queryKeys.earthStations.all });
       if (selectedEarthStation?.id === id) setSelectedEarthStation(null);
+      notifications.show({
+        title: "Earth station deleted",
+        message: "Earth station removed successfully",
+        color: "green",
+      });
     },
   });
   const deletingSatelliteId = deleteSatellite.variables as string | undefined;

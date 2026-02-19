@@ -11,8 +11,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { notifications } from "@mantine/notifications";
+
 import { ScenarioPayload } from "../../api/schemas";
 import { request } from "../../api/client";
+import { queryKeys } from "../../api/queryKeys";
 import { formatError } from "../../lib/formatters";
 
 const scenarioSchema = z.object({
@@ -77,8 +80,13 @@ export function ScenarioSaveModal({
         },
       }),
     onSuccess: () => {
+      notifications.show({
+        title: "Scenario saved",
+        message: "Scenario saved successfully",
+        color: "green",
+      });
       onClose();
-      client.invalidateQueries({ queryKey: ["scenarios"] });
+      client.invalidateQueries({ queryKey: queryKeys.scenarios.all });
       form.reset();
     },
   });

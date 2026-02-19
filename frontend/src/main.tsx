@@ -12,12 +12,17 @@ import {
 } from "react-router-dom";
 
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
+
+import { Notifications } from "@mantine/notifications";
 
 import { theme } from "./theme";
 import { ApiProvider } from "./api/provider";
 
 const CalculationPage = React.lazy(() =>
-  import("./pages/CalculationPage").then((m) => ({ default: m.CalculationPage })),
+  import("./pages/CalculationPage").then((m) => ({
+    default: m.CalculationPage,
+  })),
 );
 const AssetsPage = React.lazy(() =>
   import("./pages/AssetsPage").then((m) => ({ default: m.AssetsPage })),
@@ -50,7 +55,10 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 
 function NavBar() {
   const location = useLocation();
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) =>
+    path === "/"
+      ? location.pathname === "/" || location.pathname.startsWith("/scenarios/")
+      : location.pathname === path;
   const linkStyle = (path: string) => ({
     textDecoration: "none",
     fontWeight: isActive(path) ? 700 : 500,
@@ -76,12 +84,23 @@ if (root) {
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
       <MantineProvider theme={theme} defaultColorScheme="dark">
+        <Notifications position="top-right" />
         <ApiProvider>
           <BrowserRouter>
             <NavBar />
             <Routes>
               <Route
                 path="/"
+                element={
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <Suspense fallback={<PageLoader />}>
+                      <CalculationPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/scenarios/:scenarioId"
                 element={
                   <ErrorBoundary FallbackComponent={ErrorFallback}>
                     <Suspense fallback={<PageLoader />}>
