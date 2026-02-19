@@ -11,7 +11,8 @@ export default defineConfig({
     css: false,
     coverage: {
       provider: "v8",
-      include: ["src/lib/**"],
+      include: ["src/**"],
+      exclude: ["src/test/**"],
       reporter: ["text", "text-summary"],
     },
   },

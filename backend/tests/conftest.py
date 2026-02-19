@@ -17,6 +17,16 @@ from src.api.main import app
 from src.config.deps import get_db_session
 
 
+class FakeScalarResult:
+    """Mimics SQLAlchemy Result.scalar() for COUNT queries."""
+
+    def __init__(self, value: int):
+        self._value = value
+
+    def scalar(self) -> int:
+        return self._value
+
+
 class FakeResult:
     """Mimics SQLAlchemy Result.scalars().all()."""
 
@@ -74,7 +84,16 @@ class FakeSession:
         model_cls = type(obj)
         self._store.get(model_cls, {}).pop(getattr(obj, "id", None), None)
 
-    async def execute(self, stmt: Any, *args: Any, **kwargs: Any) -> "FakeResult":
+    async def execute(self, stmt: Any, *args: Any, **kwargs: Any) -> "FakeResult | FakeScalarResult":
+        # Detect COUNT queries by checking the compiled SQL string
+        if self._is_count_query(stmt):
+            model_cls = self._model_from_count_stmt(stmt)
+            if model_cls is None:
+                return FakeScalarResult(0)
+            items = list(self._store.get(model_cls, {}).values())
+            items = self._apply_where(stmt, items)
+            return FakeScalarResult(len(items))
+
         model_cls = self._model_from_stmt(stmt)
         if model_cls is None:
             return FakeResult([])
@@ -84,6 +103,32 @@ class FakeSession:
         return FakeResult(items)
 
     # ---- Helpers ----
+
+    def _is_count_query(self, stmt: Any) -> bool:
+        try:
+            compiled = str(stmt.compile(compile_kwargs={"literal_binds": True}))
+            return "count" in compiled.lower()
+        except Exception:
+            return False
+
+    def _model_from_count_stmt(self, stmt: Any) -> type | None:
+        try:
+            froms = stmt.froms if hasattr(stmt, "froms") else []
+            for frm in froms:
+                entity = getattr(frm, "entity_namespace", None)
+                if entity is not None:
+                    return entity
+            # Fallback: check select_from / froms for table name mapping
+            for frm in froms:
+                table_name = getattr(frm, "name", None)
+                if table_name:
+                    for model_cls in self._store:
+                        tbl = getattr(model_cls, "__table__", None)
+                        if tbl is not None and getattr(tbl, "name", None) == table_name:
+                            return model_cls
+        except Exception:
+            pass
+        return None
 
     def _model_from_stmt(self, stmt: Any) -> type | None:
         try:

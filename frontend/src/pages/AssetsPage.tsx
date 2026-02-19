@@ -4,6 +4,7 @@ import {
   Card,
   Container,
   Group,
+  Pagination,
   Stack,
   Tabs,
   Text,
@@ -16,22 +17,50 @@ import { notifications } from "@mantine/notifications";
 
 import { request } from "../api/client";
 import { queryKeys } from "../api/queryKeys";
-import type { EarthStationAsset, SatelliteAsset } from "../api/types";
+import type {
+  EarthStationAsset,
+  PaginatedResponse,
+  SatelliteAsset,
+} from "../api/types";
 import { formatError } from "../lib/formatters";
 import { EarthStationForm } from "../features/assets/EarthStationForm";
 import { SatelliteForm } from "../features/assets/SatelliteForm";
 import { ModcodManager } from "../features/modcod/ModcodManager";
 
+const PAGE_SIZE = 20;
+
 export function AssetsPage() {
   const client = useQueryClient();
-  const satellitesQuery = useQuery<SatelliteAsset[]>({
-    queryKey: queryKeys.satellites.all,
-    queryFn: () => request({ method: "GET", url: "/assets/satellites" }),
+  const [satPage, setSatPage] = useState(1);
+  const [esPage, setEsPage] = useState(1);
+
+  const satOffset = (satPage - 1) * PAGE_SIZE;
+  const esOffset = (esPage - 1) * PAGE_SIZE;
+
+  const satellitesQuery = useQuery<PaginatedResponse<SatelliteAsset>>({
+    queryKey: queryKeys.satellites.list({ limit: PAGE_SIZE, offset: satOffset }),
+    queryFn: () =>
+      request({
+        method: "GET",
+        url: `/assets/satellites?limit=${PAGE_SIZE}&offset=${satOffset}`,
+      }),
   });
-  const earthStationsQuery = useQuery<EarthStationAsset[]>({
-    queryKey: queryKeys.earthStations.all,
-    queryFn: () => request({ method: "GET", url: "/assets/earth-stations" }),
+  const earthStationsQuery = useQuery<PaginatedResponse<EarthStationAsset>>({
+    queryKey: queryKeys.earthStations.list({
+      limit: PAGE_SIZE,
+      offset: esOffset,
+    }),
+    queryFn: () =>
+      request({
+        method: "GET",
+        url: `/assets/earth-stations?limit=${PAGE_SIZE}&offset=${esOffset}`,
+      }),
   });
+
+  const satellites = satellitesQuery.data?.items ?? [];
+  const satTotal = satellitesQuery.data?.total ?? 0;
+  const earthStations = earthStationsQuery.data?.items ?? [];
+  const esTotal = earthStationsQuery.data?.total ?? 0;
 
   const [selectedSatellite, setSelectedSatellite] =
     useState<SatelliteAsset | null>(null);
@@ -86,7 +115,7 @@ export function AssetsPage() {
       <Title order={2} mb="md">
         Assets
       </Title>
-      <Tabs defaultValue="satellites">
+      <Tabs defaultValue="satellites" aria-label="Asset management">
         <Tabs.List>
           <Tabs.Tab value="satellites">Satellites</Tabs.Tab>
           <Tabs.Tab value="earth-stations">Earth Stations</Tabs.Tab>
@@ -108,7 +137,7 @@ export function AssetsPage() {
                     {formatError(deleteSatellite.error)}
                   </Alert>
                 )}
-                {satellitesQuery.data?.map((sat) => (
+                {satellites.map((sat) => (
                   <Card key={sat.id} withBorder>
                     <Group justify="space-between" align="flex-start">
                       <div>
@@ -164,6 +193,13 @@ export function AssetsPage() {
                     </Group>
                   </Card>
                 ))}
+                {satTotal > PAGE_SIZE && (
+                  <Pagination
+                    total={Math.ceil(satTotal / PAGE_SIZE)}
+                    value={satPage}
+                    onChange={setSatPage}
+                  />
+                )}
               </Stack>
             </Group>
           </Stack>
@@ -184,7 +220,7 @@ export function AssetsPage() {
                     {formatError(deleteEarthStation.error)}
                   </Alert>
                 )}
-                {earthStationsQuery.data?.map((es) => (
+                {earthStations.map((es) => (
                   <Card key={es.id} withBorder>
                     <Group justify="space-between" align="flex-start">
                       <div>
@@ -278,6 +314,13 @@ export function AssetsPage() {
                     </Group>
                   </Card>
                 ))}
+                {esTotal > PAGE_SIZE && (
+                  <Pagination
+                    total={Math.ceil(esTotal / PAGE_SIZE)}
+                    value={esPage}
+                    onChange={setEsPage}
+                  />
+                )}
               </Stack>
             </Group>
           </Stack>

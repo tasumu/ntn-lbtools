@@ -1,0 +1,104 @@
+import { screen } from "@testing-library/react";
+import { useForm, FormProvider } from "react-hook-form";
+import { describe, expect, it } from "vitest";
+import type { ReactNode } from "react";
+
+import { InterferenceSection } from "./InterferenceSection";
+import { renderWithProviders } from "../../../test/utils";
+import type { CalculationRequest } from "../../../api/schemas";
+
+function FormWrapper({
+  children,
+}: {
+  children: (methods: ReturnType<typeof useForm<CalculationRequest>>) => ReactNode;
+}) {
+  const methods = useForm<CalculationRequest>({
+    defaultValues: {
+      runtime: {
+        uplink: {
+          frequency_hz: 14.25e9,
+          bandwidth_hz: 36e6,
+          rain_rate_mm_per_hr: 10,
+          ground_lat_deg: 0,
+          ground_lon_deg: 0,
+          interference: {
+            adjacent_sat_ci_db: undefined,
+            cross_polar_ci_db: undefined,
+            other_carrier_ci_db: undefined,
+            applied: false,
+          },
+        },
+        downlink: {
+          frequency_hz: 12e9,
+          bandwidth_hz: 36e6,
+          rain_rate_mm_per_hr: 10,
+          ground_lat_deg: 0,
+          ground_lon_deg: 0,
+          interference: {
+            adjacent_sat_ci_db: undefined,
+            cross_polar_ci_db: undefined,
+            other_carrier_ci_db: undefined,
+            applied: false,
+          },
+        },
+      },
+    } as CalculationRequest,
+  });
+  return <FormProvider {...methods}>{children(methods)}</FormProvider>;
+}
+
+describe("InterferenceSection", () => {
+  it("renders uplink interference fields", () => {
+    renderWithProviders(
+      <FormWrapper>
+        {(methods) => (
+          <InterferenceSection
+            control={methods.control}
+            errors={methods.formState.errors}
+            direction="uplink"
+            mitigationDb={undefined}
+            onMitigationChange={() => {}}
+          />
+        )}
+      </FormWrapper>,
+    );
+    expect(screen.getByLabelText(/Apply uplink interference/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Adjacent Satellite C\/I/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Cross-Pol C\/I/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Other C\/I/)).toBeInTheDocument();
+  });
+
+  it("renders downlink interference fields", () => {
+    renderWithProviders(
+      <FormWrapper>
+        {(methods) => (
+          <InterferenceSection
+            control={methods.control}
+            errors={methods.formState.errors}
+            direction="downlink"
+            mitigationDb={undefined}
+            onMitigationChange={() => {}}
+          />
+        )}
+      </FormWrapper>,
+    );
+    expect(screen.getByLabelText(/Apply downlink interference/)).toBeInTheDocument();
+  });
+
+  it("renders mitigation field", () => {
+    renderWithProviders(
+      <FormWrapper>
+        {(methods) => (
+          <InterferenceSection
+            control={methods.control}
+            errors={methods.formState.errors}
+            direction="uplink"
+            mitigationDb={3}
+            onMitigationChange={() => {}}
+          />
+        )}
+      </FormWrapper>,
+    );
+    expect(screen.getByLabelText(/Mitigation/)).toBeInTheDocument();
+  });
+});

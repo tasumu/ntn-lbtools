@@ -109,7 +109,11 @@ class TestListModcod:
             resp = await client.get("/api/v1/assets/modcod-tables")
 
         assert resp.status_code == 200
-        assert resp.json() == []
+        body = resp.json()
+        assert body["items"] == []
+        assert body["total"] == 0
+        assert body["limit"] == 20
+        assert body["offset"] == 0
 
     @pytest.mark.asyncio
     async def test_list_modcod_returns_seeded(self, client_factory, fake_db):
@@ -120,7 +124,9 @@ class TestListModcod:
             resp = await client.get("/api/v1/assets/modcod-tables")
 
         assert resp.status_code == 200
-        items = resp.json()
+        body = resp.json()
+        assert body["total"] == 1
+        items = body["items"]
         assert len(items) == 1
         assert items[0]["waveform"] == "DVB_S2X"
 
@@ -135,7 +141,9 @@ class TestListModcod:
             resp = await client.get("/api/v1/assets/modcod-tables?waveform=DVB_S2X")
 
         assert resp.status_code == 200
-        items = resp.json()
+        body = resp.json()
+        assert body["total"] == 1
+        items = body["items"]
         assert len(items) == 1
         assert items[0]["waveform"] == "DVB_S2X"
 

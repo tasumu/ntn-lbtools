@@ -31,14 +31,14 @@ export function LinkBudgetWaterfall({ uplink, downlink }: Props) {
     if (!target) return [];
 
     const bwDb = target.bandwidth_hz ? 10 * Math.log10(target.bandwidth_hz) : 0;
-    
+
     // Step 1: Tx EIRP (+)
     const eirp = target.eirp_dbw ?? 0;
-    
+
     // Step 2: Path Loss (-) (FSPL + Atm + Pointing)
     const fspl = target.fspl_db;
     const otherLoss = (target.atm_loss_db ?? 0) - fspl;
-    
+
     // Step 3: Rx G/T (+)
     const gt = target.gt_db_per_k;
 
@@ -94,7 +94,7 @@ export function LinkBudgetWaterfall({ uplink, downlink }: Props) {
       name: "-k",
       value: [current, current + boltzmann],
       displayValue: boltzmann,
-      type: "gain", 
+      type: "gain",
     });
     current += boltzmann;
 
@@ -121,6 +121,7 @@ export function LinkBudgetWaterfall({ uplink, downlink }: Props) {
   return (
     <Stack gap="md">
       <SegmentedControl
+        aria-label="Select link direction"
         value={direction}
         onChange={(v) => setDirection(v as "uplink" | "downlink")}
         data={[
@@ -128,74 +129,97 @@ export function LinkBudgetWaterfall({ uplink, downlink }: Props) {
           { label: "Downlink", value: "downlink" },
         ]}
       />
-      <ResponsiveContainer width="100%" height={400}>
-        <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 12 }} label={{ value: "dB", angle: -90, position: "insideLeft" }} />
-          <Tooltip
-            cursor={{ fill: "transparent" }}
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                const item = payload[0].payload;
-                return (
-                  <div style={{ backgroundColor: "white", padding: "8px", border: "1px solid #ccc", borderRadius: 4 }}>
-                    <Text size="sm" fw={700}>{item.name}</Text>
-                    <Text size="sm">Value: {item.displayValue.toFixed(2)} dB</Text>
-                    <Text size="xs" c="dimmed">
-                      Range: {item.value[0].toFixed(1)} to {item.value[1].toFixed(1)}
-                    </Text>
-                  </div>
-                );
-              }
-              return null;
-            }}
-          />
-          <ReferenceLine y={0} stroke="#000" />
-          
-          {data.slice(0, -1).map((step, index) => {
-            const nextStep = data[index + 1];
-            let yLevel = 0;
-            if (nextStep.type === "loss") {
-              yLevel = nextStep.value[1];
-            } else if (nextStep.type === "gain") {
-              yLevel = nextStep.value[0];
-            } else if (nextStep.type === "total") {
-              yLevel = nextStep.value[1];
-            }
-            return (
-              <ReferenceLine
-                key={`conn-${index}`}
-                segment={[
-                  { x: step.name, y: yLevel },
-                  { x: nextStep.name, y: yLevel },
-                ]}
-                stroke="#333"
-                strokeDasharray="2 2"
-              />
-            );
-          })}
-
-          <Bar dataKey="value">
-            {data.map((entry, index) => {
-              let color = theme.colors.gray[5];
-              if (entry.type === "gain") color = theme.colors.teal[6];
-              if (entry.type === "loss") color = theme.colors.red[6];
-              if (entry.type === "total") color = theme.colors.blue[6];
-              return <Cell key={`cell-${index}`} fill={color} />;
-            })}
-            <LabelList
-              dataKey="displayValue"
-              position="top"
-              formatter={(val: number) => val.toFixed(1)}
-              style={{ fontSize: 11, fill: "#666" }}
+      <div
+        role="img"
+        aria-label="Waterfall chart showing link budget components"
+      >
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart
+            data={data}
+            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <YAxis
+              tick={{ fontSize: 12 }}
+              label={{ value: "dB", angle: -90, position: "insideLeft" }}
             />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+            <Tooltip
+              cursor={{ fill: "transparent" }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const item = payload[0].payload;
+                  return (
+                    <div
+                      style={{
+                        backgroundColor: "white",
+                        padding: "8px",
+                        border: "1px solid #ccc",
+                        borderRadius: 4,
+                      }}
+                    >
+                      <Text size="sm" fw={700}>
+                        {item.name}
+                      </Text>
+                      <Text size="sm">
+                        Value: {item.displayValue.toFixed(2)} dB
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        Range: {item.value[0].toFixed(1)} to{" "}
+                        {item.value[1].toFixed(1)}
+                      </Text>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <ReferenceLine y={0} stroke="#000" />
+
+            {data.slice(0, -1).map((step, index) => {
+              const nextStep = data[index + 1];
+              let yLevel = 0;
+              if (nextStep.type === "loss") {
+                yLevel = nextStep.value[1];
+              } else if (nextStep.type === "gain") {
+                yLevel = nextStep.value[0];
+              } else if (nextStep.type === "total") {
+                yLevel = nextStep.value[1];
+              }
+              return (
+                <ReferenceLine
+                  key={`conn-${index}`}
+                  segment={[
+                    { x: step.name, y: yLevel },
+                    { x: nextStep.name, y: yLevel },
+                  ]}
+                  stroke="#333"
+                  strokeDasharray="2 2"
+                />
+              );
+            })}
+
+            <Bar dataKey="value">
+              {data.map((entry, index) => {
+                let color = theme.colors.gray[5];
+                if (entry.type === "gain") color = theme.colors.teal[6];
+                if (entry.type === "loss") color = theme.colors.red[6];
+                if (entry.type === "total") color = theme.colors.blue[6];
+                return <Cell key={`cell-${index}`} fill={color} />;
+              })}
+              <LabelList
+                dataKey="displayValue"
+                position="top"
+                formatter={(val: number) => val.toFixed(1)}
+                style={{ fontSize: 11, fill: "#666" }}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
       <Text size="xs" c="dimmed" ta="center">
-        * "Atm/Point" includes Rain, Gas, Cloud, and Antenna Pointing losses. 
-        * "-k" is the Boltzmann constant conversion (+228.6 dB).
+        * "Atm/Point" includes Rain, Gas, Cloud, and Antenna Pointing losses. *
+        "-k" is the Boltzmann constant conversion (+228.6 dB).
       </Text>
     </Stack>
   );

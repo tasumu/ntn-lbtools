@@ -330,7 +330,10 @@ export function CalculationForm({
   const rootError = firstErrorMessage(errors);
 
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(prepareData(values)))}>
+    <form
+      aria-label="Link budget calculation"
+      onSubmit={handleSubmit((values) => onSubmit(prepareData(values)))}
+    >
       <Stack>
         {rootError && (
           <Alert color="red" title="Input Error">
@@ -419,7 +422,7 @@ export function CalculationForm({
         </Grid>
 
         {/* Interference / Intermodulation in Accordion */}
-        <Accordion multiple variant="separated">
+        <Accordion multiple variant="separated" aria-label="Advanced settings">
           <Accordion.Item value="interference">
             <Accordion.Control>
               Interference (Uplink / Downlink)
@@ -460,7 +463,7 @@ export function CalculationForm({
         </Accordion>
 
         <Group mt="md">
-          <Button type="submit" loading={loading}>
+          <Button type="submit" loading={loading} aria-busy={loading}>
             Calculate
           </Button>
         </Group>

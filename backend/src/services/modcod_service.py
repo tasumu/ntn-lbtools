@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -31,6 +33,14 @@ class ModcodService:
         if waveform:
             return await self.repo.list_versions(waveform)
         return await self.repo.list()
+
+    async def list_paginated(
+        self, limit: int = 20, offset: int = 0, waveform: str | None = None
+    ) -> tuple[list[ModcodTable], int]:
+        items, total = await self.repo.list_paginated(
+            limit=limit, offset=offset, waveform=waveform
+        )
+        return list(items), total
 
     async def delete(self, table_id: UUID) -> bool:
         table = await self.repo.get(table_id)

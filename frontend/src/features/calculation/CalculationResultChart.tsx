@@ -68,56 +68,66 @@ export function CalculationResultChart({ uplink, downlink }: Props) {
         <Text fw={600} mb="sm">
           Losses (dB)
         </Text>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart
-            data={lossData}
-            margin={{ top: 8, right: 16, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Legend />
-            <Bar
-              dataKey="uplink"
-              name="Uplink"
-              fill="var(--mantine-color-uplink-7)"
-            />
-            <Bar
-              dataKey="downlink"
-              name="Downlink"
-              fill="var(--mantine-color-downlink-7)"
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        <div
+          role="img"
+          aria-label="Bar chart comparing uplink and downlink atmospheric losses"
+        >
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart
+              data={lossData}
+              margin={{ top: 8, right: 16, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey="uplink"
+                name="Uplink"
+                fill="var(--mantine-color-uplink-7)"
+              />
+              <Bar
+                dataKey="downlink"
+                name="Downlink"
+                fill="var(--mantine-color-downlink-7)"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
 
       <Card shadow="sm" withBorder>
         <Text fw={600} mb="sm">
           Signal Metrics
         </Text>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart
-            data={signalData}
-            margin={{ top: 8, right: 16, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Legend />
-            <Bar
-              dataKey="uplink"
-              name="Uplink"
-              fill="var(--mantine-color-uplink-7)"
-            />
-            <Bar
-              dataKey="downlink"
-              name="Downlink"
-              fill="var(--mantine-color-downlink-7)"
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        <div
+          role="img"
+          aria-label="Bar chart comparing uplink and downlink signal metrics"
+        >
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart
+              data={signalData}
+              margin={{ top: 8, right: 16, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey="uplink"
+                name="Uplink"
+                fill="var(--mantine-color-uplink-7)"
+              />
+              <Bar
+                dataKey="downlink"
+                name="Downlink"
+                fill="var(--mantine-color-downlink-7)"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
     </Stack>
   );

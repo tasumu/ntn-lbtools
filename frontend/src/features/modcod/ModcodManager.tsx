@@ -17,7 +17,7 @@ import { z } from "zod";
 
 import { request } from "../../api/client";
 import { queryKeys } from "../../api/queryKeys";
-import type { ModcodTableAsset } from "../../api/types";
+import type { ModcodTableAsset, PaginatedResponse } from "../../api/types";
 import { formatError } from "../../lib/formatters";
 
 const entrySchema = z
@@ -109,19 +109,22 @@ export function ModcodManager() {
   const deletingId = deleteMutation.variables as string | undefined;
 
   const {
-    data = [],
+    data: paginatedData,
     isLoading,
     error: queryError,
-  } = useQuery<ModcodTableAsset[]>({
+  } = useQuery<PaginatedResponse<ModcodTableAsset>>({
     queryKey: queryKeys.modcodTables.all,
-    queryFn: () => request({ method: "GET", url: "/assets/modcod-tables" }),
+    queryFn: () =>
+      request({ method: "GET", url: "/assets/modcod-tables?limit=100" }),
   });
+  const data = paginatedData?.items ?? [];
 
   return (
     <Stack gap="md">
       <Group grow align="flex-start" wrap="nowrap">
         <div style={{ flex: 1, minWidth: 360 }}>
           <form
+            aria-label="ModCod table editor"
             onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
           >
             <Stack>
@@ -225,7 +228,11 @@ export function ModcodManager() {
                   </Card>
                 ))}
               </Stack>
-              <Button type="submit" loading={mutation.isPending}>
+              <Button
+                type="submit"
+                loading={mutation.isPending}
+                aria-busy={mutation.isPending}
+              >
                 {selected ? "Save as new version" : "Save ModCod table"}
               </Button>
             </Stack>

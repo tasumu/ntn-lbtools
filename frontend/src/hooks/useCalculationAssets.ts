@@ -4,33 +4,41 @@ import { queryKeys } from "../api/queryKeys";
 import type {
   EarthStationAsset,
   ModcodTableAsset,
+  PaginatedResponse,
   SatelliteAsset,
 } from "../api/types";
 
 export function useCalculationAssets() {
-  const satellitesQuery = useQuery<SatelliteAsset[]>({
+  const satellitesQuery = useQuery<PaginatedResponse<SatelliteAsset>>({
     queryKey: queryKeys.satellites.all,
-    queryFn: () => request({ method: "GET", url: "/assets/satellites" }),
+    queryFn: () =>
+      request({ method: "GET", url: "/assets/satellites?limit=100" }),
   });
-  const earthStationsQuery = useQuery<EarthStationAsset[]>({
+  const earthStationsQuery = useQuery<PaginatedResponse<EarthStationAsset>>({
     queryKey: queryKeys.earthStations.all,
-    queryFn: () => request({ method: "GET", url: "/assets/earth-stations" }),
+    queryFn: () =>
+      request({ method: "GET", url: "/assets/earth-stations?limit=100" }),
   });
-  const modcodTablesQuery = useQuery<ModcodTableAsset[]>({
+  const modcodTablesQuery = useQuery<PaginatedResponse<ModcodTableAsset>>({
     queryKey: queryKeys.modcodTables.all,
-    queryFn: () => request({ method: "GET", url: "/assets/modcod-tables" }),
+    queryFn: () =>
+      request({ method: "GET", url: "/assets/modcod-tables?limit=100" }),
   });
 
-  const modcodOptions = (modcodTablesQuery.data ?? []).map((t) => ({
+  const satellites = satellitesQuery.data?.items ?? [];
+  const earthStations = earthStationsQuery.data?.items ?? [];
+  const modcodTables = modcodTablesQuery.data?.items ?? [];
+
+  const modcodOptions = modcodTables.map((t) => ({
     value: t.id,
     label: `${t.waveform} v${t.version}`,
     waveform: t.waveform,
   }));
-  const satelliteOptions = (satellitesQuery.data ?? []).map((s) => ({
+  const satelliteOptions = satellites.map((s) => ({
     value: s.id,
     label: s.name,
   }));
-  const earthStationOptions = (earthStationsQuery.data ?? []).map((e) => ({
+  const earthStationOptions = earthStations.map((e) => ({
     value: e.id,
     label: e.name,
   }));
@@ -57,8 +65,8 @@ export function useCalculationAssets() {
     modcodOptions,
     satelliteOptions,
     earthStationOptions,
-    satellites: satellitesQuery.data ?? [],
-    earthStations: earthStationsQuery.data ?? [],
+    satellites,
+    earthStations,
     modcodLoading: modcodTablesQuery.isLoading,
     satelliteLoading: satellitesQuery.isLoading,
     earthStationLoading: earthStationsQuery.isLoading,

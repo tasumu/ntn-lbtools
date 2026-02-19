@@ -17,7 +17,7 @@ import { notifications } from "@mantine/notifications";
 import { CalculationRequest, CalculationResponse } from "../../api/schemas";
 import { request } from "../../api/client";
 import { queryKeys } from "../../api/queryKeys";
-import type { ScenarioSummary } from "../../api/types";
+import type { PaginatedResponse, ScenarioSummary } from "../../api/types";
 import { formatModcod, formatError } from "../../lib/formatters";
 import { loadScenario } from "../../lib/scenarioMapper";
 import { useCalculationAssets } from "../../hooks/useCalculationAssets";
@@ -47,9 +47,9 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
 
   const assets = useCalculationAssets();
 
-  const scenariosQuery = useQuery<ScenarioSummary[]>({
+  const scenariosQuery = useQuery<PaginatedResponse<ScenarioSummary>>({
     queryKey: queryKeys.scenarios.all,
-    queryFn: () => request({ method: "GET", url: "/scenarios" }),
+    queryFn: () => request({ method: "GET", url: "/scenarios?limit=100" }),
   });
   const scenarioDetailQuery = useQuery<ScenarioSummary>({
     queryKey: queryKeys.scenarios.detail(selectedScenarioId),
@@ -185,7 +185,7 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
               />
             </div>
             <ScenarioList
-              scenarios={scenariosQuery.data ?? []}
+              scenarios={scenariosQuery.data?.items ?? []}
               isLoading={scenariosQuery.isLoading}
               errorMessage={scenarioErrorMessage}
               selectedScenarioId={selectedScenarioId}
@@ -258,7 +258,7 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
           </Flex>
 
           <Card shadow="sm" withBorder>
-            <Tabs defaultValue="waterfall">
+            <Tabs defaultValue="waterfall" aria-label="Result visualization">
               <Tabs.List>
                 <Tabs.Tab value="waterfall">Link Budget Waterfall</Tabs.Tab>
                 <Tabs.Tab value="metrics">Detailed Metrics</Tabs.Tab>

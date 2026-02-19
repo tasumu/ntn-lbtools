@@ -1,9 +1,10 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.schemas.pagination import PaginatedResponse
 from src.api.schemas.scenario import ScenarioCreate, ScenarioRead
 from src.config.deps import get_db_session
 from src.services.scenario_service import ScenarioService
@@ -26,10 +27,15 @@ async def create_scenario(
     return scenario
 
 
-@router.get("", response_model=list[ScenarioRead], operation_id="list_scenarios")
-async def list_scenarios(session: AsyncSession = Depends(get_db_session)):  # noqa: B008
+@router.get("", response_model=PaginatedResponse[ScenarioRead], operation_id="list_scenarios")
+async def list_scenarios(
+    limit: int = Query(ge=1, le=100, default=20),  # noqa: B008
+    offset: int = Query(ge=0, default=0),  # noqa: B008
+    session: AsyncSession = Depends(get_db_session),  # noqa: B008
+):
     service = ScenarioService(session)
-    return await service.list()
+    items, total = await service.list_paginated(limit=limit, offset=offset)
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.get(

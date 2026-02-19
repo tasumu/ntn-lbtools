@@ -114,6 +114,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
 
   return (
     <form
+      aria-label="Satellite details"
       onSubmit={form.handleSubmit((values) =>
         mutation.mutate({ values, id: editingId }),
       )}
@@ -197,7 +198,11 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
           />
         </Group>
         <Group justify="flex-start" gap="sm">
-          <Button type="submit" loading={mutation.isPending}>
+          <Button
+            type="submit"
+            loading={mutation.isPending}
+            aria-busy={mutation.isPending}
+          >
             {editingId ? "Update satellite" : "Save satellite"}
           </Button>
           {editingId && (

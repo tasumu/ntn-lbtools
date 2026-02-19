@@ -43,6 +43,12 @@ class AssetsService:
     async def list_satellites(self) -> list[Satellite]:
         return await self.sat_repo.list_all()
 
+    async def list_satellites_paginated(
+        self, limit: int = 20, offset: int = 0
+    ) -> tuple[list[Satellite], int]:
+        items, total = await self.sat_repo.list_all_paginated(limit=limit, offset=offset)
+        return list(items), total
+
     async def create_earth_station(self, data: dict) -> EarthStation:
         es = EarthStation(**data)
         await self.es_repo.add(es)
@@ -73,3 +79,9 @@ class AssetsService:
 
     async def list_earth_stations(self) -> list[EarthStation]:
         return await self.es_repo.list_all()
+
+    async def list_earth_stations_paginated(
+        self, limit: int = 20, offset: int = 0
+    ) -> tuple[list[EarthStation], int]:
+        items, total = await self.es_repo.list_all_paginated(limit=limit, offset=offset)
+        return list(items), total

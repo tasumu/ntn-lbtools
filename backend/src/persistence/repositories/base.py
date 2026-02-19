@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.persistence.database import Base
@@ -21,6 +21,16 @@ class BaseRepository(Generic[ModelT]):  # noqa: UP046
         stmt = select(self.model).limit(limit).offset(offset)
         result = await self.session.execute(stmt)
         return result.scalars().all()
+
+    async def list_with_count(self, limit: int = 100, offset: int = 0) -> tuple[Sequence[ModelT], int]:
+        count_stmt = select(func.count()).select_from(self.model)
+        count_result = await self.session.execute(count_stmt)
+        total = count_result.scalar() or 0
+
+        stmt = select(self.model).limit(limit).offset(offset)
+        result = await self.session.execute(stmt)
+        items = result.scalars().all()
+        return items, total
 
     async def add(self, obj: ModelT) -> ModelT:
         self.session.add(obj)

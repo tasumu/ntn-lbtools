@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from src.api.schemas.assets import (
     SatelliteCreate,
     SatelliteRead,
 )
+from src.api.schemas.pagination import PaginatedResponse
 from src.config.deps import get_db_session
 from src.services.assets_service import AssetsService
 
@@ -31,10 +32,19 @@ async def create_satellite(
     return sat
 
 
-@router.get("/satellites", response_model=list[SatelliteRead], operation_id="list_satellites")
-async def list_satellites(session: AsyncSession = Depends(get_db_session)):  # noqa: B008
+@router.get(
+    "/satellites",
+    response_model=PaginatedResponse[SatelliteRead],
+    operation_id="list_satellites",
+)
+async def list_satellites(
+    limit: int = Query(ge=1, le=100, default=20),  # noqa: B008
+    offset: int = Query(ge=0, default=0),  # noqa: B008
+    session: AsyncSession = Depends(get_db_session),  # noqa: B008
+):
     service = AssetsService(session)
-    return await service.list_satellites()
+    items, total = await service.list_satellites_paginated(limit=limit, offset=offset)
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.put(
@@ -86,12 +96,17 @@ async def create_earth_station(
 
 @router.get(
     "/earth-stations",
-    response_model=list[EarthStationRead],
+    response_model=PaginatedResponse[EarthStationRead],
     operation_id="list_earth_stations",
 )
-async def list_earth_stations(session: AsyncSession = Depends(get_db_session)):  # noqa: B008
+async def list_earth_stations(
+    limit: int = Query(ge=1, le=100, default=20),  # noqa: B008
+    offset: int = Query(ge=0, default=0),  # noqa: B008
+    session: AsyncSession = Depends(get_db_session),  # noqa: B008
+):
     service = AssetsService(session)
-    return await service.list_earth_stations()
+    items, total = await service.list_earth_stations_paginated(limit=limit, offset=offset)
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.put(

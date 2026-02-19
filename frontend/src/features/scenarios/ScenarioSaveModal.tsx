@@ -93,7 +93,10 @@ export function ScenarioSaveModal({
 
   return (
     <Modal opened={opened} onClose={onClose} title="Save Scenario">
-      <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+      <form
+        aria-label="Save scenario"
+        onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+      >
         <Stack>
           {mutation.error != null && (
             <Alert color="red">
@@ -111,7 +114,11 @@ export function ScenarioSaveModal({
             {...form.register("description")}
             error={form.formState.errors.description?.message}
           />
-          <Button type="submit" loading={mutation.isPending}>
+          <Button
+            type="submit"
+            loading={mutation.isPending}
+            aria-busy={mutation.isPending}
+          >
             Save
           </Button>
         </Stack>

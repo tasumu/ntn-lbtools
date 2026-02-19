@@ -123,6 +123,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
 
   return (
     <form
+      aria-label="Earth station details"
       onSubmit={form.handleSubmit((values) =>
         mutation.mutate({ values, id: editingId }),
       )}
@@ -234,7 +235,11 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
           <Textarea label="Notes" minRows={2} {...form.register("notes")} />
         </Group>
         <Group justify="flex-start" gap="sm">
-          <Button type="submit" loading={mutation.isPending}>
+          <Button
+            type="submit"
+            loading={mutation.isPending}
+            aria-busy={mutation.isPending}
+          >
             {editingId ? "Update earth station" : "Save earth station"}
           </Button>
           {editingId && (

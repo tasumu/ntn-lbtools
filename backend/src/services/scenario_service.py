@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 from uuid import UUID
 
@@ -72,6 +74,12 @@ class ScenarioService:
 
     async def list(self, limit: int = 50) -> list[Scenario]:
         return await self.repo.list_recent(limit=limit)
+
+    async def list_paginated(
+        self, limit: int = 20, offset: int = 0
+    ) -> tuple[list[Scenario], int]:
+        items, total = await self.repo.list_recent_paginated(limit=limit, offset=offset)
+        return list(items), total
 
     async def delete(self, scenario_id: UUID) -> bool:
         scenario = await self.repo.get(scenario_id)
