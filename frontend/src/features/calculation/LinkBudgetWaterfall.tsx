@@ -1,5 +1,5 @@
 import { SegmentedControl, Stack, Text, useMantineTheme } from "@mantine/core";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -22,8 +22,11 @@ type Props = {
 
 const KB_DB = 228.6; // Boltzmann constant in dB (approx -228.6 dBW/K/Hz, so -k is +228.6)
 
-export function LinkBudgetWaterfall({ uplink, downlink }: Props) {
-  const [direction, setDirection] = useState<"uplink" | "downlink">("uplink"); // Default to Uplink? Or just change order in UI? UI requested Uplink first.
+export const LinkBudgetWaterfall = memo(function LinkBudgetWaterfall({
+  uplink,
+  downlink,
+}: Props) {
+  const [direction, setDirection] = useState<"uplink" | "downlink">("uplink");
   const theme = useMantineTheme();
 
   const data = useMemo(() => {
@@ -223,4 +226,4 @@ export function LinkBudgetWaterfall({ uplink, downlink }: Props) {
       </Text>
     </Stack>
   );
-}
+});

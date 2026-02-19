@@ -7,10 +7,13 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+import { IconBookmark } from "@tabler/icons-react";
 import { useState } from "react";
 
 import type { CalculationRequest } from "../../api/schemas";
 import type { ScenarioSummary } from "../../api/types";
+import { DeleteConfirmModal } from "../../components/DeleteConfirmModal";
+import { EmptyState } from "../../components/EmptyState";
 import { loadScenario } from "../../lib/scenarioMapper";
 
 type Props = {
@@ -37,6 +40,10 @@ export function ScenarioList({
   onDelete,
 }: Props) {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  const deleteModalItemName = scenarios.find(
+    (s) => s.id === confirmingId,
+  )?.name;
 
   return (
     <Card shadow="xs" withBorder style={{ flex: 1, minWidth: 260 }}>
@@ -82,50 +89,44 @@ export function ScenarioList({
                     >
                       Load
                     </Button>
-                    {confirmingId === s.id ? (
-                      <Group gap={4}>
-                        <Button
-                          size="xs"
-                          color="red"
-                          variant="filled"
-                          loading={deletePending && deletingId === s.id}
-                          onClick={() => {
-                            onDelete(s.id);
-                            setConfirmingId(null);
-                          }}
-                        >
-                          Confirm
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="subtle"
-                          onClick={() => setConfirmingId(null)}
-                        >
-                          Cancel
-                        </Button>
-                      </Group>
-                    ) : (
-                      <Button
-                        size="xs"
-                        color="red"
-                        variant="subtle"
-                        onClick={() => setConfirmingId(s.id)}
-                      >
-                        Delete
-                      </Button>
-                    )}
+                    <Button
+                      size="xs"
+                      color="red"
+                      variant="subtle"
+                      onClick={() => setConfirmingId(s.id)}
+                    >
+                      Delete
+                    </Button>
                   </Group>
                 </Group>
               </Card>
             ))}
             {scenarios.length === 0 && !isLoading && (
-              <Text size="sm" c="dimmed">
-                No scenarios saved yet
-              </Text>
+              <EmptyState
+                icon={<IconBookmark size={24} />}
+                title="No scenarios saved yet"
+                description="Run a calculation and save the results as a scenario."
+              />
             )}
           </Stack>
         </ScrollArea>
       </Stack>
+      <DeleteConfirmModal
+        opened={confirmingId !== null}
+        onConfirm={() => {
+          if (confirmingId) {
+            onDelete(confirmingId);
+            setConfirmingId(null);
+          }
+        }}
+        onCancel={() => setConfirmingId(null)}
+        message={
+          deleteModalItemName
+            ? `Are you sure you want to delete scenario '${deleteModalItemName}'? This action cannot be undone.`
+            : "Are you sure you want to delete this scenario? This action cannot be undone."
+        }
+        loading={deletePending && deletingId === confirmingId}
+      />
     </Card>
   );
 }

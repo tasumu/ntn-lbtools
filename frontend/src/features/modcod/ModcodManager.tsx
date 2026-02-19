@@ -10,15 +10,20 @@ import {
   Textarea,
   NumberInput,
 } from "@mantine/core";
+import { IconTable } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { notifications } from "@mantine/notifications";
+
 import { request } from "../../api/client";
 import { queryKeys } from "../../api/queryKeys";
 import type { ModcodTableAsset, PaginatedResponse } from "../../api/types";
 import { formatError } from "../../lib/formatters";
+import { DeleteConfirmModal } from "../../components/DeleteConfirmModal";
+import { EmptyState } from "../../components/EmptyState";
 
 const entrySchema = z
   .object({
@@ -48,13 +53,6 @@ export function ModcodManager() {
   const [selected, setSelected] = useState<ModcodTableAsset | null>(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
     null,
-  );
-  const handleConfirmDelete = useCallback(
-    (id: string, mutate: (id: string) => void) => {
-      mutate(id);
-      setConfirmingDeleteId(null);
-    },
-    [],
   );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -101,12 +99,23 @@ export function ModcodManager() {
   const deleteMutation = useMutation<void, unknown, string>({
     mutationFn: (id) =>
       request({ method: "DELETE", url: `/assets/modcod-tables/${id}` }),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       client.invalidateQueries({ queryKey: queryKeys.modcodTables.all });
       if (selected?.id) setSelected(null);
+      const name = data.find((t) => t.id === id)?.waveform ?? "ModCod table";
+      notifications.show({
+        title: "ModCod table deleted",
+        message: `'${name}' removed successfully`,
+        color: "green",
+      });
     },
   });
-  const deletingId = deleteMutation.variables as string | undefined;
+
+  const handleConfirmDelete = useCallback(() => {
+    if (!confirmingDeleteId) return;
+    deleteMutation.mutate(confirmingDeleteId);
+    setConfirmingDeleteId(null);
+  }, [confirmingDeleteId, deleteMutation]);
 
   const {
     data: paginatedData,
@@ -118,6 +127,10 @@ export function ModcodManager() {
       request({ method: "GET", url: "/assets/modcod-tables?limit=100" }),
   });
   const data = paginatedData?.items ?? [];
+
+  const deleteModalItemName = data.find(
+    (t) => t.id === confirmingDeleteId,
+  )?.waveform;
 
   return (
     <Stack gap="md">
@@ -283,50 +296,38 @@ export function ModcodManager() {
                   >
                     Load
                   </Button>
-                  {confirmingDeleteId === table.id ? (
-                    <Group gap={4}>
-                      <Button
-                        size="xs"
-                        color="red"
-                        variant="filled"
-                        loading={
-                          deleteMutation.isPending && deletingId === table.id
-                        }
-                        onClick={() =>
-                          handleConfirmDelete(table.id, deleteMutation.mutate)
-                        }
-                      >
-                        Confirm
-                      </Button>
-                      <Button
-                        size="xs"
-                        variant="subtle"
-                        onClick={() => setConfirmingDeleteId(null)}
-                      >
-                        Cancel
-                      </Button>
-                    </Group>
-                  ) : (
-                    <Button
-                      size="xs"
-                      color="red"
-                      variant="subtle"
-                      onClick={() => setConfirmingDeleteId(table.id)}
-                    >
-                      Delete
-                    </Button>
-                  )}
+                  <Button
+                    size="xs"
+                    color="red"
+                    variant="subtle"
+                    onClick={() => setConfirmingDeleteId(table.id)}
+                  >
+                    Delete
+                  </Button>
                 </Group>
               </Group>
             </Card>
           ))}
-          {data.length === 0 && (
-            <Text size="sm" c="dimmed">
-              No ModCod tables saved yet
-            </Text>
+          {data.length === 0 && !isLoading && (
+            <EmptyState
+              icon={<IconTable size={24} />}
+              title="No ModCod tables saved yet"
+              description="Create a ModCod table using the editor on the left."
+            />
           )}
         </Stack>
       </Group>
+      <DeleteConfirmModal
+        opened={confirmingDeleteId !== null}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmingDeleteId(null)}
+        message={
+          deleteModalItemName
+            ? `Are you sure you want to delete '${deleteModalItemName}'? This action cannot be undone.`
+            : "Are you sure you want to delete this ModCod table? This action cannot be undone."
+        }
+        loading={deleteMutation.isPending}
+      />
     </Stack>
   );
 }

@@ -10,6 +10,10 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import {
+  IconBuildingBroadcastTower,
+  IconSatellite,
+} from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
@@ -23,6 +27,8 @@ import type {
   SatelliteAsset,
 } from "../api/types";
 import { formatError } from "../lib/formatters";
+import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
+import { EmptyState } from "../components/EmptyState";
 import { EarthStationForm } from "../features/assets/EarthStationForm";
 import { SatelliteForm } from "../features/assets/SatelliteForm";
 import { ModcodManager } from "../features/modcod/ModcodManager";
@@ -69,14 +75,9 @@ export function AssetsPage() {
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
     null,
   );
-
-  const confirmDelete = useCallback(
-    (id: string, mutate: (id: string) => void) => {
-      mutate(id);
-      setConfirmingDeleteId(null);
-    },
-    [],
-  );
+  const [deleteTarget, setDeleteTarget] = useState<
+    "satellite" | "earth-station" | null
+  >(null);
 
   const deleteSatellite = useMutation<void, unknown, string>({
     mutationFn: (id) =>
@@ -84,9 +85,10 @@ export function AssetsPage() {
     onSuccess: (_, id) => {
       client.invalidateQueries({ queryKey: queryKeys.satellites.all });
       if (selectedSatellite?.id === id) setSelectedSatellite(null);
+      const name = satellites.find((s) => s.id === id)?.name ?? "Satellite";
       notifications.show({
         title: "Satellite deleted",
-        message: "Satellite removed successfully",
+        message: `'${name}' removed successfully`,
         color: "green",
       });
     },
@@ -98,17 +100,47 @@ export function AssetsPage() {
     onSuccess: (_, id) => {
       client.invalidateQueries({ queryKey: queryKeys.earthStations.all });
       if (selectedEarthStation?.id === id) setSelectedEarthStation(null);
+      const name =
+        earthStations.find((e) => e.id === id)?.name ?? "Earth station";
       notifications.show({
         title: "Earth station deleted",
-        message: "Earth station removed successfully",
+        message: `'${name}' removed successfully`,
         color: "green",
       });
     },
   });
-  const deletingSatelliteId = deleteSatellite.variables as string | undefined;
-  const deletingEarthStationId = deleteEarthStation.variables as
-    | string
-    | undefined;
+
+  const openDeleteModal = useCallback(
+    (id: string, type: "satellite" | "earth-station") => {
+      setConfirmingDeleteId(id);
+      setDeleteTarget(type);
+    },
+    [],
+  );
+
+  const handleConfirmDelete = useCallback(() => {
+    if (!confirmingDeleteId || !deleteTarget) return;
+    if (deleteTarget === "satellite") {
+      deleteSatellite.mutate(confirmingDeleteId);
+    } else {
+      deleteEarthStation.mutate(confirmingDeleteId);
+    }
+    setConfirmingDeleteId(null);
+    setDeleteTarget(null);
+  }, [confirmingDeleteId, deleteTarget, deleteSatellite, deleteEarthStation]);
+
+  const deleteModalItemName = (() => {
+    if (!confirmingDeleteId || !deleteTarget) return "";
+    if (deleteTarget === "satellite") {
+      return satellites.find((s) => s.id === confirmingDeleteId)?.name ?? "";
+    }
+    return earthStations.find((e) => e.id === confirmingDeleteId)?.name ?? "";
+  })();
+
+  const isDeletePending =
+    deleteTarget === "satellite"
+      ? deleteSatellite.isPending
+      : deleteEarthStation.isPending;
 
   return (
     <Container size="lg" py="xl">
@@ -155,44 +187,25 @@ export function AssetsPage() {
                         >
                           Edit
                         </Button>
-                        {confirmingDeleteId === sat.id ? (
-                          <Group gap={4}>
-                            <Button
-                              size="xs"
-                              color="red"
-                              variant="filled"
-                              loading={
-                                deleteSatellite.isPending &&
-                                deletingSatelliteId === sat.id
-                              }
-                              onClick={() =>
-                                confirmDelete(sat.id, deleteSatellite.mutate)
-                              }
-                            >
-                              Confirm
-                            </Button>
-                            <Button
-                              size="xs"
-                              variant="subtle"
-                              onClick={() => setConfirmingDeleteId(null)}
-                            >
-                              Cancel
-                            </Button>
-                          </Group>
-                        ) : (
-                          <Button
-                            size="xs"
-                            color="red"
-                            variant="subtle"
-                            onClick={() => setConfirmingDeleteId(sat.id)}
-                          >
-                            Delete
-                          </Button>
-                        )}
+                        <Button
+                          size="xs"
+                          color="red"
+                          variant="subtle"
+                          onClick={() => openDeleteModal(sat.id, "satellite")}
+                        >
+                          Delete
+                        </Button>
                       </Group>
                     </Group>
                   </Card>
                 ))}
+                {satellites.length === 0 && !satellitesQuery.isLoading && (
+                  <EmptyState
+                    icon={<IconSatellite size={24} />}
+                    title="No satellites yet"
+                    description="Add your first satellite using the form on the left."
+                  />
+                )}
                 {satTotal > PAGE_SIZE && (
                   <Pagination
                     total={Math.ceil(satTotal / PAGE_SIZE)}
@@ -276,44 +289,28 @@ export function AssetsPage() {
                         >
                           Edit
                         </Button>
-                        {confirmingDeleteId === es.id ? (
-                          <Group gap={4}>
-                            <Button
-                              size="xs"
-                              color="red"
-                              variant="filled"
-                              loading={
-                                deleteEarthStation.isPending &&
-                                deletingEarthStationId === es.id
-                              }
-                              onClick={() =>
-                                confirmDelete(es.id, deleteEarthStation.mutate)
-                              }
-                            >
-                              Confirm
-                            </Button>
-                            <Button
-                              size="xs"
-                              variant="subtle"
-                              onClick={() => setConfirmingDeleteId(null)}
-                            >
-                              Cancel
-                            </Button>
-                          </Group>
-                        ) : (
-                          <Button
-                            size="xs"
-                            color="red"
-                            variant="subtle"
-                            onClick={() => setConfirmingDeleteId(es.id)}
-                          >
-                            Delete
-                          </Button>
-                        )}
+                        <Button
+                          size="xs"
+                          color="red"
+                          variant="subtle"
+                          onClick={() =>
+                            openDeleteModal(es.id, "earth-station")
+                          }
+                        >
+                          Delete
+                        </Button>
                       </Group>
                     </Group>
                   </Card>
                 ))}
+                {earthStations.length === 0 &&
+                  !earthStationsQuery.isLoading && (
+                    <EmptyState
+                      icon={<IconBuildingBroadcastTower size={24} />}
+                      title="No earth stations yet"
+                      description="Add your first earth station using the form on the left."
+                    />
+                  )}
                 {esTotal > PAGE_SIZE && (
                   <Pagination
                     total={Math.ceil(esTotal / PAGE_SIZE)}
@@ -329,6 +326,20 @@ export function AssetsPage() {
           <ModcodManager />
         </Tabs.Panel>
       </Tabs>
+      <DeleteConfirmModal
+        opened={confirmingDeleteId !== null}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setConfirmingDeleteId(null);
+          setDeleteTarget(null);
+        }}
+        message={
+          deleteModalItemName
+            ? `Are you sure you want to delete '${deleteModalItemName}'? This action cannot be undone.`
+            : "Are you sure you want to delete this item? This action cannot be undone."
+        }
+        loading={isDeletePending}
+      />
     </Container>
   );
 }

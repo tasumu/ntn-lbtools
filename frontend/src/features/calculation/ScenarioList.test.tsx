@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -55,33 +55,45 @@ describe("ScenarioList", () => {
     expect(onSelect).toHaveBeenCalledWith("sc-001", expect.anything());
   });
 
-  it("shows delete confirmation flow", async () => {
+  it("shows delete confirmation modal", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
     renderWithProviders(
       <ScenarioList {...defaultProps} onDelete={onDelete} />,
     );
     await user.click(screen.getByRole("button", { name: /Delete/ }));
-    expect(screen.getByRole("button", { name: /Confirm/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Cancel/ })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm deletion/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/cannot be undone/)).toBeInTheDocument();
   });
 
-  it("calls onDelete on confirm", async () => {
+  it("calls onDelete when modal Delete is clicked", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
     renderWithProviders(
       <ScenarioList {...defaultProps} onDelete={onDelete} />,
     );
     await user.click(screen.getByRole("button", { name: /Delete/ }));
-    await user.click(screen.getByRole("button", { name: /Confirm/ }));
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm deletion/)).toBeInTheDocument();
+    });
+    // Click the Delete button inside the modal (last one)
+    const deleteButtons = screen.getAllByRole("button", { name: /Delete/ });
+    await user.click(deleteButtons[deleteButtons.length - 1]);
     expect(onDelete).toHaveBeenCalledWith("sc-001");
   });
 
-  it("cancels delete confirmation", async () => {
+  it("cancels delete confirmation modal", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ScenarioList {...defaultProps} />);
     await user.click(screen.getByRole("button", { name: /Delete/ }));
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm deletion/)).toBeInTheDocument();
+    });
     await user.click(screen.getByRole("button", { name: /Cancel/ }));
-    expect(screen.getByRole("button", { name: /Delete/ })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/Confirm deletion/)).not.toBeInTheDocument();
+    });
   });
 });

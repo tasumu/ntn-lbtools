@@ -8,7 +8,7 @@ import {
   NumberInput,
   Stack,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Controller, useForm, useWatch, FieldErrors } from "react-hook-form";
 
 import {
@@ -18,6 +18,7 @@ import {
   waveformStrategySchema,
 } from "../../api/schemas";
 import type { EarthStationAsset, SatelliteAsset } from "../../api/types";
+import type { CalculationFormValues } from "./form/types";
 import { AssetSelectors } from "./form/AssetSelectors";
 import { AssetSummaryCard } from "./form/AssetSummaryCard";
 import { LinkSection } from "./form/LinkSection";
@@ -59,20 +60,13 @@ export function CalculationForm({
   satellites = [],
   earthStations = [],
 }: Props) {
-  const [uplinkMitigationDb, setUplinkMitigationDb] = useState<
-    number | undefined
-  >(undefined);
-  const [downlinkMitigationDb, setDownlinkMitigationDb] = useState<
-    number | undefined
-  >(undefined);
-
   const {
     handleSubmit,
     control,
     formState: { errors },
     reset,
     setValue,
-  } = useForm<CalculationRequest>({
+  } = useForm<CalculationFormValues>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
     defaultValues: {
@@ -84,6 +78,8 @@ export function CalculationForm({
       satellite_id: "",
       earth_station_tx_id: undefined,
       earth_station_rx_id: undefined,
+      _uplinkMitigationDb: undefined,
+      _downlinkMitigationDb: undefined,
       runtime: {
         bandwidth_hz: 36e6,
         rolloff: 0.2,
@@ -138,6 +134,14 @@ export function CalculationForm({
     control,
     name: "runtime.downlink.bandwidth_hz",
   });
+  const uplinkMitigationDb = useWatch({
+    control,
+    name: "_uplinkMitigationDb",
+  });
+  const downlinkMitigationDb = useWatch({
+    control,
+    name: "_downlinkMitigationDb",
+  });
 
   const availableWaveforms = Array.from(
     new Set(modcodOptions.map((o) => o.waveform).filter(Boolean)),
@@ -182,6 +186,8 @@ export function CalculationForm({
     if (initialValues) {
       reset({
         ...initialValues,
+        _uplinkMitigationDb: undefined,
+        _downlinkMitigationDb: undefined,
         runtime: {
           ...initialValues.runtime,
           uplink: {
@@ -204,7 +210,7 @@ export function CalculationForm({
   }, [initialValues, reset]);
 
   const firstErrorMessage = (
-    errObj: FieldErrors<CalculationRequest>,
+    errObj: FieldErrors<CalculationFormValues>,
   ): string | null => {
     const stack: Array<{ path: string; node: unknown }> = [
       { path: "", node: errObj },
@@ -230,7 +236,7 @@ export function CalculationForm({
     return null;
   };
 
-  const prepareData = (values: CalculationRequest) => {
+  const prepareData = (values: CalculationFormValues): CalculationRequest => {
     const normalizeInterference = (
       block?: CalculationRequest["runtime"]["uplink"]["interference"],
       mitigationDb?: number,
@@ -324,7 +330,10 @@ export function CalculationForm({
       ),
     };
     prepared.overrides = overrides.satellite ? overrides : undefined;
-    return prepared;
+
+    // Remove UI-only fields from the payload
+    const { _uplinkMitigationDb: _, _downlinkMitigationDb: __, ...clean } = prepared as CalculationFormValues;
+    return clean;
   };
 
   const rootError = firstErrorMessage(errors);
@@ -434,8 +443,6 @@ export function CalculationForm({
                     control={control}
                     errors={errors}
                     direction="uplink"
-                    mitigationDb={uplinkMitigationDb}
-                    onMitigationChange={setUplinkMitigationDb}
                   />
                 </Grid.Col>
                 <Grid.Col span={{ base: 12, md: 6 }}>
@@ -443,8 +450,6 @@ export function CalculationForm({
                     control={control}
                     errors={errors}
                     direction="downlink"
-                    mitigationDb={downlinkMitigationDb}
-                    onMitigationChange={setDownlinkMitigationDb}
                   />
                 </Grid.Col>
               </Grid>

@@ -13,10 +13,16 @@ export function ApiProvider({ children }: Props) {
           queries: {
             staleTime: 30_000,
             refetchOnWindowFocus: false,
+            retry: 3,
+            retryDelay: (attemptIndex) =>
+              Math.min(1000 * 2 ** attemptIndex, 30000),
+          },
+          mutations: {
+            retry: false,
           },
         },
       }),
-    []
+    [],
   );
 
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;

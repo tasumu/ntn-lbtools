@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { request } from "../api/client";
 import { queryKeys } from "../api/queryKeys";
 import type {
@@ -29,19 +30,31 @@ export function useCalculationAssets() {
   const earthStations = earthStationsQuery.data?.items ?? [];
   const modcodTables = modcodTablesQuery.data?.items ?? [];
 
-  const modcodOptions = modcodTables.map((t) => ({
-    value: t.id,
-    label: `${t.waveform} v${t.version}`,
-    waveform: t.waveform,
-  }));
-  const satelliteOptions = satellites.map((s) => ({
-    value: s.id,
-    label: s.name,
-  }));
-  const earthStationOptions = earthStations.map((e) => ({
-    value: e.id,
-    label: e.name,
-  }));
+  const modcodOptions = useMemo(
+    () =>
+      modcodTables.map((t) => ({
+        value: t.id,
+        label: `${t.waveform} v${t.version}`,
+        waveform: t.waveform,
+      })),
+    [modcodTables],
+  );
+  const satelliteOptions = useMemo(
+    () =>
+      satellites.map((s) => ({
+        value: s.id,
+        label: s.name,
+      })),
+    [satellites],
+  );
+  const earthStationOptions = useMemo(
+    () =>
+      earthStations.map((e) => ({
+        value: e.id,
+        label: e.name,
+      })),
+    [earthStations],
+  );
 
   const refetch = () =>
     Promise.all([

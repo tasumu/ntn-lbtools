@@ -8,8 +8,9 @@ import {
   Button,
   Tabs,
 } from "@mantine/core";
+import { IconCalculator } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { notifications } from "@mantine/notifications";
@@ -21,6 +22,7 @@ import type { PaginatedResponse, ScenarioSummary } from "../../api/types";
 import { formatModcod, formatError } from "../../lib/formatters";
 import { loadScenario } from "../../lib/scenarioMapper";
 import { useCalculationAssets } from "../../hooks/useCalculationAssets";
+import { EmptyState } from "../../components/EmptyState";
 import { CalculationForm } from "./CalculationForm";
 import { ScenarioList } from "./ScenarioList";
 import { DirectionResultCard } from "./results/DirectionResultCard";
@@ -84,12 +86,23 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
     .map((err) => formatError(err))
     .join("; ");
 
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const mutation = useMutation<
     CalculationResponse,
     unknown,
     CalculationRequest
   >({
     mutationFn: (payload) => {
+      abortRef.current?.abort();
+      abortRef.current = new AbortController();
+
       const elevUl = payload.runtime?.uplink?.elevation_deg ?? null;
       const elevDl = payload.runtime?.downlink?.elevation_deg ?? null;
       if ((elevUl != null && elevUl <= 0) || (elevDl != null && elevDl <= 0)) {
@@ -101,6 +114,7 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
         method: "POST",
         url: "/link-budgets/calculate",
         data: { ...payload, include_snapshot: true },
+        signal: abortRef.current.signal,
       });
     },
     onSuccess: () => {
@@ -207,6 +221,16 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
         <Alert color="red">
           Calculation failed: {formatError(mutation.error)}
         </Alert>
+      )}
+
+      {!mutation.data && !mutation.isPending && !mutation.error && (
+        <Card shadow="sm" withBorder>
+          <EmptyState
+            icon={<IconCalculator size={24} />}
+            title="No results yet"
+            description="Fill in the parameters above and click Calculate to see link budget results."
+          />
+        </Card>
       )}
 
       {mutation.data && (

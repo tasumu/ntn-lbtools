@@ -5,15 +5,17 @@ import type { ReactNode } from "react";
 
 import { InterferenceSection } from "./InterferenceSection";
 import { renderWithProviders } from "../../../test/utils";
-import type { CalculationRequest } from "../../../api/schemas";
+import type { CalculationFormValues } from "./types";
 
 function FormWrapper({
   children,
 }: {
-  children: (methods: ReturnType<typeof useForm<CalculationRequest>>) => ReactNode;
+  children: (methods: ReturnType<typeof useForm<CalculationFormValues>>) => ReactNode;
 }) {
-  const methods = useForm<CalculationRequest>({
+  const methods = useForm<CalculationFormValues>({
     defaultValues: {
+      _uplinkMitigationDb: undefined,
+      _downlinkMitigationDb: undefined,
       runtime: {
         uplink: {
           frequency_hz: 14.25e9,
@@ -42,7 +44,7 @@ function FormWrapper({
           },
         },
       },
-    } as CalculationRequest,
+    } as CalculationFormValues,
   });
   return <FormProvider {...methods}>{children(methods)}</FormProvider>;
 }
@@ -56,8 +58,6 @@ describe("InterferenceSection", () => {
             control={methods.control}
             errors={methods.formState.errors}
             direction="uplink"
-            mitigationDb={undefined}
-            onMitigationChange={() => {}}
           />
         )}
       </FormWrapper>,
@@ -76,8 +76,6 @@ describe("InterferenceSection", () => {
             control={methods.control}
             errors={methods.formState.errors}
             direction="downlink"
-            mitigationDb={undefined}
-            onMitigationChange={() => {}}
           />
         )}
       </FormWrapper>,
@@ -93,8 +91,6 @@ describe("InterferenceSection", () => {
             control={methods.control}
             errors={methods.formState.errors}
             direction="uplink"
-            mitigationDb={3}
-            onMitigationChange={() => {}}
           />
         )}
       </FormWrapper>,

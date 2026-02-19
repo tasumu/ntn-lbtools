@@ -54,13 +54,16 @@ describe("AssetsPage", () => {
     });
   });
 
-  it("shows delete confirmation for satellite", async () => {
+  it("shows delete confirmation modal for satellite", async () => {
     const user = userEvent.setup();
     renderWithProviders(<AssetsPage />);
     await waitFor(() => {
       expect(screen.getByText("Test Satellite")).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /Delete/ }));
-    expect(screen.getByRole("button", { name: /Confirm/ })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm deletion/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/cannot be undone/)).toBeInTheDocument();
   });
 });

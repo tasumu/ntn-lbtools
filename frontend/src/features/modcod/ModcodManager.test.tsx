@@ -36,13 +36,11 @@ describe("ModcodManager", () => {
     renderWithProviders(<ModcodManager />);
     const removeButtons = screen.getAllByRole("button", { name: /Remove/ });
     const initialCount = removeButtons.length;
-    await user.click(
-      screen.getByRole("button", { name: /Add entry/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /Add entry/ }));
     await waitFor(() => {
-      expect(
-        screen.getAllByRole("button", { name: /Remove/ }),
-      ).toHaveLength(initialCount + 1);
+      expect(screen.getAllByRole("button", { name: /Remove/ })).toHaveLength(
+        initialCount + 1,
+      );
     });
   });
 
@@ -56,14 +54,16 @@ describe("ModcodManager", () => {
     });
   });
 
-  it("shows delete confirmation flow for saved tables", async () => {
+  it("shows delete confirmation modal for saved tables", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ModcodManager />);
     await waitFor(() => {
       expect(screen.getByText("DVB_S2X")).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: /Delete/ }));
-    expect(screen.getByRole("button", { name: /Confirm/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Cancel/ })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm deletion/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/cannot be undone/)).toBeInTheDocument();
   });
 });

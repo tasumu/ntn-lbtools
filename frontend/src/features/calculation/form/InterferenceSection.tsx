@@ -5,21 +5,16 @@ import type { FormSectionProps } from "./types";
 
 type Props = FormSectionProps & {
   direction: "uplink" | "downlink";
-  mitigationDb: number | undefined;
-  onMitigationChange: (value: number | undefined) => void;
 };
 
-export function InterferenceSection({
-  control,
-  errors,
-  direction,
-  mitigationDb,
-  onMitigationChange,
-}: Props) {
+export function InterferenceSection({ control, errors, direction }: Props) {
   const dirErrors =
     direction === "uplink"
       ? errors.runtime?.uplink?.interference
       : errors.runtime?.downlink?.interference;
+
+  const mitigationField =
+    direction === "uplink" ? "_uplinkMitigationDb" : "_downlinkMitigationDb";
 
   return (
     <Stack gap="xs">
@@ -37,13 +32,19 @@ export function InterferenceSection({
         />
       </Group>
       <Group grow>
-        <NumberInput
-          label={`Mitigation (dB, improve ${direction} C/I)`}
-          min={0}
-          value={mitigationDb ?? undefined}
-          onChange={(value) =>
-            onMitigationChange(value === "" ? undefined : (value as number | undefined))
-          }
+        <Controller
+          name={mitigationField}
+          control={control}
+          render={({ field }) => (
+            <NumberInput
+              label={`Mitigation (dB, improve ${direction} C/I)`}
+              min={0}
+              value={field.value ?? undefined}
+              onChange={(value) =>
+                field.onChange(value === "" ? undefined : value)
+              }
+            />
+          )}
         />
         <Controller
           name={`runtime.${direction}.interference.notes`}
@@ -70,7 +71,9 @@ export function InterferenceSection({
             <NumberInput
               label="Adjacent Satellite C/I (dB)"
               value={field.value ?? undefined}
-              onChange={(value) => field.onChange(value === "" ? undefined : value)}
+              onChange={(value) =>
+                field.onChange(value === "" ? undefined : value)
+              }
               error={dirErrors?.adjacent_sat_ci_db?.message}
             />
           )}
@@ -82,7 +85,9 @@ export function InterferenceSection({
             <NumberInput
               label="Cross-Pol C/I (dB)"
               value={field.value ?? undefined}
-              onChange={(value) => field.onChange(value === "" ? undefined : value)}
+              onChange={(value) =>
+                field.onChange(value === "" ? undefined : value)
+              }
               error={dirErrors?.cross_polar_ci_db?.message}
             />
           )}
@@ -94,7 +99,9 @@ export function InterferenceSection({
             <NumberInput
               label="Other C/I (dB)"
               value={field.value ?? undefined}
-              onChange={(value) => field.onChange(value === "" ? undefined : value)}
+              onChange={(value) =>
+                field.onChange(value === "" ? undefined : value)
+              }
               error={dirErrors?.other_carrier_ci_db?.message}
             />
           )}
