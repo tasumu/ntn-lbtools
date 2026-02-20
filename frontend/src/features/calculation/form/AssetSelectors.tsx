@@ -4,6 +4,7 @@ import { Controller } from "react-hook-form";
 
 import { transponderTypeSchema } from "../../../api/schemas";
 import type { EarthStationAsset, SatelliteAsset } from "../../../api/types";
+import { LabelWithTooltip } from "../../../components/FieldTooltip";
 import type { FormSectionProps } from "./types";
 
 type Props = FormSectionProps & {
@@ -98,7 +99,7 @@ export function AssetSelectors({
           control={control}
           render={({ field }) => (
             <Select
-              label="Waveform"
+              label={<LabelWithTooltip label="Waveform" fieldKey="waveform" />}
               data={waveformOptions}
               value={field.value || null}
               onChange={(value) => field.onChange(value ?? "")}
@@ -114,7 +115,7 @@ export function AssetSelectors({
           control={control}
           render={({ field }) => (
             <Select
-              label="Transponder"
+              label={<LabelWithTooltip label="Transponder" fieldKey="transponder_type" />}
               data={[
                 { value: "TRANSPARENT", label: "Transparent" },
                 { value: "REGENERATIVE", label: "Regenerative" },
@@ -136,7 +137,7 @@ export function AssetSelectors({
             control={control}
             render={({ field }) => (
               <Select
-                label="ModCod Table"
+                label={<LabelWithTooltip label="ModCod Table" fieldKey="modcod_table" />}
                 placeholder={modcodLoading ? "Loading..." : "Select"}
                 data={filteredModcodOptions}
                 searchable
@@ -158,7 +159,7 @@ export function AssetSelectors({
           control={control}
           render={({ field }) => (
             <Select
-              label="Satellite"
+              label={<LabelWithTooltip label="Satellite" fieldKey="satellite" />}
               placeholder={satelliteLoading ? "Loading..." : "Select"}
               data={satelliteOptions}
               searchable
@@ -182,7 +183,7 @@ export function AssetSelectors({
           control={control}
           render={({ field }) => (
             <Select
-              label="Earth Station (TX)"
+              label={<LabelWithTooltip label="Earth Station (TX)" fieldKey="earth_station_tx" />}
               placeholder={earthStationLoading ? "Loading..." : "Select"}
               data={earthStationOptions}
               searchable
@@ -204,7 +205,7 @@ export function AssetSelectors({
           control={control}
           render={({ field }) => (
             <Select
-              label="Earth Station (RX)"
+              label={<LabelWithTooltip label="Earth Station (RX)" fieldKey="earth_station_rx" />}
               placeholder={earthStationLoading ? "Loading..." : "Select"}
               data={earthStationOptions}
               searchable

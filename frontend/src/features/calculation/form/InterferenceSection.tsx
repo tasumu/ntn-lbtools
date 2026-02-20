@@ -1,6 +1,7 @@
 import { Group, NumberInput, Stack, Switch, TextInput } from "@mantine/core";
 import { Controller } from "react-hook-form";
 
+import { LabelWithTooltip } from "../../../components/FieldTooltip";
 import type { FormSectionProps } from "./types";
 
 type Props = FormSectionProps & {
@@ -69,7 +70,7 @@ export function InterferenceSection({ control, errors, direction }: Props) {
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Adjacent Satellite C/I (dB)"
+              label={<LabelWithTooltip label="Adjacent Satellite C/I (dB)" fieldKey="adjacent_sat_ci" />}
               value={field.value ?? undefined}
               onChange={(value) =>
                 field.onChange(value === "" ? undefined : value)
@@ -83,7 +84,7 @@ export function InterferenceSection({ control, errors, direction }: Props) {
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Cross-Pol C/I (dB)"
+              label={<LabelWithTooltip label="Cross-Pol C/I (dB)" fieldKey="cross_polar_ci" />}
               value={field.value ?? undefined}
               onChange={(value) =>
                 field.onChange(value === "" ? undefined : value)
@@ -97,7 +98,7 @@ export function InterferenceSection({ control, errors, direction }: Props) {
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Other C/I (dB)"
+              label={<LabelWithTooltip label="Other C/I (dB)" fieldKey="other_carrier_ci" />}
               value={field.value ?? undefined}
               onChange={(value) =>
                 field.onChange(value === "" ? undefined : value)

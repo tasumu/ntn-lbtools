@@ -63,9 +63,12 @@ describe("InterferenceSection", () => {
       </FormWrapper>,
     );
     expect(screen.getByLabelText(/Apply uplink interference/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Adjacent Satellite C\/I/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Cross-Pol C\/I/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Other C\/I/)).toBeInTheDocument();
+    expect(screen.getByText(/Adjacent Satellite C\/I/)).toBeInTheDocument();
+    expect(screen.getByText(/Cross-Pol C\/I/)).toBeInTheDocument();
+    expect(screen.getByText(/Other C\/I/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: adjacent_sat_ci")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: cross_polar_ci")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: other_carrier_ci")).toBeInTheDocument();
   });
 
   it("renders downlink interference fields", () => {

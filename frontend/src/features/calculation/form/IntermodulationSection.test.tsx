@@ -56,10 +56,14 @@ describe("IntermodulationSection", () => {
       </FormWrapper>,
     );
     expect(screen.getByLabelText(/Apply intermodulation/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Input back-off/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Output back-off/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Composite carriers/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Reference bandwidth/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Saturation power/)).toBeInTheDocument();
+    expect(screen.getByText(/Input back-off/)).toBeInTheDocument();
+    expect(screen.getByText(/Output back-off/)).toBeInTheDocument();
+    expect(screen.getByText(/Composite carriers/)).toBeInTheDocument();
+    expect(screen.getByText(/Reference bandwidth/)).toBeInTheDocument();
+    expect(screen.getByText(/Saturation power/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: input_backoff")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: output_backoff")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: composite_carriers")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: saturation_power")).toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
 import { Group, NumberInput, Select } from "@mantine/core";
+import type { ReactNode } from "react";
 import { useCallback, useMemo, useState } from "react";
 
 export type UnitOption = {
@@ -20,7 +21,7 @@ export const BANDWIDTH_UNITS: UnitOption[] = [
 ];
 
 type Props = {
-  label: string;
+  label: ReactNode;
   description?: string;
   withAsterisk?: boolean;
   value?: number | null;

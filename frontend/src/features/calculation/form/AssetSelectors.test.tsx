@@ -53,6 +53,8 @@ describe("AssetSelectors", () => {
     expect(screen.getByText("Waveform")).toBeInTheDocument();
     expect(screen.getByText("Transponder")).toBeInTheDocument();
     expect(screen.getByText("Satellite")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: waveform")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: transponder_type")).toBeInTheDocument();
   });
 
   it("renders ModCod Table selector for TRANSPARENT mode", () => {
@@ -106,5 +108,7 @@ describe("AssetSelectors", () => {
     );
     expect(screen.getByText("Earth Station (TX)")).toBeInTheDocument();
     expect(screen.getByText("Earth Station (RX)")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: earth_station_tx")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: earth_station_rx")).toBeInTheDocument();
   });
 });

@@ -21,6 +21,7 @@ import {
 } from "../../api/schemas";
 import type { EarthStationAsset, SatelliteAsset } from "../../api/types";
 import type { CalculationFormValues } from "./form/types";
+import { LabelWithTooltip } from "../../components/FieldTooltip";
 import { AssetSelectors } from "./form/AssetSelectors";
 import { AssetSummaryCard } from "./form/AssetSummaryCard";
 import { LinkSection } from "./form/LinkSection";
@@ -403,7 +404,7 @@ export function CalculationForm({
             control={control}
             render={({ field }) => (
               <NumberInput
-                label="Rolloff (alpha)"
+                label={<LabelWithTooltip label="Rolloff (alpha)" fieldKey="rolloff" />}
                 min={0}
                 max={1}
                 step={0.01}
@@ -421,7 +422,7 @@ export function CalculationForm({
               control={control}
               render={({ field }) => (
                 <FrequencyInput
-                  label="Channel bandwidth"
+                  label={<LabelWithTooltip label="Channel bandwidth" fieldKey="bandwidth_hz" />}
                   description="Required"
                   withAsterisk
                   value={field.value ?? undefined}

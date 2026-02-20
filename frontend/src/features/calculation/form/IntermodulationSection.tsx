@@ -2,6 +2,7 @@ import { Group, NumberInput, Stack, Switch } from "@mantine/core";
 import { Controller } from "react-hook-form";
 
 import { FrequencyInput, BANDWIDTH_UNITS } from "../../../components/FrequencyInput";
+import { LabelWithTooltip } from "../../../components/FieldTooltip";
 import type { FormSectionProps } from "./types";
 
 export function IntermodulationSection({ control, errors }: FormSectionProps) {
@@ -28,7 +29,7 @@ export function IntermodulationSection({ control, errors }: FormSectionProps) {
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Input back-off (dB)"
+              label={<LabelWithTooltip label="Input back-off (dB)" fieldKey="input_backoff" />}
               min={0}
               value={field.value ?? undefined}
               onChange={(value) => field.onChange(value === "" ? undefined : value)}
@@ -41,7 +42,7 @@ export function IntermodulationSection({ control, errors }: FormSectionProps) {
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Output back-off (dB)"
+              label={<LabelWithTooltip label="Output back-off (dB)" fieldKey="output_backoff" />}
               min={0}
               value={field.value ?? undefined}
               onChange={(value) => field.onChange(value === "" ? undefined : value)}
@@ -54,7 +55,7 @@ export function IntermodulationSection({ control, errors }: FormSectionProps) {
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Composite carriers"
+              label={<LabelWithTooltip label="Composite carriers" fieldKey="composite_carriers" />}
               min={1}
               value={field.value ?? undefined}
               onChange={(value) => field.onChange(value === "" ? undefined : value)}
@@ -69,7 +70,7 @@ export function IntermodulationSection({ control, errors }: FormSectionProps) {
           control={control}
           render={({ field }) => (
             <FrequencyInput
-              label="Reference bandwidth"
+              label={<LabelWithTooltip label="Reference bandwidth" fieldKey="reference_bandwidth" />}
               value={field.value ?? undefined}
               onChange={(val) => field.onChange(val ?? undefined)}
               error={imErrors?.reference_bandwidth_hz?.message}
@@ -83,7 +84,7 @@ export function IntermodulationSection({ control, errors }: FormSectionProps) {
           control={control}
           render={({ field }) => (
             <NumberInput
-              label="Saturation power (dBW)"
+              label={<LabelWithTooltip label="Saturation power (dBW)" fieldKey="saturation_power" />}
               value={field.value ?? undefined}
               onChange={(value) => field.onChange(value === "" ? undefined : value)}
               error={imErrors?.saturation_power_dbw?.message}

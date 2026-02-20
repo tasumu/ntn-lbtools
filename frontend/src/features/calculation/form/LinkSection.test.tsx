@@ -54,7 +54,8 @@ describe("LinkSection", () => {
       </FormWrapper>,
     );
     expect(screen.getByText(/Uplink.*earth.*satellite/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Uplink frequency/)).toBeInTheDocument();
+    expect(screen.getByText(/Uplink frequency/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: uplink_frequency")).toBeInTheDocument();
   });
 
   it("renders downlink section with correct label", () => {
@@ -73,7 +74,8 @@ describe("LinkSection", () => {
       </FormWrapper>,
     );
     expect(screen.getByText(/Downlink.*satellite.*earth/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Downlink frequency/)).toBeInTheDocument();
+    expect(screen.getByText(/Downlink frequency/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: downlink_frequency")).toBeInTheDocument();
   });
 
   it("shows modcod and bandwidth selectors for REGENERATIVE", () => {
@@ -112,10 +114,11 @@ describe("LinkSection", () => {
         )}
       </FormWrapper>,
     );
-    expect(screen.getByLabelText(/Uplink ground latitude/)).toBeInTheDocument();
-    expect(
-      screen.getByLabelText(/Uplink ground longitude/),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText(/Uplink altitude/)).toBeInTheDocument();
+    expect(screen.getByText(/Uplink ground latitude/)).toBeInTheDocument();
+    expect(screen.getByText(/Uplink ground longitude/)).toBeInTheDocument();
+    expect(screen.getByText(/Uplink altitude/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: uplink_ground_lat")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: uplink_ground_lon")).toBeInTheDocument();
+    expect(screen.getByLabelText("Info: uplink_ground_alt")).toBeInTheDocument();
   });
 });

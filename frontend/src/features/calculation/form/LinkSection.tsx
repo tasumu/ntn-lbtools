@@ -3,6 +3,7 @@ import { Controller } from "react-hook-form";
 
 import { transponderTypeSchema } from "../../../api/schemas";
 import { FrequencyInput, FREQUENCY_UNITS, BANDWIDTH_UNITS } from "../../../components/FrequencyInput";
+import { LabelWithTooltip } from "../../../components/FieldTooltip";
 import type { FormSectionProps } from "./types";
 
 type Props = FormSectionProps & {
@@ -38,7 +39,7 @@ export function LinkSection({
           control={control}
           render={({ field }) => (
             <FrequencyInput
-              label={`${label} frequency`}
+              label={<LabelWithTooltip label={`${label} frequency`} fieldKey={`${direction}_frequency`} />}
               description="Required"
               withAsterisk
               value={field.value}
@@ -55,7 +56,7 @@ export function LinkSection({
             control={control}
             render={({ field }) => (
               <Select
-                label={`${label} ModCod Table`}
+                label={<LabelWithTooltip label={`${label} ModCod Table`} fieldKey={`${direction}_modcod`} />}
                 placeholder={modcodLoading ? "Loading..." : "Select"}
                 data={filteredModcodOptions}
                 searchable
@@ -78,7 +79,7 @@ export function LinkSection({
             control={control}
             render={({ field }) => (
               <FrequencyInput
-                label={`${label} bandwidth`}
+                label={<LabelWithTooltip label={`${label} bandwidth`} fieldKey={`${direction}_bandwidth`} />}
                 description="Required"
                 withAsterisk
                 value={field.value ?? undefined}
@@ -97,7 +98,7 @@ export function LinkSection({
           control={control}
           render={({ field }) => (
             <NumberInput
-              label={`${label} ground latitude (deg)`}
+              label={<LabelWithTooltip label={`${label} ground latitude (deg)`} fieldKey={`${direction}_ground_lat`} />}
               description="Required"
               withAsterisk
               value={field.value ?? undefined}
@@ -111,7 +112,7 @@ export function LinkSection({
           control={control}
           render={({ field }) => (
             <NumberInput
-              label={`${label} ground longitude (deg)`}
+              label={<LabelWithTooltip label={`${label} ground longitude (deg)`} fieldKey={`${direction}_ground_lon`} />}
               description="Required"
               withAsterisk
               value={field.value ?? undefined}
@@ -125,7 +126,7 @@ export function LinkSection({
           control={control}
           render={({ field }) => (
             <NumberInput
-              label={`${label} altitude (m)`}
+              label={<LabelWithTooltip label={`${label} altitude (m)`} fieldKey={`${direction}_ground_alt`} />}
               description="Optional (defaults to 0)"
               value={field.value ?? undefined}
               onChange={(value) => field.onChange(value ?? undefined)}
@@ -140,7 +141,7 @@ export function LinkSection({
           control={control}
           render={({ field }) => (
             <NumberInput
-              label={`${label} rain rate (mm/hr)`}
+              label={<LabelWithTooltip label={`${label} rain rate (mm/hr)`} fieldKey={`${direction}_rain_rate`} />}
               description="Optional (defaults to 0)"
               {...field}
               error={dirErrors?.rain_rate_mm_per_hr?.message}
