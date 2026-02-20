@@ -30,6 +30,11 @@ pnpm test                        # Run tests (vitest)
 pnpm lint                        # TypeScript type check
 ```
 
+### Test Execution Guidelines
+- Run tests directly without shell pipes (`| head`, `| tail`, `| grep`). Pipes can leave orphan vitest/pnpm processes running in the background.
+- Prefer `npx vitest run <file>` for single-file test runs — it exits cleanly and reports results reliably.
+- For full suite: `pnpm test` (no pipes).
+
 ### MCP Server
 ```bash
 cd mcp-server

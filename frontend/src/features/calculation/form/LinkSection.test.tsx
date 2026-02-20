@@ -75,7 +75,9 @@ describe("LinkSection", () => {
     );
     expect(screen.getByText(/Downlink.*satellite.*earth/)).toBeInTheDocument();
     expect(screen.getByText(/Downlink frequency/)).toBeInTheDocument();
-    expect(screen.getByLabelText("Info: downlink_frequency")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Info: downlink_frequency"),
+    ).toBeInTheDocument();
   });
 
   it("shows modcod and bandwidth selectors for REGENERATIVE", () => {
@@ -117,8 +119,34 @@ describe("LinkSection", () => {
     expect(screen.getByText(/Uplink ground latitude/)).toBeInTheDocument();
     expect(screen.getByText(/Uplink ground longitude/)).toBeInTheDocument();
     expect(screen.getByText(/Uplink altitude/)).toBeInTheDocument();
-    expect(screen.getByLabelText("Info: uplink_ground_lat")).toBeInTheDocument();
-    expect(screen.getByLabelText("Info: uplink_ground_lon")).toBeInTheDocument();
-    expect(screen.getByLabelText("Info: uplink_ground_alt")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Info: uplink_ground_lat"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Info: uplink_ground_lon"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Info: uplink_ground_alt"),
+    ).toBeInTheDocument();
+  });
+
+  it("aligns ground coordinate inputs at the bottom so fields with different label heights share the same input row", () => {
+    const { container } = renderWithProviders(
+      <FormWrapper>
+        {(methods) => (
+          <LinkSection
+            control={methods.control}
+            errors={methods.formState.errors}
+            direction="uplink"
+            transponderType="TRANSPARENT"
+            filteredModcodOptions={[]}
+            modcodLoading={false}
+          />
+        )}
+      </FormWrapper>,
+    );
+    const grid = container.querySelector(".mantine-SimpleGrid-root");
+    expect(grid).not.toBeNull();
+    expect((grid as HTMLElement).style.alignItems).toBe("end");
   });
 });

@@ -3,7 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { renderWithProviders } from "../test/utils";
-import { FrequencyInput, FREQUENCY_UNITS, BANDWIDTH_UNITS } from "./FrequencyInput";
+import {
+  FrequencyInput,
+  FREQUENCY_UNITS,
+  BANDWIDTH_UNITS,
+} from "./FrequencyInput";
 
 describe("FrequencyInput", () => {
   it("renders with correct default unit display value", () => {
@@ -54,7 +58,7 @@ describe("FrequencyInput", () => {
     expect(lastCall[0]).toBe(14e9);
   });
 
-  it("renders unit selector with correct options", () => {
+  it("renders unit selector without visible label, with aria-label", () => {
     renderWithProviders(
       <FrequencyInput
         label="Frequency"
@@ -64,7 +68,9 @@ describe("FrequencyInput", () => {
         defaultUnit="GHz"
       />,
     );
-    expect(screen.getByText("Unit")).toBeInTheDocument();
+    // No visible "Unit" label - it should NOT be rendered as text
+    expect(screen.queryByText("Unit")).not.toBeInTheDocument();
+    // Accessible via aria-label
     const unitInput = screen.getByRole("textbox", { name: "Unit" });
     expect(unitInput).toHaveValue("GHz");
   });
@@ -109,5 +115,28 @@ describe("FrequencyInput", () => {
       />,
     );
     expect(screen.getByText("*")).toBeInTheDocument();
+  });
+
+  it("aligns NumberInput and Select at bottom so inputs share the same row height", () => {
+    const { container } = renderWithProviders(
+      <FrequencyInput
+        label="Uplink frequency"
+        value={14.25e9}
+        onChange={vi.fn()}
+        units={FREQUENCY_UNITS}
+        defaultUnit="GHz"
+      />,
+    );
+    // The wrapper Group should align items at flex-end
+    const group = container.querySelector(".mantine-Group-root");
+    expect(group).not.toBeNull();
+    expect(group!.getAttribute("style")).toContain("--group-align: flex-end");
+
+    // Select root should have fixed width via style
+    const unitInput = screen.getByRole("textbox", { name: "Unit" });
+    const selectRoot = unitInput.closest(".mantine-Select-root");
+    expect(selectRoot).not.toBeNull();
+    // Mantine converts w={90} to rem-based calc
+    expect((selectRoot as HTMLElement).style.width).toContain("5.625rem");
   });
 });

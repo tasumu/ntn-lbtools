@@ -69,13 +69,10 @@ export function FrequencyInput({
     [multiplier, onChange],
   );
 
-  const handleUnitChange = useCallback(
-    (newUnit: string | null) => {
-      if (!newUnit) return;
-      setSelectedUnit(newUnit);
-    },
-    [],
-  );
+  const handleUnitChange = useCallback((newUnit: string | null) => {
+    if (!newUnit) return;
+    setSelectedUnit(newUnit);
+  }, []);
 
   const selectData = useMemo(
     () => units.map((u) => ({ value: u.value, label: u.label })),
@@ -83,7 +80,7 @@ export function FrequencyInput({
   );
 
   return (
-    <Group gap={0} grow align="flex-start">
+    <Group gap={0} align="flex-end" wrap="nowrap">
       <NumberInput
         label={label}
         description={description}
@@ -95,12 +92,12 @@ export function FrequencyInput({
         style={{ flex: 1 }}
       />
       <Select
-        label="Unit"
+        aria-label="Unit"
         data={selectData}
         value={selectedUnit}
         onChange={handleUnitChange}
         allowDeselect={false}
-        styles={{ root: { maxWidth: 90 } }}
+        w={90}
       />
     </Group>
   );
