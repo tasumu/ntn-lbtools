@@ -24,6 +24,8 @@ import type { ModcodTableAsset, PaginatedResponse } from "../../api/types";
 import { formatError } from "../../lib/formatters";
 import { DeleteConfirmModal } from "../../components/DeleteConfirmModal";
 import { EmptyState } from "../../components/EmptyState";
+import { PresetSelector } from "./PresetSelector";
+import type { ModcodPreset } from "../../data/dvbs2xPresets";
 
 const entrySchema = z
   .object({
@@ -154,22 +156,37 @@ export function ModcodManager() {
                 <Text size="sm" fw={600}>
                   Entries
                 </Text>
-                <Button
-                  size="xs"
-                  variant="light"
-                  onClick={() =>
-                    entriesArray.append({
-                      id: `entry-${entriesArray.fields.length + 1}`,
-                      modulation: "",
-                      code_rate: "",
-                      required_cn0_dbhz: undefined,
-                      required_ebno_db: undefined,
-                      info_bits_per_symbol: 0,
-                    })
-                  }
-                >
-                  Add entry
-                </Button>
+                <Group gap="xs">
+                  <PresetSelector
+                    onSelect={(preset: ModcodPreset) => {
+                      form.reset({
+                        waveform: form.getValues("waveform"),
+                        version: form.getValues("version"),
+                        description: form.getValues("description"),
+                        entries: preset.entries.map((e) => ({
+                          ...e,
+                          required_cn0_dbhz: undefined,
+                        })),
+                      });
+                    }}
+                  />
+                  <Button
+                    size="xs"
+                    variant="light"
+                    onClick={() =>
+                      entriesArray.append({
+                        id: `entry-${entriesArray.fields.length + 1}`,
+                        modulation: "",
+                        code_rate: "",
+                        required_cn0_dbhz: undefined,
+                        required_ebno_db: undefined,
+                        info_bits_per_symbol: 0,
+                      })
+                    }
+                  >
+                    Add entry
+                  </Button>
+                </Group>
               </Group>
               <Stack gap="sm">
                 {entriesArray.fields.map((field, idx) => (

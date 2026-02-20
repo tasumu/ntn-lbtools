@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { ModcodManager } from "./ModcodManager";
+import { DVB_S2X_PRESETS } from "../../data/dvbs2xPresets";
 import { renderWithProviders } from "../../test/utils";
 
 describe("ModcodManager", () => {
@@ -65,5 +66,36 @@ describe("ModcodManager", () => {
       expect(screen.getByText(/Confirm deletion/)).toBeInTheDocument();
     });
     expect(screen.getByText(/cannot be undone/)).toBeInTheDocument();
+  });
+
+  it("renders Load Preset button", () => {
+    renderWithProviders(<ModcodManager />);
+    expect(
+      screen.getByRole("button", { name: /Load Preset/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("populates entries when a preset is loaded", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ModcodManager />);
+    await user.click(screen.getByRole("button", { name: /Load Preset/ }));
+    const firstPreset = DVB_S2X_PRESETS[0];
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          `${firstPreset.name} (${firstPreset.entries.length} entries)`,
+        ),
+      ).toBeInTheDocument();
+    });
+    await user.click(
+      screen.getByText(
+        `${firstPreset.name} (${firstPreset.entries.length} entries)`,
+      ),
+    );
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: /Remove/ })).toHaveLength(
+        firstPreset.entries.length,
+      );
+    });
   });
 });
