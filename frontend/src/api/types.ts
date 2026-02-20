@@ -31,6 +31,9 @@ export interface EarthStationAsset {
   tx_power_dbw?: number;
   gt_db_per_k?: number;
   polarization?: string;
+  latitude_deg?: number;
+  longitude_deg?: number;
+  altitude_m?: number;
   notes?: string;
 }
 

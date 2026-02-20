@@ -27,6 +27,9 @@ export const mockEarthStation = {
   tx_power_dbw: 20,
   gt_db_per_k: 23.2,
   polarization: "Circular",
+  latitude_deg: 35.68,
+  longitude_deg: 139.69,
+  altitude_m: 40,
 };
 
 export const mockModcodTable = {
@@ -113,6 +116,7 @@ export const mockCalculationResponse = {
     code_rate: "1/4",
     required_cn0_dbhz: 65,
     info_bits_per_symbol: 0.5,
+    effective_spectral_efficiency: 0.49,
   },
   runtime_echo: {
     bandwidth_hz: 36e6,

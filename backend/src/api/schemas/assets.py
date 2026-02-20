@@ -57,6 +57,15 @@ class EarthStationBase(BaseModel):
     polarization: str | None = Field(
         default=None, description="Polarization (e.g. Linear/Circular) for interference checks"
     )
+    latitude_deg: float | None = Field(
+        default=None, ge=-90, le=90, description="Default ground station latitude (degrees)"
+    )
+    longitude_deg: float | None = Field(
+        default=None, ge=-180, le=180, description="Default ground station longitude (degrees)"
+    )
+    altitude_m: float | None = Field(
+        default=None, description="Default ground station altitude (metres above sea level)"
+    )
     notes: str | None = None
 
     model_config = ConfigDict(extra="forbid")

@@ -163,6 +163,9 @@ class EarthStationSnapshot(BaseModel):
     tx_power_dbw: float | None = None
     gt_db_per_k: float | None = None
     polarization: str | None = None
+    latitude_deg: float | None = None
+    longitude_deg: float | None = None
+    altitude_m: float | None = None
     notes: str | None = None
 
 

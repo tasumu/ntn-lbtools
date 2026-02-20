@@ -57,6 +57,19 @@ export const formatModcod = (
   return parts.length > 0 ? parts.join(" ") : (single.id ?? "-");
 };
 
+export const formatThroughput = (
+  bandwidthHz?: number | null,
+  spectralEfficiency?: number | null,
+): string => {
+  const bw = toNumber(bandwidthHz);
+  const se = toNumber(spectralEfficiency);
+  if (bw === null || se === null) return "-";
+  const bps = bw * se;
+  if (bps >= 1e6) return `${(bps / 1e6).toFixed(2)} Mbps`;
+  if (bps >= 1e3) return `${(bps / 1e3).toFixed(2)} kbps`;
+  return `${bps.toFixed(2)} bps`;
+};
+
 export const formatApplied = (flag?: boolean): string =>
   flag ? "Applied" : "Not applied";
 

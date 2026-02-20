@@ -2,6 +2,7 @@ import { Group, Loader, NumberInput, Select, SimpleGrid, Stack, Text } from "@ma
 import { Controller } from "react-hook-form";
 
 import { transponderTypeSchema } from "../../../api/schemas";
+import { FrequencyInput, FREQUENCY_UNITS, BANDWIDTH_UNITS } from "../../../components/FrequencyInput";
 import type { FormSectionProps } from "./types";
 
 type Props = FormSectionProps & {
@@ -36,13 +37,15 @@ export function LinkSection({
           name={`runtime.${direction}.frequency_hz`}
           control={control}
           render={({ field }) => (
-            <NumberInput
-              label={`${label} frequency (Hz)`}
+            <FrequencyInput
+              label={`${label} frequency`}
               description="Required"
               withAsterisk
-              thousandSeparator=","
-              {...field}
+              value={field.value}
+              onChange={(val) => field.onChange(val ?? undefined)}
               error={dirErrors?.frequency_hz?.message}
+              units={FREQUENCY_UNITS}
+              defaultUnit="GHz"
             />
           )}
         />
@@ -74,14 +77,15 @@ export function LinkSection({
             name={`runtime.${direction}.bandwidth_hz`}
             control={control}
             render={({ field }) => (
-              <NumberInput
-                label={`${label} bandwidth (Hz)`}
+              <FrequencyInput
+                label={`${label} bandwidth`}
                 description="Required"
                 withAsterisk
-                thousandSeparator=","
                 value={field.value ?? undefined}
-                onChange={(value) => field.onChange(value ?? undefined)}
+                onChange={(val) => field.onChange(val ?? undefined)}
                 error={dirErrors?.bandwidth_hz?.message}
+                units={BANDWIDTH_UNITS}
+                defaultUnit="MHz"
               />
             )}
           />

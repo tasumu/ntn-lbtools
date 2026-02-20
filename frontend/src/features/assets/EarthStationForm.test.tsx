@@ -63,4 +63,32 @@ describe("EarthStationForm", () => {
     await user.click(screen.getByRole("button", { name: /Cancel/ }));
     expect(onCancelEdit).toHaveBeenCalled();
   });
+
+  it("renders location fields", () => {
+    renderWithProviders(<EarthStationForm />);
+    expect(screen.getByText("Default Location (optional)")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Latitude/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Longitude/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Altitude/)).toBeInTheDocument();
+  });
+
+  it("populates location fields in edit mode", () => {
+    renderWithProviders(
+      <EarthStationForm
+        initial={{
+          id: "es-002",
+          name: "With Location",
+          latitude_deg: 35.68,
+          longitude_deg: 139.69,
+          altitude_m: 40,
+        }}
+      />,
+    );
+    const latInput = screen.getByLabelText(/Latitude/) as HTMLInputElement;
+    expect(latInput.value).toBe("35.68");
+    const lonInput = screen.getByLabelText(/Longitude/) as HTMLInputElement;
+    expect(lonInput.value).toBe("139.69");
+    const altInput = screen.getByLabelText(/Altitude/) as HTMLInputElement;
+    expect(altInput.value).toBe("40");
+  });
 });

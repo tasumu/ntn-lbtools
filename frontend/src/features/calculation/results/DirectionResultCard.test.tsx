@@ -93,4 +93,67 @@ describe("DirectionResultCard", () => {
     );
     expect(screen.getByText(/ModCod/)).toBeInTheDocument();
   });
+
+  it("shows GO badge for REGENERATIVE with positive margin", () => {
+    renderWithProviders(
+      <DirectionResultCard
+        direction="uplink"
+        result={uplinkResult}
+        elevationDeg={48.5}
+        transponderType="REGENERATIVE"
+        isDirectionalModcod={false}
+      />,
+    );
+    expect(screen.getByText("GO")).toBeInTheDocument();
+  });
+
+  it("shows NO-GO badge for REGENERATIVE with negative margin", () => {
+    const negativeResult = { ...uplinkResult, link_margin_db: -1.0 };
+    renderWithProviders(
+      <DirectionResultCard
+        direction="uplink"
+        result={negativeResult}
+        elevationDeg={48.5}
+        transponderType="REGENERATIVE"
+        isDirectionalModcod={false}
+      />,
+    );
+    expect(screen.getByText("NO-GO")).toBeInTheDocument();
+  });
+
+  it("does not show badge for TRANSPARENT", () => {
+    renderWithProviders(
+      <DirectionResultCard
+        direction="uplink"
+        result={uplinkResult}
+        elevationDeg={48.5}
+        transponderType="TRANSPARENT"
+        isDirectionalModcod={false}
+      />,
+    );
+    expect(screen.queryByText("GO")).not.toBeInTheDocument();
+    expect(screen.queryByText("NO-GO")).not.toBeInTheDocument();
+  });
+
+  it("shows throughput for REGENERATIVE with spectral efficiency", () => {
+    renderWithProviders(
+      <DirectionResultCard
+        direction="uplink"
+        result={uplinkResult}
+        elevationDeg={48.5}
+        transponderType="REGENERATIVE"
+        isDirectionalModcod={true}
+        modcodSelected={{
+          uplink: {
+            id: "qpsk-1/4",
+            modulation: "QPSK",
+            code_rate: "1/4",
+            effective_spectral_efficiency: 0.5,
+          },
+          downlink: null,
+        }}
+      />,
+    );
+    expect(screen.getByText(/Throughput.*18\.00 Mbps/)).toBeInTheDocument();
+  });
 });

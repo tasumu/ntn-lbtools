@@ -1,6 +1,7 @@
 import { Group, NumberInput, Stack, Switch } from "@mantine/core";
 import { Controller } from "react-hook-form";
 
+import { FrequencyInput, BANDWIDTH_UNITS } from "../../../components/FrequencyInput";
 import type { FormSectionProps } from "./types";
 
 export function IntermodulationSection({ control, errors }: FormSectionProps) {
@@ -67,12 +68,13 @@ export function IntermodulationSection({ control, errors }: FormSectionProps) {
           name="runtime.intermodulation.reference_bandwidth_hz"
           control={control}
           render={({ field }) => (
-            <NumberInput
-              label="Reference bandwidth (Hz)"
-              min={0}
+            <FrequencyInput
+              label="Reference bandwidth"
               value={field.value ?? undefined}
-              onChange={(value) => field.onChange(value === "" ? undefined : value)}
+              onChange={(val) => field.onChange(val ?? undefined)}
               error={imErrors?.reference_bandwidth_hz?.message}
+              units={BANDWIDTH_UNITS}
+              defaultUnit="MHz"
             />
           )}
         />

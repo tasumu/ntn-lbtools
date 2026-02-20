@@ -52,6 +52,14 @@ class EarthStation(Base):
             "(noise_temperature_k IS NULL) OR (noise_temperature_k > 0)",
             name="ck_earth_stations_noise_temp_positive",
         ),
+        CheckConstraint(
+            "(latitude_deg IS NULL) OR (latitude_deg >= -90 AND latitude_deg <= 90)",
+            name="ck_earth_stations_latitude_range",
+        ),
+        CheckConstraint(
+            "(longitude_deg IS NULL) OR (longitude_deg >= -180 AND longitude_deg <= 180)",
+            name="ck_earth_stations_longitude_range",
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -65,6 +73,9 @@ class EarthStation(Base):
     tx_power_dbw = Column(Float, nullable=True)
     gt_db_per_k = Column(Float, nullable=True)
     polarization = Column(String(20), nullable=True)
+    latitude_deg = Column(Float, nullable=True)
+    longitude_deg = Column(Float, nullable=True)
+    altitude_m = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
     updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

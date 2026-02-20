@@ -4,6 +4,7 @@ import {
   formatHz,
   formatDeg,
   formatModcod,
+  formatThroughput,
   formatApplied,
   formatError,
 } from "./formatters";
@@ -145,6 +146,36 @@ describe("formatModcod", () => {
       downlink: null,
     };
     expect(formatModcod(modcod, "uplink")).toBe("-");
+  });
+});
+
+describe("formatThroughput", () => {
+  it("computes Mbps from bandwidth and spectral efficiency", () => {
+    expect(formatThroughput(36e6, 0.5)).toBe("18.00 Mbps");
+  });
+
+  it("computes kbps for small values", () => {
+    expect(formatThroughput(100e3, 0.5)).toBe("50.00 kbps");
+  });
+
+  it("computes bps for very small values", () => {
+    expect(formatThroughput(100, 0.5)).toBe("50.00 bps");
+  });
+
+  it("returns dash for null bandwidth", () => {
+    expect(formatThroughput(null, 0.5)).toBe("-");
+  });
+
+  it("returns dash for null spectral efficiency", () => {
+    expect(formatThroughput(36e6, null)).toBe("-");
+  });
+
+  it("returns dash for undefined inputs", () => {
+    expect(formatThroughput(undefined, undefined)).toBe("-");
+  });
+
+  it("handles high spectral efficiency", () => {
+    expect(formatThroughput(36e6, 4.0)).toBe("144.00 Mbps");
   });
 });
 

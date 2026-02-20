@@ -11,6 +11,8 @@ import {
 import { useEffect } from "react";
 import { Controller, useForm, useWatch, FieldErrors } from "react-hook-form";
 
+import { FrequencyInput, BANDWIDTH_UNITS } from "../../components/FrequencyInput";
+
 import {
   CalculationRequest,
   calculationRequestSchema,
@@ -142,6 +144,14 @@ export function CalculationForm({
     control,
     name: "_downlinkMitigationDb",
   });
+  const earthStationTxId = useWatch({
+    control,
+    name: "earth_station_tx_id",
+  });
+  const earthStationRxId = useWatch({
+    control,
+    name: "earth_station_rx_id",
+  });
 
   const availableWaveforms = Array.from(
     new Set(modcodOptions.map((o) => o.waveform).filter(Boolean)),
@@ -181,6 +191,24 @@ export function CalculationForm({
     transponderType,
     uplinkBandwidth,
   ]);
+
+  useEffect(() => {
+    if (!earthStationTxId) return;
+    const es = earthStations.find((s) => s.id === earthStationTxId);
+    if (!es) return;
+    if (es.latitude_deg != null) setValue("runtime.uplink.ground_lat_deg", es.latitude_deg);
+    if (es.longitude_deg != null) setValue("runtime.uplink.ground_lon_deg", es.longitude_deg);
+    if (es.altitude_m != null) setValue("runtime.uplink.ground_alt_m", es.altitude_m);
+  }, [earthStationTxId, earthStations, setValue]);
+
+  useEffect(() => {
+    if (!earthStationRxId) return;
+    const es = earthStations.find((s) => s.id === earthStationRxId);
+    if (!es) return;
+    if (es.latitude_deg != null) setValue("runtime.downlink.ground_lat_deg", es.latitude_deg);
+    if (es.longitude_deg != null) setValue("runtime.downlink.ground_lon_deg", es.longitude_deg);
+    if (es.altitude_m != null) setValue("runtime.downlink.ground_alt_m", es.altitude_m);
+  }, [earthStationRxId, earthStations, setValue]);
 
   useEffect(() => {
     if (initialValues) {
@@ -392,14 +420,15 @@ export function CalculationForm({
               name="runtime.bandwidth_hz"
               control={control}
               render={({ field }) => (
-                <NumberInput
-                  label="Channel bandwidth (Hz)"
+                <FrequencyInput
+                  label="Channel bandwidth"
                   description="Required"
                   withAsterisk
-                  thousandSeparator=","
                   value={field.value ?? undefined}
-                  onChange={(value) => field.onChange(value ?? undefined)}
+                  onChange={(val) => field.onChange(val ?? undefined)}
                   error={errors.runtime?.bandwidth_hz?.message}
+                  units={BANDWIDTH_UNITS}
+                  defaultUnit="MHz"
                 />
               )}
             />

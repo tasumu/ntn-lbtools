@@ -4,7 +4,9 @@ import {
   Button,
   Group,
   NumberInput,
+  SimpleGrid,
   Stack,
+  Text,
   TextInput,
   Textarea,
 } from "@mantine/core";
@@ -31,6 +33,15 @@ const schema = z.object({
   tx_power_dbw: optionalNumber,
   gt_db_per_k: optionalNumber,
   polarization: z.string().optional(),
+  latitude_deg: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : v),
+    z.number().min(-90).max(90).optional(),
+  ),
+  longitude_deg: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : v),
+    z.number().min(-180).max(180).optional(),
+  ),
+  altitude_m: optionalNumber,
   notes: z.string().optional(),
 });
 
@@ -47,6 +58,9 @@ const EARTH_STATION_DEFAULTS: FormValues = {
   tx_power_dbw: undefined,
   gt_db_per_k: undefined,
   polarization: "",
+  latitude_deg: undefined,
+  longitude_deg: undefined,
+  altitude_m: undefined,
   notes: "",
 };
 
@@ -82,6 +96,9 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
         tx_power_dbw: rest.tx_power_dbw,
         gt_db_per_k: rest.gt_db_per_k,
         polarization: rest.polarization,
+        latitude_deg: rest.latitude_deg,
+        longitude_deg: rest.longitude_deg,
+        altitude_m: rest.altitude_m,
         notes: rest.notes,
       });
     } else {
@@ -234,6 +251,54 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
           />
           <Textarea label="Notes" minRows={2} {...form.register("notes")} />
         </Group>
+        <Text size="sm" fw={600} mt="xs">
+          Default Location (optional)
+        </Text>
+        <SimpleGrid cols={{ base: 1, sm: 3 }}>
+          <Controller
+            name="latitude_deg"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput
+                label="Latitude (deg)"
+                description="-90 to 90"
+                min={-90}
+                max={90}
+                value={field.value ?? undefined}
+                onChange={(value) => field.onChange(value === "" ? undefined : value)}
+                error={form.formState.errors.latitude_deg?.message}
+              />
+            )}
+          />
+          <Controller
+            name="longitude_deg"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput
+                label="Longitude (deg)"
+                description="-180 to 180"
+                min={-180}
+                max={180}
+                value={field.value ?? undefined}
+                onChange={(value) => field.onChange(value === "" ? undefined : value)}
+                error={form.formState.errors.longitude_deg?.message}
+              />
+            )}
+          />
+          <Controller
+            name="altitude_m"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput
+                label="Altitude (m)"
+                description="Above sea level"
+                value={field.value ?? undefined}
+                onChange={(value) => field.onChange(value === "" ? undefined : value)}
+                error={form.formState.errors.altitude_m?.message}
+              />
+            )}
+          />
+        </SimpleGrid>
         <Group justify="flex-start" gap="sm">
           <Button
             type="submit"

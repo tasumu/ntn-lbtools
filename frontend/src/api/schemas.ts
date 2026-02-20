@@ -155,6 +155,9 @@ const earthStationSnapshotSchema = z.object({
   tx_power_dbw: z.number().optional().nullable(),
   gt_db_per_k: z.number().optional().nullable(),
   polarization: z.string().optional().nullable(),
+  latitude_deg: z.number().optional().nullable(),
+  longitude_deg: z.number().optional().nullable(),
+  altitude_m: z.number().optional().nullable(),
   notes: z.string().optional().nullable(),
 });
 
