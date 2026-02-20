@@ -32,6 +32,11 @@ const ScenarioComparisonPage = React.lazy(() =>
     default: m.ScenarioComparisonPage,
   })),
 );
+const SweepPage = React.lazy(() =>
+  import("./features/sweep/SweepPage").then((m) => ({
+    default: m.SweepPage,
+  })),
+);
 
 function PageLoader() {
   return (
@@ -81,6 +86,9 @@ function NavBar() {
           </Link>
           <Link to="/compare" style={linkStyle("/compare")}>
             Compare
+          </Link>
+          <Link to="/sweep" style={linkStyle("/sweep")}>
+            Sweep
           </Link>
         </div>
       </Container>
@@ -160,6 +168,16 @@ if (root) {
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <Suspense fallback={<PageLoader />}>
                         <ScenarioComparisonPage />
+                      </Suspense>
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/sweep"
+                  element={
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <Suspense fallback={<PageLoader />}>
+                        <SweepPage />
                       </Suspense>
                     </ErrorBoundary>
                   }

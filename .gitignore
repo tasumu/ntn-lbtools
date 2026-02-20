@@ -14,6 +14,9 @@ venv/
 .specify/
 specs/
 
+# Claude Code
+.claude/
+
 # Python artifacts
 __pycache__/
 *.py[cod]

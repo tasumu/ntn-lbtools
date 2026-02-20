@@ -229,4 +229,51 @@ export const handlers = [
   http.post(`${API_BASE}/link-budgets/calculate`, () =>
     HttpResponse.json(mockCalculationResponse),
   ),
+
+  http.post(`${API_BASE}/link-budgets/sweep`, () =>
+    HttpResponse.json({
+      sweep_parameter: "runtime.uplink.rain_rate_mm_per_hr",
+      sweep_label: "Uplink Rain Rate (mm/hr)",
+      threshold_db: 3.0,
+      points: [
+        {
+          sweep_value: 0,
+          combined_link_margin_db: 8.0,
+          combined_cn_db: 15.0,
+          combined_cn0_dbhz: 90.0,
+          uplink_cn_db: 18.0,
+          uplink_rain_loss_db: 0.0,
+          uplink_link_margin_db: 10.0,
+          downlink_cn_db: 17.0,
+          downlink_rain_loss_db: 0.0,
+          downlink_link_margin_db: 9.0,
+          modcod_id: "8psk-3/4",
+          modcod_label: "8PSK 3/4",
+          viable: true,
+          warnings: [],
+        },
+        {
+          sweep_value: 50,
+          combined_link_margin_db: 2.0,
+          combined_cn_db: 10.0,
+          combined_cn0_dbhz: 85.0,
+          uplink_cn_db: 13.0,
+          uplink_rain_loss_db: 5.0,
+          uplink_link_margin_db: 4.0,
+          downlink_cn_db: 17.0,
+          downlink_rain_loss_db: 0.0,
+          downlink_link_margin_db: 9.0,
+          modcod_id: "qpsk-1/2",
+          modcod_label: "QPSK 1/2",
+          viable: false,
+          warnings: [],
+        },
+      ],
+      crossover_value: 41.7,
+      strategy: {
+        waveform_strategy: "DVB_S2X",
+        transponder_type: "TRANSPARENT",
+      },
+    }),
+  ),
 ];

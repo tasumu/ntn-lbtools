@@ -9,7 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from src.api.limiter import limiter
 from src.api.middleware.auth import ApiKeyMiddleware
 from src.api.middleware.logging import logging_middleware
-from src.api.routes import assets, calculations, modcod, scenarios
+from src.api.routes import assets, calculations, modcod, scenarios, sweep
 from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -63,6 +63,7 @@ def create_app() -> FastAPI:
     app.include_router(scenarios.router, prefix="/api/v1")
     app.include_router(assets.router, prefix="/api/v1")
     app.include_router(modcod.router, prefix="/api/v1")
+    app.include_router(sweep.router, prefix="/api/v1")
 
     return app
 

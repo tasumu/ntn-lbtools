@@ -278,6 +278,11 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
               modcodSummary={modcodSummary}
               channelBandwidth={channelBandwidth}
               onSave={() => setSaveOpen(true)}
+              onSweep={() => {
+                if (lastRequest) {
+                  navigate("/sweep", { state: { baseRequest: lastRequest } });
+                }
+              }}
             />
           </Flex>
 
