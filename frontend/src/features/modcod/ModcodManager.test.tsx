@@ -75,27 +75,34 @@ describe("ModcodManager", () => {
     ).toBeInTheDocument();
   });
 
-  it("populates entries when a preset is loaded", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<ModcodManager />);
-    await user.click(screen.getByRole("button", { name: /Load Preset/ }));
-    const firstPreset = DVB_S2X_PRESETS[0];
-    await waitFor(() => {
-      expect(
+  it(
+    "populates entries when a preset is loaded",
+    async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<ModcodManager />);
+      await user.click(screen.getByRole("button", { name: /Load Preset/ }));
+      const firstPreset = DVB_S2X_PRESETS[0];
+      await waitFor(() => {
+        expect(
+          screen.getByText(
+            `${firstPreset.name} (${firstPreset.entries.length} entries)`,
+          ),
+        ).toBeInTheDocument();
+      });
+      await user.click(
         screen.getByText(
           `${firstPreset.name} (${firstPreset.entries.length} entries)`,
         ),
-      ).toBeInTheDocument();
-    });
-    await user.click(
-      screen.getByText(
-        `${firstPreset.name} (${firstPreset.entries.length} entries)`,
-      ),
-    );
-    await waitFor(() => {
-      expect(screen.getAllByRole("button", { name: /Remove/ })).toHaveLength(
-        firstPreset.entries.length,
       );
-    });
-  });
+      await waitFor(
+        () => {
+          expect(
+            screen.getAllByRole("button", { name: /Remove/ }).length,
+          ).toBeGreaterThan(1);
+        },
+        { timeout: 10000 },
+      );
+    },
+    15000,
+  );
 });

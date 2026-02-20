@@ -27,6 +27,11 @@ const CalculationPage = React.lazy(() =>
 const AssetsPage = React.lazy(() =>
   import("./pages/AssetsPage").then((m) => ({ default: m.AssetsPage })),
 );
+const ScenarioComparisonPage = React.lazy(() =>
+  import("./features/comparison/ScenarioComparisonPage").then((m) => ({
+    default: m.ScenarioComparisonPage,
+  })),
+);
 
 function PageLoader() {
   return (
@@ -73,6 +78,9 @@ function NavBar() {
           </Link>
           <Link to="/assets" style={linkStyle("/assets")}>
             Assets
+          </Link>
+          <Link to="/compare" style={linkStyle("/compare")}>
+            Compare
           </Link>
         </div>
       </Container>
@@ -142,6 +150,16 @@ if (root) {
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <Suspense fallback={<PageLoader />}>
                         <AssetsPage />
+                      </Suspense>
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/compare"
+                  element={
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <Suspense fallback={<PageLoader />}>
+                        <ScenarioComparisonPage />
                       </Suspense>
                     </ErrorBoundary>
                   }

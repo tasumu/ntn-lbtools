@@ -62,6 +62,40 @@ export const mockScenario = {
   created_at: "2026-01-01T00:00:00Z",
 };
 
+export const mockScenario2 = {
+  id: "sc-002",
+  name: "Test Scenario 2",
+  description: "A second test scenario with different parameters",
+  waveform_strategy: "DVB_S2X",
+  transponder_type: "TRANSPARENT",
+  satellite_id: "sat-001",
+  modcod_table_id: "mc-001",
+  earth_station_tx_id: "es-001",
+  earth_station_rx_id: "es-001",
+  payload_snapshot: {
+    runtime: {
+      bandwidth_hz: 72e6,
+      uplink: {
+        frequency_hz: 14.5e9,
+        bandwidth_hz: 72e6,
+        rain_rate_mm_per_hr: 20,
+        ground_lat_deg: 40,
+        ground_lon_deg: 140,
+        ground_alt_m: 100,
+      },
+      downlink: {
+        frequency_hz: 11.5e9,
+        bandwidth_hz: 72e6,
+        rain_rate_mm_per_hr: 15,
+        ground_lat_deg: 40,
+        ground_lon_deg: 140,
+        ground_alt_m: 100,
+      },
+    },
+  },
+  created_at: "2026-01-02T00:00:00Z",
+};
+
 const makeDirectionResult = (direction: string) => ({
   direction,
   fspl_db: 205.5,
@@ -182,7 +216,7 @@ export const handlers = [
   ),
 
   http.get(`${API_BASE}/scenarios`, () =>
-    HttpResponse.json(paginate([mockScenario])),
+    HttpResponse.json(paginate([mockScenario, mockScenario2])),
   ),
   http.post(`${API_BASE}/scenarios`, () =>
     HttpResponse.json(mockScenario, { status: 201 }),
