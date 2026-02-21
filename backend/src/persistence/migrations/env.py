@@ -1,5 +1,6 @@
 import asyncio
 from logging.config import fileConfig
+from pathlib import Path
 
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -10,7 +11,7 @@ from src.persistence.database import Base, get_engine
 
 config = context.config
 
-if config.config_file_name is not None:
+if config.config_file_name is not None and Path(config.config_file_name).is_file():
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
