@@ -10,15 +10,28 @@ if str(ROOT) not in sys.path:
 
 from itur.models import itu618, itu676  # type: ignore  # noqa: E402
 
-from src.core.propagation import LinkBudgetInputs, compute_link_budget, rain_loss_db  # type: ignore  # noqa: E402
+from src.core.propagation import (  # type: ignore  # noqa: E402
+    LinkBudgetInputs,
+    compute_link_budget,
+    rain_loss_db,
+)
 from src.core.strategies.dvbs2x import DvbS2xStrategy, ModcodEntry  # type: ignore  # noqa: E402
 
 
 def test_modcod_selection_picks_highest_meeting_threshold():
     table = [
-        ModcodEntry(id="low", modulation="QPSK", code_rate="1/4", required_cn0_dbhz=60.0, info_bits_per_symbol=0.5),
-        ModcodEntry(id="mid", modulation="QPSK", code_rate="1/2", required_cn0_dbhz=70.0, info_bits_per_symbol=1.0),
-        ModcodEntry(id="high", modulation="8PSK", code_rate="3/4", required_cn0_dbhz=78.0, info_bits_per_symbol=2.25),
+        ModcodEntry(
+            id="low", modulation="QPSK", code_rate="1/4",
+            required_cn0_dbhz=60.0, info_bits_per_symbol=0.5,
+        ),
+        ModcodEntry(
+            id="mid", modulation="QPSK", code_rate="1/2",
+            required_cn0_dbhz=70.0, info_bits_per_symbol=1.0,
+        ),
+        ModcodEntry(
+            id="high", modulation="8PSK", code_rate="3/4",
+            required_cn0_dbhz=78.0, info_bits_per_symbol=2.25,
+        ),
     ]
     strat = DvbS2xStrategy(table=table)
     assert strat.select_modcod(65.0).id == "low"

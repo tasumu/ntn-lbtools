@@ -106,7 +106,9 @@ def base_payload(mock_modcod_entries):
         "_mocks": {
             "sat": FakeSatellite(id=sat_id, eirp_dbw=60.0, gt_db_per_k=5.0),
             "tx": FakeStation(id=tx_id, tx_power_dbw=20.0, antenna_gain_tx_db=40.0), # EIRP = 60
-            "rx": FakeStation(id=rx_id, antenna_gain_rx_db=30.0, noise_temperature_k=200.0), # G/T approx 30 - 23 = 7
+            "rx": FakeStation(  # G/T approx 30 - 23 = 7
+                id=rx_id, antenna_gain_rx_db=30.0, noise_temperature_k=200.0,
+            ),
             "modcod": FakeModCodTable(id=mc_id, entries=mock_modcod_entries),
         },
     }
@@ -131,7 +133,8 @@ def calculation_service(base_payload):
 async def test_calculate_transparent_success(calculation_service, base_payload):
     """
     Verify a basic successful calculation for Transparent Transponder.
-    Check if C/N, C/N0, and Link Margin are calculated and non-negative (given the strong link setup).
+    Check if C/N, C/N0, and Link Margin are calculated and
+    non-negative (given the strong link setup).
     """
     result = await calculation_service.calculate(base_payload)
     
@@ -162,7 +165,9 @@ async def test_calculate_defaults_temperature(calculation_service, base_payload)
     assert result["results"]["downlink"]["cn0_dbhz"] is not None
 
 @pytest.mark.asyncio
-async def test_calculate_regenerative_success(calculation_service, base_payload, mock_modcod_entries):
+async def test_calculate_regenerative_success(
+    calculation_service, base_payload, mock_modcod_entries,
+):
     """
     Verify basic Regenerative Transponder calculation.
     Uplink and Downlink are independent.
@@ -176,7 +181,8 @@ async def test_calculate_regenerative_success(calculation_service, base_payload,
     payload["downlink_modcod_table_id"] = mc_id
     
     # Bandwidth must be per-link in regenerative (implied by service logic)
-    # The service logic throws error if shared 'bandwidth_hz' is set in runtime root for Regenerative?
+    # The service logic throws error if shared 'bandwidth_hz' is set
+    # in runtime root for Regenerative?
     # Let's check logic:
     # "if shared_bandwidth is not None: raise ... detail='Regenerative ... require per-link ...'"
     # So we remove root bandwidth

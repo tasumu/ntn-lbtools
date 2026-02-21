@@ -28,9 +28,18 @@ class TransparentCommunicationStrategy:
     async def calculate(
         self, runtime: RuntimeParameters, direction: str = "uplink",
     ) -> CalculationResult:
-        params: LinkDirectionParameters = runtime.uplink if direction == "uplink" else runtime.downlink
-        tx_eirp = self.context.uplink_tx_eirp_dbw if direction == "uplink" else self.context.downlink_tx_eirp_dbw
-        rx_gt = self.context.uplink_rx_gt_db_per_k if direction == "uplink" else self.context.downlink_rx_gt_db_per_k
+        is_uplink = direction == "uplink"
+        params: LinkDirectionParameters = (
+            runtime.uplink if is_uplink else runtime.downlink
+        )
+        tx_eirp = (
+            self.context.uplink_tx_eirp_dbw if is_uplink
+            else self.context.downlink_tx_eirp_dbw
+        )
+        rx_gt = (
+            self.context.uplink_rx_gt_db_per_k if is_uplink
+            else self.context.downlink_rx_gt_db_per_k
+        )
 
         inputs = LinkBudgetInputs(
             frequency_hz=params.frequency_hz,
@@ -49,7 +58,11 @@ class TransparentCommunicationStrategy:
                 if params.water_vapor_density is not None
                 else DEFAULT_WATER_VAPOR_DENSITY
             ),
-            pressure_hpa=params.pressure_hpa if params.pressure_hpa is not None else DEFAULT_PRESSURE_HPA,
+            pressure_hpa=(
+                params.pressure_hpa
+                if params.pressure_hpa is not None
+                else DEFAULT_PRESSURE_HPA
+            ),
         )
         stats = compute_link_budget(inputs)
         return CalculationResult(

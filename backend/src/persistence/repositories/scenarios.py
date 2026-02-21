@@ -17,7 +17,7 @@ class ScenarioRepository(BaseRepository[Scenario]):
         return result.scalars().all()
 
     async def list_recent_paginated(
-        self, limit: int = 20, offset: int = 0
+        self, limit: int = 20, offset: int = 0,
     ) -> tuple[Sequence[Scenario], int]:
         count_stmt = select(func.count()).select_from(Scenario)
         count_result = await self.session.execute(count_stmt)

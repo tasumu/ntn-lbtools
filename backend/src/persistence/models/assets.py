@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import CheckConstraint, Column, DateTime, Float, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
@@ -8,7 +8,7 @@ from src.persistence.database import Base
 
 
 def utcnow():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Satellite(Base):

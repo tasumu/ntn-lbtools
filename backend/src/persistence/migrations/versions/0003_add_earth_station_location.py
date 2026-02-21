@@ -1,6 +1,7 @@
 """Add latitude_deg, longitude_deg, altitude_m to earth_stations."""
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision = "0003_es_location"

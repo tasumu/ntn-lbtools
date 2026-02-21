@@ -105,7 +105,7 @@ def test_compute_link_budget_math():
     with patch("src.core.propagation.rain_loss_db", return_value=0.5), \
          patch("src.core.propagation.gas_loss_db", return_value=0.5), \
          patch("src.core.propagation.cloud_loss_db", return_value=0.5), \
-         patch("src.core.propagation.estimate_slant_range_km", return_value=36000.0): # Fix range for stable FSPL
+         patch("src.core.propagation.estimate_slant_range_km", return_value=36000.0):  # noqa: E501
          
         results = compute_link_budget(inputs)
         

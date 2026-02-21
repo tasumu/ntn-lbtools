@@ -1,8 +1,9 @@
 """Initial schema and seed data."""
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0001_initial"
@@ -210,7 +211,7 @@ def upgrade() -> None:
             published_at=sa.func.now(),
             created_at=sa.func.now(),
         )
-        .on_conflict_do_nothing()
+        .on_conflict_do_nothing(),
     )
 
     satellites = sa.table(
@@ -282,10 +283,10 @@ def upgrade() -> None:
                     "notes": "Seeded sample asset",
                     "created_at": sa.func.now(),
                     "updated_at": sa.func.now(),
-                }
-            ]
+                },
+            ],
         )
-        .on_conflict_do_nothing()
+        .on_conflict_do_nothing(),
     )
 
     op.get_bind().execute(
@@ -324,9 +325,9 @@ def upgrade() -> None:
                     "created_at": sa.func.now(),
                     "updated_at": sa.func.now(),
                 },
-            ]
+            ],
         )
-        .on_conflict_do_nothing()
+        .on_conflict_do_nothing(),
     )
 
     payload_snapshot = {
@@ -429,9 +430,9 @@ def upgrade() -> None:
                 "payload_snapshot": payload_snapshot,
                 "created_at": sa.func.now(),
                 "updated_at": sa.func.now(),
-            }
+            },
         )
-        .on_conflict_do_nothing()
+        .on_conflict_do_nothing(),
     )
 
 

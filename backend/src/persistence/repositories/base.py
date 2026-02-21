@@ -22,7 +22,9 @@ class BaseRepository(Generic[ModelT]):  # noqa: UP046
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def list_with_count(self, limit: int = 100, offset: int = 0) -> tuple[Sequence[ModelT], int]:
+    async def list_with_count(
+        self, limit: int = 100, offset: int = 0,
+    ) -> tuple[Sequence[ModelT], int]:
         count_stmt = select(func.count()).select_from(self.model)
         count_result = await self.session.execute(count_stmt)
         total = count_result.scalar() or 0

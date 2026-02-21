@@ -1,10 +1,10 @@
 import asyncio
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from alembic import context
 from src.config.settings import get_database_url
 from src.persistence.database import Base, get_engine
 

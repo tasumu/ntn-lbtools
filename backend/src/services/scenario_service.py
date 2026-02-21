@@ -7,9 +7,9 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.strategies.dvbs2x import _clean_modcod_dict
 from src.persistence.models.scenario import Scenario
 from src.persistence.repositories.scenarios import ScenarioRepository
-from src.core.strategies.dvbs2x import _clean_modcod_dict
 
 
 class ScenarioService:
@@ -22,7 +22,10 @@ class ScenarioService:
         for key in ("modcod_entries", "uplink_modcod_entries", "downlink_modcod_entries"):
             entries = static.get(key)
             if isinstance(entries, list):
-                static[key] = [_clean_modcod_dict(entry) if isinstance(entry, dict) else entry for entry in entries]
+                static[key] = [
+                    _clean_modcod_dict(entry) if isinstance(entry, dict) else entry
+                    for entry in entries
+                ]
         payload_snapshot["static"] = static
         runtime = payload_snapshot.get("runtime") or {}
         for key in ("uplink", "downlink"):
@@ -37,7 +40,10 @@ class ScenarioService:
         metadata = payload_snapshot.get("metadata") or {}
         overrides = payload_snapshot.get("overrides") or {}
         # Keep only satellite override (legacy fields are dropped)
-        overrides = {"satellite": overrides.get("satellite")} if overrides.get("satellite") else None
+        overrides = (
+            {"satellite": overrides.get("satellite")}
+            if overrides.get("satellite") else None
+        )
         payload_snapshot["overrides"] = overrides
         metadata.setdefault("schema_version", "1.1.0")
         payload_snapshot["metadata"] = metadata
@@ -76,7 +82,7 @@ class ScenarioService:
         return await self.repo.list_recent(limit=limit)
 
     async def list_paginated(
-        self, limit: int = 20, offset: int = 0
+        self, limit: int = 20, offset: int = 0,
     ) -> tuple[list[Scenario], int]:
         items, total = await self.repo.list_recent_paginated(limit=limit, offset=offset)
         return list(items), total

@@ -81,6 +81,9 @@ async def delete_scenario(scenario_id: UUID, session: AsyncSession = Depends(get
     try:
         deleted = await service.delete(scenario_id)
     except IntegrityError:
-        raise HTTPException(status_code=400, detail="Scenario is referenced and cannot be deleted") from None
+        raise HTTPException(
+            status_code=400,
+            detail="Scenario is referenced and cannot be deleted",
+        ) from None
     if not deleted:
         raise HTTPException(status_code=404, detail="Scenario not found")

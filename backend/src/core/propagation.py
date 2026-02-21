@@ -10,7 +10,7 @@ except Exception:  # pragma: no cover
     Loader = None
 
 try:  # optional dependency
-    from scipy.constants import c as SPEED_OF_LIGHT
+    from scipy.constants import c as SPEED_OF_LIGHT  # noqa: N812
 except Exception:  # pragma: no cover
     SPEED_OF_LIGHT = 299_792_458.0
 
@@ -83,7 +83,7 @@ def rain_loss_db(
                 elevation_deg,
                 hs=ground_alt_m / 1000,
                 R001=rain_rate_mm_per_hr,
-            ).value
+            ).value,
         )
     except Exception as exc:  # pragma: no cover
         raise RuntimeError("Failed to compute rain attenuation via ITU-R P.618") from exc
@@ -105,7 +105,7 @@ def gas_loss_db(
                 P=pressure_hpa,
                 T=temperature_k,
                 mode="approx",
-            ).value
+            ).value,
         )
     except Exception as exc:  # pragma: no cover
         raise RuntimeError("Failed to compute gaseous attenuation via ITU-R P.676") from exc
@@ -122,7 +122,7 @@ def cloud_loss_db(
         return float(
             itu840.cloud_attenuation(
                 ground_lat_deg, ground_lon_deg, elevation_deg, frequency_hz / 1e9, availability_p,
-            ).value
+            ).value,
         )
     except Exception as exc:  # pragma: no cover
         raise RuntimeError("Failed to compute cloud attenuation via ITU-R P.840") from exc
@@ -163,7 +163,8 @@ def compute_link_budget(inputs: LinkBudgetInputs) -> dict:
         inputs.frequency_hz,
     )
     gas = gas_loss_db(
-        inputs.frequency_hz, inputs.elevation_deg, inputs.temperature_k, inputs.water_vapor_density, inputs.pressure_hpa,
+        inputs.frequency_hz, inputs.elevation_deg, inputs.temperature_k,
+        inputs.water_vapor_density, inputs.pressure_hpa,
     )
     cloud = cloud_loss_db(
         inputs.ground_lat_deg, inputs.ground_lon_deg, inputs.elevation_deg, inputs.frequency_hz,

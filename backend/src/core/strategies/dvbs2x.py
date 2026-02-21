@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Iterable, Sequence
 
 from src.core.strategies.base import WaveformStrategy
 
@@ -113,9 +113,18 @@ class DvbS2xStrategy(WaveformStrategy):
         self.default_rolloff = 0.2
         if table is None:
             self.table: list[ModcodEntry] = [
-                ModcodEntry("qpsk-1/4", "QPSK", "1/4", required_cn0_dbhz=65.0, info_bits_per_symbol=0.5),
-                ModcodEntry("qpsk-1/2", "QPSK", "1/2", required_cn0_dbhz=70.0, info_bits_per_symbol=1.0),
-                ModcodEntry("8psk-3/4", "8PSK", "3/4", required_cn0_dbhz=78.0, info_bits_per_symbol=2.25),
+                ModcodEntry(
+                    "qpsk-1/4", "QPSK", "1/4",
+                    required_cn0_dbhz=65.0, info_bits_per_symbol=0.5,
+                ),
+                ModcodEntry(
+                    "qpsk-1/2", "QPSK", "1/2",
+                    required_cn0_dbhz=70.0, info_bits_per_symbol=1.0,
+                ),
+                ModcodEntry(
+                    "8psk-3/4", "8PSK", "3/4",
+                    required_cn0_dbhz=78.0, info_bits_per_symbol=2.25,
+                ),
             ]
         else:
             normalized: list[ModcodEntry] = []
@@ -148,7 +157,10 @@ class DvbS2xStrategy(WaveformStrategy):
     def _validate_table(self) -> None:
         for entry in self.table:
             if entry.info_bits_per_symbol is None or entry.info_bits_per_symbol <= 0:
-                raise ValueError(f"info_bits_per_symbol must be provided and positive for ModCod {entry.id}")
+                raise ValueError(
+                    "info_bits_per_symbol must be provided"
+                    f" and positive for ModCod {entry.id}",
+                )
 
     def _resolve_rolloff(self, entry: ModcodEntry, rolloff: float | None) -> float:
         alpha = rolloff if rolloff is not None else entry.rolloff
@@ -166,7 +178,10 @@ class DvbS2xStrategy(WaveformStrategy):
         info_bits = self._info_bits_per_symbol(entry, rolloff)
         return info_bits / (1 + alpha)
 
-    def _bitrate_bps(self, entry: ModcodEntry, bandwidth_hz: float | None, rolloff: float | None) -> float | None:
+    def _bitrate_bps(
+        self, entry: ModcodEntry, bandwidth_hz: float | None,
+        rolloff: float | None,
+    ) -> float | None:
         if bandwidth_hz is None:
             return None
         eff = self._effective_spectral_efficiency(entry, rolloff)
@@ -177,7 +192,11 @@ class DvbS2xStrategy(WaveformStrategy):
             return entry.required_cn0_dbhz
         return None
 
-    def select_modcod(self, cn0_dbhz: float, bandwidth_hz: float | None = None, rolloff: float | None = None) -> ModcodEntry | None:
+    def select_modcod(
+        self, cn0_dbhz: float,
+        bandwidth_hz: float | None = None,
+        rolloff: float | None = None,
+    ) -> ModcodEntry | None:
         entries = self._sorted_entries()
         if not entries:
             return None
@@ -227,7 +246,9 @@ class DvbS2xStrategy(WaveformStrategy):
         margin = available_ebno - required_ebno
         return entry, available_ebno, required_ebno, margin, bitrate
 
-    def effective_spectral_efficiency(self, entry: ModcodEntry, rolloff: float | None = None) -> float:
+    def effective_spectral_efficiency(
+        self, entry: ModcodEntry, rolloff: float | None = None,
+    ) -> float:
         return self._effective_spectral_efficiency(entry, rolloff)
 
     def spectral_efficiency(self) -> float:

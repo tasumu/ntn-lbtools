@@ -74,7 +74,10 @@ async def delete_satellite(sat_id: UUID, session: AsyncSession = Depends(get_db_
     try:
         deleted = await service.delete_satellite(sat_id)
     except IntegrityError:
-        raise HTTPException(status_code=400, detail="Satellite is referenced and cannot be deleted") from None
+        raise HTTPException(
+            status_code=400,
+            detail="Satellite is referenced and cannot be deleted",
+        ) from None
     if not deleted:
         raise HTTPException(status_code=404, detail="Satellite not found")
 
@@ -136,6 +139,9 @@ async def delete_earth_station(es_id: UUID, session: AsyncSession = Depends(get_
     try:
         deleted = await service.delete_earth_station(es_id)
     except IntegrityError:
-        raise HTTPException(status_code=400, detail="Earth station is referenced and cannot be deleted") from None
+        raise HTTPException(
+            status_code=400,
+            detail="Earth station is referenced and cannot be deleted",
+        ) from None
     if not deleted:
         raise HTTPException(status_code=404, detail="Earth station not found")

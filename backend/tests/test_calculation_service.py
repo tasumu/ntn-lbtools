@@ -24,7 +24,9 @@ class FakeRepo:
 @pytest.mark.asyncio
 async def test_calculate_404_when_modcod_missing():
     service = CalculationService(
-        modcod_repo=FakeRepo(obj=None), satellite_repo=FakeRepo(obj=None), earth_station_repo=FakeRepo(obj=None)
+        modcod_repo=FakeRepo(obj=None),
+        satellite_repo=FakeRepo(obj=None),
+        earth_station_repo=FakeRepo(obj=None),
     )
     payload = {
         "waveform_strategy": "DVB_S2X",

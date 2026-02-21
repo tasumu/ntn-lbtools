@@ -10,7 +10,12 @@ class WaveformStrategy(ABC):
     name: str
 
     @abstractmethod
-    def select_modcod(self, cn0_dbhz: float, bandwidth_hz: float | None = None, rolloff: float | None = None):
+    def select_modcod(
+        self,
+        cn0_dbhz: float,
+        bandwidth_hz: float | None = None,
+        rolloff: float | None = None,
+    ):
         """Return a ModCod entry given CN0 (and optionally bandwidth and rolloff)."""
 
     @abstractmethod
@@ -21,5 +26,6 @@ class WaveformStrategy(ABC):
 class CommunicationStrategy(Protocol):
     name: str
 
-    async def calculate(self, runtime: RuntimeParameters, direction: str = "uplink") -> CalculationResult:
-        ...
+    async def calculate(
+        self, runtime: RuntimeParameters, direction: str = "uplink",
+    ) -> CalculationResult: ...

@@ -44,7 +44,7 @@ class AssetsService:
         return await self.sat_repo.list_all()
 
     async def list_satellites_paginated(
-        self, limit: int = 20, offset: int = 0
+        self, limit: int = 20, offset: int = 0,
     ) -> tuple[list[Satellite], int]:
         items, total = await self.sat_repo.list_all_paginated(limit=limit, offset=offset)
         return list(items), total
@@ -81,7 +81,7 @@ class AssetsService:
         return await self.es_repo.list_all()
 
     async def list_earth_stations_paginated(
-        self, limit: int = 20, offset: int = 0
+        self, limit: int = 20, offset: int = 0,
     ) -> tuple[list[EarthStation], int]:
         items, total = await self.es_repo.list_all_paginated(limit=limit, offset=offset)
         return list(items), total
