@@ -45,13 +45,14 @@ export function ScenarioComparisonPage() {
 
   const scenarios = paginatedScenarios?.items ?? [];
 
-  const { satellites, earthStations } = useCalculationAssets();
+  const { satellites, earthStations, modcodOptions } = useCalculationAssets();
   const assetMap: AssetNameMap = useMemo(() => {
     const m = new Map<string, string>();
     for (const s of satellites) m.set(s.id, s.name);
     for (const e of earthStations) m.set(e.id, e.name);
+    for (const mc of modcodOptions) m.set(mc.value, mc.label);
     return m;
-  }, [satellites, earthStations]);
+  }, [satellites, earthStations, modcodOptions]);
 
   const compareMutation = useMutation({
     mutationFn: async ({ idA, idB }: { idA: string; idB: string }) => {

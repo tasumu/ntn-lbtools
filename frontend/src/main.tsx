@@ -104,7 +104,9 @@ if (root) {
       <MantineProvider theme={theme} defaultColorScheme="dark">
         <Notifications position="top-right" />
         <ApiProvider>
-          <BrowserRouter>
+          <BrowserRouter
+            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+          >
             <a
               href="#main-content"
               style={{

@@ -22,7 +22,11 @@ function AllProviders({ children }: { children: ReactNode }) {
     <MantineProvider theme={theme}>
       <Notifications position="top-right" />
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>{children}</BrowserRouter>
+        <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
+          {children}
+        </BrowserRouter>
       </QueryClientProvider>
     </MantineProvider>
   );
