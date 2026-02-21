@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "0004_add_modcod_name"
-down_revision = "0003_add_earth_station_location"
+down_revision = "0003_es_location"
 branch_labels = None
 depends_on = None
 
@@ -35,7 +35,7 @@ def upgrade() -> None:
     op.execute(
         sa.text(
             "UPDATE modcod_tables SET name = 'Sample Standard' "
-            "WHERE id = :id",
+            "WHERE id = CAST(:id AS UUID)",
         ).bindparams(id=SAMPLE_MODCOD_ID),
     )
 
@@ -50,7 +50,7 @@ def downgrade() -> None:
     op.execute(
         sa.text(
             "UPDATE modcod_tables SET version = 'sample-1.0.0' "
-            "WHERE id = :id",
+            "WHERE id = CAST(:id AS UUID)",
         ).bindparams(id=SAMPLE_MODCOD_ID),
     )
 
