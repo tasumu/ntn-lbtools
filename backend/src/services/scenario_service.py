@@ -41,8 +41,7 @@ class ScenarioService:
         overrides = payload_snapshot.get("overrides") or {}
         # Keep only satellite override (legacy fields are dropped)
         overrides = (
-            {"satellite": overrides.get("satellite")}
-            if overrides.get("satellite") else None
+            {"satellite": overrides.get("satellite")} if overrides.get("satellite") else None
         )
         payload_snapshot["overrides"] = overrides
         metadata.setdefault("schema_version", "1.1.0")
@@ -82,7 +81,9 @@ class ScenarioService:
         return await self.repo.list_recent(limit=limit)
 
     async def list_paginated(
-        self, limit: int = 20, offset: int = 0,
+        self,
+        limit: int = 20,
+        offset: int = 0,
     ) -> tuple[list[Scenario], int]:
         items, total = await self.repo.list_recent_paginated(limit=limit, offset=offset)
         return list(items), total

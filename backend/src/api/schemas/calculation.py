@@ -17,6 +17,7 @@ class TransponderType(str, Enum):
     TRANSPARENT = "TRANSPARENT"
     REGENERATIVE = "REGENERATIVE"
 
+
 class InterferenceModel(BaseModel):
     adjacent_sat_ci_db: float | None = None
     cross_polar_ci_db: float | None = None
@@ -229,10 +230,7 @@ class CalculationRequest(BaseModel):
         if self.transponder_type == TransponderType.TRANSPARENT:
             if self.modcod_table_id is None:
                 raise ValueError("modcod_table_id is required for Transparent transponders")
-            if (
-                self.uplink_modcod_table_id
-                and self.uplink_modcod_table_id != self.modcod_table_id
-            ):
+            if self.uplink_modcod_table_id and self.uplink_modcod_table_id != self.modcod_table_id:
                 raise ValueError("Transparent transponders use a single ModCod table")
             if (
                 self.downlink_modcod_table_id

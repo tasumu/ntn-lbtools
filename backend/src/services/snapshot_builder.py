@@ -42,7 +42,8 @@ def build_runtime_echo(
         "rolloff": rolloff,
         "uplink": _runtime_direction_echo(runtime.uplink, uplink_data.get("interference") or {}),
         "downlink": _runtime_direction_echo(
-            runtime.downlink, downlink_data.get("interference") or {},
+            runtime.downlink,
+            downlink_data.get("interference") or {},
         ),
         "intermodulation": intermod_block or None,
     }
@@ -58,23 +59,39 @@ def _serialize_asset(obj: Any, fields: list[str]) -> dict[str, Any] | None:
 
 
 _SATELLITE_FIELDS = [
-    "id", "name", "description", "orbit_type", "longitude_deg", "inclination_deg",
-    "transponder_bandwidth_mhz", "eirp_dbw", "gt_db_per_k", "frequency_band", "notes",
+    "id",
+    "name",
+    "description",
+    "orbit_type",
+    "longitude_deg",
+    "inclination_deg",
+    "transponder_bandwidth_mhz",
+    "eirp_dbw",
+    "gt_db_per_k",
+    "frequency_band",
+    "notes",
 ]
 
 _EARTH_STATION_FIELDS = [
-    "id", "name", "description", "antenna_diameter_m", "antenna_gain_tx_db",
-    "antenna_gain_rx_db", "noise_temperature_k", "eirp_dbw", "tx_power_dbw",
-    "gt_db_per_k", "polarization", "notes",
+    "id",
+    "name",
+    "description",
+    "antenna_diameter_m",
+    "antenna_gain_tx_db",
+    "antenna_gain_rx_db",
+    "noise_temperature_k",
+    "eirp_dbw",
+    "tx_power_dbw",
+    "gt_db_per_k",
+    "polarization",
+    "notes",
 ]
 
 
 def _snapshot_entries(table: Any) -> list[dict[str, Any]] | None:
     if not table:
         return None
-    return [
-        _clean_modcod_dict(e if isinstance(e, dict) else asdict(e)) for e in table.entries
-    ]
+    return [_clean_modcod_dict(e if isinstance(e, dict) else asdict(e)) for e in table.entries]
 
 
 def build_payload_snapshot(

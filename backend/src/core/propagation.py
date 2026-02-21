@@ -33,7 +33,10 @@ if Loader:
 
 
 def estimate_slant_range_km(
-    ground_lat_deg: float, ground_lon_deg: float, ground_alt_m: float, sat_longitude_deg: float,
+    ground_lat_deg: float,
+    ground_lon_deg: float,
+    ground_alt_m: float,
+    sat_longitude_deg: float,
 ) -> float:
     """
     Estimate GEO slant range. Prefer Skyfield geometry; fall back to spherical geometry.
@@ -121,7 +124,11 @@ def cloud_loss_db(
     try:
         return float(
             itu840.cloud_attenuation(
-                ground_lat_deg, ground_lon_deg, elevation_deg, frequency_hz / 1e9, availability_p,
+                ground_lat_deg,
+                ground_lon_deg,
+                elevation_deg,
+                frequency_hz / 1e9,
+                availability_p,
             ).value,
         )
     except Exception as exc:  # pragma: no cover
@@ -151,7 +158,10 @@ class LinkBudgetInputs:
 
 def compute_link_budget(inputs: LinkBudgetInputs) -> dict:
     slant_range_km = estimate_slant_range_km(
-        inputs.ground_lat_deg, inputs.ground_lon_deg, inputs.ground_alt_m, inputs.sat_longitude_deg,
+        inputs.ground_lat_deg,
+        inputs.ground_lon_deg,
+        inputs.ground_alt_m,
+        inputs.sat_longitude_deg,
     )
     fspl = free_space_path_loss_db(inputs.frequency_hz, slant_range_km)
     rain = rain_loss_db(
@@ -163,11 +173,17 @@ def compute_link_budget(inputs: LinkBudgetInputs) -> dict:
         inputs.frequency_hz,
     )
     gas = gas_loss_db(
-        inputs.frequency_hz, inputs.elevation_deg, inputs.temperature_k,
-        inputs.water_vapor_density, inputs.pressure_hpa,
+        inputs.frequency_hz,
+        inputs.elevation_deg,
+        inputs.temperature_k,
+        inputs.water_vapor_density,
+        inputs.pressure_hpa,
     )
     cloud = cloud_loss_db(
-        inputs.ground_lat_deg, inputs.ground_lon_deg, inputs.elevation_deg, inputs.frequency_hz,
+        inputs.ground_lat_deg,
+        inputs.ground_lon_deg,
+        inputs.elevation_deg,
+        inputs.frequency_hz,
     )
     pointing = pointing_loss_db(inputs.elevation_deg)
     atm_loss = fspl + rain + gas + cloud + pointing

@@ -17,7 +17,10 @@ class ModcodRepository(BaseRepository[ModcodTable]):
         return result.scalars().all()
 
     async def list_paginated(
-        self, limit: int = 20, offset: int = 0, waveform: str | None = None,
+        self,
+        limit: int = 20,
+        offset: int = 0,
+        waveform: str | None = None,
     ) -> tuple[Sequence[ModcodTable], int]:
         count_stmt = select(func.count()).select_from(ModcodTable)
         items_stmt = select(ModcodTable)

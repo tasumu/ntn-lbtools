@@ -28,16 +28,24 @@ class Scenario(Base):
     waveform_strategy = Column(String(50), nullable=False)
     transponder_type = Column(String(50), nullable=False)
     modcod_table_id = Column(
-        UUID(as_uuid=True), ForeignKey("modcod_tables.id"), nullable=False,
+        UUID(as_uuid=True),
+        ForeignKey("modcod_tables.id"),
+        nullable=False,
     )
     satellite_id = Column(
-        UUID(as_uuid=True), ForeignKey("satellites.id"), nullable=True,
+        UUID(as_uuid=True),
+        ForeignKey("satellites.id"),
+        nullable=True,
     )
     earth_station_tx_id = Column(
-        UUID(as_uuid=True), ForeignKey("earth_stations.id"), nullable=True,
+        UUID(as_uuid=True),
+        ForeignKey("earth_stations.id"),
+        nullable=True,
     )
     earth_station_rx_id = Column(
-        UUID(as_uuid=True), ForeignKey("earth_stations.id"), nullable=True,
+        UUID(as_uuid=True),
+        ForeignKey("earth_stations.id"),
+        nullable=True,
     )
     schema_version = Column(String(20), nullable=False, default="1.1.0")
     status = Column(String(30), nullable=False, default="Draft")

@@ -27,5 +27,7 @@ class CommunicationStrategy(Protocol):
     name: str
 
     async def calculate(
-        self, runtime: RuntimeParameters, direction: str = "uplink",
+        self,
+        runtime: RuntimeParameters,
+        direction: str = "uplink",
     ) -> CalculationResult: ...

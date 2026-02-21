@@ -38,13 +38,17 @@ addopts = "-ra"
 asyncio_mode = "auto"
 pythonpath = ["src"]
 
+[tool.alembic]
+script_location = "src/persistence/migrations"
+prepend_sys_path = ["."]
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC", "A", "COM", "N"]
-ignore = ["E203"]
+ignore = ["E203", "COM812"]
 
 [dependency-groups]
 dev = [

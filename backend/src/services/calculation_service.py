@@ -49,7 +49,9 @@ def _selected_modcod_entry_from_table(
             effective_se = None
             if hasattr(waveform_source, "effective_spectral_efficiency"):
                 try:
-                    effective_se = waveform_source.effective_spectral_efficiency(entry_obj, rolloff_value)  # type: ignore[arg-type]
+                    effective_se = waveform_source.effective_spectral_efficiency(
+                        entry_obj, rolloff_value
+                    )  # type: ignore[arg-type]
                 except Exception:
                     effective_se = None
             return {
@@ -254,15 +256,25 @@ class CalculationService:
         rolloff = runtime_data.get("rolloff")
 
         # ---- Resolve ModCod tables ----
-        common_modcod_table, common_waveform = await self._fetch_modcod(payload.get("modcod_table_id"))
-        if transponder_type == TransponderType.TRANSPARENT and payload.get("modcod_table_id") is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="modcod_table_id is required for Transparent transponders")
+        common_modcod_table, common_waveform = await self._fetch_modcod(
+            payload.get("modcod_table_id")
+        )
+        if (
+            transponder_type == TransponderType.TRANSPARENT
+            and payload.get("modcod_table_id") is None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="modcod_table_id is required for Transparent transponders",
+            )
 
         uplink_modcod_table = downlink_modcod_table = None
         uplink_waveform = downlink_waveform = None
         if transponder_type == TransponderType.TRANSPARENT:
             if payload.get("modcod_table_id") and not common_modcod_table:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ModCod table not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="ModCod table not found"
+                )
             if common_waveform:
                 self.communication_strategy.waveform = common_waveform
             uplink_modcod_table = downlink_modcod_table = common_modcod_table
@@ -273,9 +285,13 @@ class CalculationService:
             uplink_modcod_table, uplink_waveform = await self._fetch_modcod(uplink_table_id)
             downlink_modcod_table, downlink_waveform = await self._fetch_modcod(downlink_table_id)
             if uplink_table_id and not uplink_modcod_table:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Uplink ModCod table not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Uplink ModCod table not found"
+                )
             if downlink_table_id and not downlink_modcod_table:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Downlink ModCod table not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Downlink ModCod table not found"
+                )
             uplink_waveform = uplink_waveform or DvbS2xStrategy()
             downlink_waveform = downlink_waveform or DvbS2xStrategy()
 
@@ -283,31 +299,51 @@ class CalculationService:
         if sat_id and not sat:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Satellite not found")
         if tx_id and not tx_es:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Earth station (tx) not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Earth station (tx) not found"
+            )
         if rx_id and not rx_es:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Earth station (rx) not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Earth station (rx) not found"
+            )
 
         # ---- Resolve bandwidth ----
         uplink_data = runtime_data.get("uplink") or {}
         downlink_data = runtime_data.get("downlink") or {}
         shared_bandwidth = runtime_data.get("bandwidth_hz")
         if transponder_type == TransponderType.TRANSPARENT:
-            shared_bandwidth = shared_bandwidth or uplink_data.get("bandwidth_hz") or downlink_data.get("bandwidth_hz")
+            shared_bandwidth = (
+                shared_bandwidth
+                or uplink_data.get("bandwidth_hz")
+                or downlink_data.get("bandwidth_hz")
+            )
             if shared_bandwidth is None:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bandwidth_hz is required for Transparent transponders")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="bandwidth_hz is required for Transparent transponders",
+                )
             for direction_data in (uplink_data, downlink_data):
-                if direction_data.get("bandwidth_hz") and direction_data.get("bandwidth_hz") != shared_bandwidth:
+                if (
+                    direction_data.get("bandwidth_hz")
+                    and direction_data.get("bandwidth_hz") != shared_bandwidth
+                ):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Transparent transponders use a common bandwidth_hz for uplink and downlink",
                     )
                 direction_data["bandwidth_hz"] = shared_bandwidth
         elif shared_bandwidth is not None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Regenerative transponders require per-link bandwidth_hz values")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Regenerative transponders require per-link bandwidth_hz values",
+            )
 
         sat_longitude = runtime_data.get("sat_longitude_deg") or getattr(sat, "longitude_deg", None)
         if sat_longitude is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Satellite longitude is required (use satellite asset longitude or provide sat_longitude_deg)")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Satellite longitude is required (use satellite asset longitude or provide sat_longitude_deg)",
+            )
 
         # ---- Build link parameters ----
         uplink_params = self._build_direction(uplink_data, "uplink", sat_longitude)
@@ -332,42 +368,104 @@ class CalculationService:
 
         ul_clean_cn = uplink.cn_db
         dl_clean_cn = downlink.cn_db
-        uplink_bandwidth = uplink.bandwidth_hz or uplink_data.get("bandwidth_hz") or shared_bandwidth
-        downlink_bandwidth = downlink.bandwidth_hz or downlink_data.get("bandwidth_hz") or shared_bandwidth
+        uplink_bandwidth = (
+            uplink.bandwidth_hz or uplink_data.get("bandwidth_hz") or shared_bandwidth
+        )
+        downlink_bandwidth = (
+            downlink.bandwidth_hz or downlink_data.get("bandwidth_hz") or shared_bandwidth
+        )
 
         # ---- Apply impairments ----
-        uplink_i_over_c, uplink_ci_db, uplink_interference_applied = compute_interference(uplink_data.get("interference"))
-        downlink_i_over_c, downlink_ci_db, downlink_interference_applied = compute_interference(downlink_data.get("interference"))
+        uplink_i_over_c, uplink_ci_db, uplink_interference_applied = compute_interference(
+            uplink_data.get("interference")
+        )
+        downlink_i_over_c, downlink_ci_db, downlink_interference_applied = compute_interference(
+            downlink_data.get("interference")
+        )
         intermod_block = runtime_data.get("intermodulation") or {}
         c_im_db, intermod_applied = estimate_intermodulation(intermod_block)
 
-        uplink = apply_impairments(uplink, uplink_bandwidth, uplink_i_over_c, uplink_ci_db, uplink_interference_applied, False, c_im_db)
-        downlink = apply_impairments(downlink, downlink_bandwidth, downlink_i_over_c, downlink_ci_db, downlink_interference_applied, intermod_applied, c_im_db)
+        uplink = apply_impairments(
+            uplink,
+            uplink_bandwidth,
+            uplink_i_over_c,
+            uplink_ci_db,
+            uplink_interference_applied,
+            False,
+            c_im_db,
+        )
+        downlink = apply_impairments(
+            downlink,
+            downlink_bandwidth,
+            downlink_i_over_c,
+            downlink_ci_db,
+            downlink_interference_applied,
+            intermod_applied,
+            c_im_db,
+        )
         uplink = replace(uplink, clean_cn_db=ul_clean_cn)
         downlink = replace(downlink, clean_cn_db=dl_clean_cn)
 
         # ---- Build runtime echo ----
         is_transparent = transponder_type == TransponderType.TRANSPARENT
-        runtime_echo = build_runtime_echo(runtime, rolloff, uplink_data, downlink_data, intermod_block, shared_bandwidth, is_transparent)
+        runtime_echo = build_runtime_echo(
+            runtime,
+            rolloff,
+            uplink_data,
+            downlink_data,
+            intermod_block,
+            shared_bandwidth,
+            is_transparent,
+        )
 
         # ---- Combine results and select ModCod ----
-        combined_results, modcod_selection_payload, combined_cn_db_val, combined_cn0_dbhz, total_link_margin = self._combine_and_select_modcod(
-            transponder_type, uplink, downlink, ul_clean_cn, dl_clean_cn,
-            rolloff, shared_bandwidth, common_modcod_table, uplink_modcod_table,
-            downlink_modcod_table, uplink_waveform, downlink_waveform,
+        (
+            combined_results,
+            modcod_selection_payload,
+            combined_cn_db_val,
+            combined_cn0_dbhz,
+            total_link_margin,
+        ) = self._combine_and_select_modcod(
+            transponder_type,
+            uplink,
+            downlink,
+            ul_clean_cn,
+            dl_clean_cn,
+            rolloff,
+            shared_bandwidth,
+            common_modcod_table,
+            uplink_modcod_table,
+            downlink_modcod_table,
+            uplink_waveform,
+            downlink_waveform,
         )
 
         # Re-read uplink/downlink since _combine_and_select_modcod returns updated values via closure
         # Instead, pass them through the method
-        results = {"uplink": asdict(uplink), "downlink": asdict(downlink), "combined": combined_results}
+        results = {
+            "uplink": asdict(uplink),
+            "downlink": asdict(downlink),
+            "combined": combined_results,
+        }
 
         # ---- Snapshot (optional) ----
         payload_snapshot = None
         if include_snapshot:
             payload_snapshot = build_payload_snapshot(
-                payload, runtime, runtime_echo, sat, tx_es, rx_es,
-                common_modcod_table, uplink_modcod_table, downlink_modcod_table,
-                self.communication_strategy.waveform, sat_id, tx_id, rx_id, clean_overrides,
+                payload,
+                runtime,
+                runtime_echo,
+                sat,
+                tx_es,
+                rx_es,
+                common_modcod_table,
+                uplink_modcod_table,
+                downlink_modcod_table,
+                self.communication_strategy.waveform,
+                sat_id,
+                tx_id,
+                rx_id,
+                clean_overrides,
             )
             payload_snapshot["runtime"] = runtime_echo
 
@@ -400,20 +498,33 @@ class CalculationService:
         downlink_modcod_table: Any,
         uplink_waveform: Any,
         downlink_waveform: Any,
-    ) -> tuple[dict[str, Any] | None, dict[str, Any] | None, float | None, float | None, float | None]:
+    ) -> tuple[
+        dict[str, Any] | None, dict[str, Any] | None, float | None, float | None, float | None
+    ]:
         """Combine uplink/downlink and select ModCod entries.
 
         Returns (combined_results, modcod_selection_payload, combined_cn_db, combined_cn0_dbhz, total_link_margin).
         """
         if transponder_type == TransponderType.TRANSPARENT:
             return self._transparent_combine(
-                uplink, downlink, ul_clean_cn, dl_clean_cn, rolloff,
+                uplink,
+                downlink,
+                ul_clean_cn,
+                dl_clean_cn,
+                rolloff,
                 common_modcod_table,
             )
         return self._regenerative_combine(
-            uplink, downlink, ul_clean_cn, dl_clean_cn, rolloff,
-            common_modcod_table, uplink_modcod_table, downlink_modcod_table,
-            uplink_waveform, downlink_waveform,
+            uplink,
+            downlink,
+            ul_clean_cn,
+            dl_clean_cn,
+            rolloff,
+            common_modcod_table,
+            uplink_modcod_table,
+            downlink_modcod_table,
+            uplink_waveform,
+            downlink_waveform,
         )
 
     def _transparent_combine(
@@ -424,7 +535,9 @@ class CalculationService:
         dl_clean_cn: float,
         rolloff: float | None,
         common_modcod_table: Any,
-    ) -> tuple[dict[str, Any] | None, dict[str, Any] | None, float | None, float | None, float | None]:
+    ) -> tuple[
+        dict[str, Any] | None, dict[str, Any] | None, float | None, float | None, float | None
+    ]:
         combined_bandwidth = downlink.bandwidth_hz or uplink.bandwidth_hz
         combined_cn = combine_cn_db(uplink.cn_db, downlink.cn_db)
         combined_cn0 = combined_cn + 10 * math.log10(combined_bandwidth)
@@ -435,9 +548,15 @@ class CalculationService:
         combined_cni0 = combined_cni + 10 * math.log10(combined_bandwidth)
 
         (
-            selected_entry, _available_ebno, required_ebno, margin, bitrate_used,
+            selected_entry,
+            _available_ebno,
+            required_ebno,
+            margin,
+            bitrate_used,
         ) = self.communication_strategy.waveform.select_modcod_with_margin(  # type: ignore[arg-type]
-            combined_cn0, combined_bandwidth, rolloff,
+            combined_cn0,
+            combined_bandwidth,
+            rolloff,
         )
         selected_modcod = selected_entry.id if selected_entry else None
         total_link_margin = margin
@@ -446,6 +565,7 @@ class CalculationService:
             uplink = replace(uplink, modcod_selected=selected_modcod)
             downlink = replace(downlink, modcod_selected=selected_modcod)
         if required_ebno is not None and bitrate_used:
+
             def _link_margin(cn0_dbhz: float) -> float:
                 return cn0_dbhz - 10 * math.log10(bitrate_used) - required_ebno
 
@@ -465,18 +585,29 @@ class CalculationService:
         }
         if total_link_margin is not None:
             combined_clean_cn = combine_cn_db(ul_clean_cn, dl_clean_cn)
-            combined_results["clean_link_margin_db"] = total_link_margin + (combined_clean_cn - combined_cn)
+            combined_results["clean_link_margin_db"] = total_link_margin + (
+                combined_clean_cn - combined_cn
+            )
             combined_results["clean_cn_db"] = combined_clean_cn
 
         modcod_selection_payload = None
         if selected_modcod:
             modcod_selection_payload = _selected_modcod_entry_from_table(
-                selected_modcod, common_modcod_table, self.communication_strategy.waveform, rolloff,
+                selected_modcod,
+                common_modcod_table,
+                self.communication_strategy.waveform,
+                rolloff,
             )
             if not modcod_selection_payload:
                 modcod_selection_payload = {"id": selected_modcod}
 
-        return combined_results, modcod_selection_payload, combined_cn, combined_cn0, total_link_margin
+        return (
+            combined_results,
+            modcod_selection_payload,
+            combined_cn,
+            combined_cn0,
+            total_link_margin,
+        )
 
     @staticmethod
     def _regenerative_combine(
@@ -492,10 +623,15 @@ class CalculationService:
         downlink_waveform: Any,
     ) -> tuple[None, dict[str, Any] | None, None, None, float | None]:
         def _apply_modcod(
-            result: CalculationResult, waveform: Any,
+            result: CalculationResult,
+            waveform: Any,
         ) -> CalculationResult:
-            entry, _available_ebno, required_ebno, margin, bitrate_used = waveform.select_modcod_with_margin(
-                result.cn0_dbhz, result.bandwidth_hz, rolloff,
+            entry, _available_ebno, required_ebno, margin, bitrate_used = (
+                waveform.select_modcod_with_margin(
+                    result.cn0_dbhz,
+                    result.bandwidth_hz,
+                    rolloff,
+                )
             )
             updates: dict[str, Any] = {}
             if entry:
@@ -521,15 +657,23 @@ class CalculationService:
                 clean_link_margin_db=downlink.link_margin_db + (dl_clean_cn - downlink.cn_db),
                 clean_cn_db=dl_clean_cn,
             )
-        link_margins = [m for m in (uplink.link_margin_db, downlink.link_margin_db) if m is not None]
+        link_margins = [
+            m for m in (uplink.link_margin_db, downlink.link_margin_db) if m is not None
+        ]
         total_link_margin = min(link_margins) if link_margins else None
         modcod_selection_payload = {
             "uplink": _selected_modcod_entry_from_table(
-                uplink.modcod_selected, uplink_modcod_table, uplink_waveform, rolloff,
+                uplink.modcod_selected,
+                uplink_modcod_table,
+                uplink_waveform,
+                rolloff,
             )
             or ({"id": uplink.modcod_selected} if uplink.modcod_selected else None),
             "downlink": _selected_modcod_entry_from_table(
-                downlink.modcod_selected, downlink_modcod_table, downlink_waveform, rolloff,
+                downlink.modcod_selected,
+                downlink_modcod_table,
+                downlink_waveform,
+                rolloff,
             )
             or ({"id": downlink.modcod_selected} if downlink.modcod_selected else None),
         }

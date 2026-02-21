@@ -1,5 +1,6 @@
 # ruff: noqa: E402
 """API-level CRUD tests for ModCod tables."""
+
 import sys
 import uuid
 from pathlib import Path
@@ -110,7 +111,9 @@ class TestCreateModcod:
     @pytest.mark.asyncio
     async def test_create_modcod_duplicate_waveform_name_rejected(self, client_factory, fake_db):
         table = ModcodTable(
-            name="Duplicate Test", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+            name="Duplicate Test",
+            waveform="DVB_S2X",
+            entries=_make_modcod_entries_json(),
         )
         fake_db.seed(table)
 
@@ -170,7 +173,9 @@ class TestListModcod:
     @pytest.mark.asyncio
     async def test_list_modcod_returns_seeded(self, client_factory, fake_db):
         table = ModcodTable(
-            name="Test Table", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+            name="Test Table",
+            waveform="DVB_S2X",
+            entries=_make_modcod_entries_json(),
         )
         fake_db.seed(table)
 
@@ -188,10 +193,14 @@ class TestListModcod:
     @pytest.mark.asyncio
     async def test_list_modcod_filter_by_waveform(self, client_factory, fake_db):
         t1 = ModcodTable(
-            name="Table A", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+            name="Table A",
+            waveform="DVB_S2X",
+            entries=_make_modcod_entries_json(),
         )
         t2 = ModcodTable(
-            name="Table B", waveform="DVB_RCS2", entries=_make_modcod_entries_json(),
+            name="Table B",
+            waveform="DVB_RCS2",
+            entries=_make_modcod_entries_json(),
         )
         fake_db.seed(t1)
         fake_db.seed(t2)
@@ -211,7 +220,9 @@ class TestPublishModcod:
     @pytest.mark.asyncio
     async def test_publish_modcod_success(self, client_factory, fake_db):
         table = ModcodTable(
-            name="Publish Test", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+            name="Publish Test",
+            waveform="DVB_S2X",
+            entries=_make_modcod_entries_json(),
         )
         fake_db.seed(table)
 
@@ -234,7 +245,9 @@ class TestDeleteModcod:
     @pytest.mark.asyncio
     async def test_delete_modcod_success(self, client_factory, fake_db):
         table = ModcodTable(
-            name="Delete Test", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+            name="Delete Test",
+            waveform="DVB_S2X",
+            entries=_make_modcod_entries_json(),
         )
         fake_db.seed(table)
 

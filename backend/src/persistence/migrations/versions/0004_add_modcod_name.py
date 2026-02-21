@@ -34,8 +34,7 @@ def upgrade() -> None:
     # 7. Update seed data name to something descriptive
     op.execute(
         sa.text(
-            "UPDATE modcod_tables SET name = 'Sample Standard' "
-            "WHERE id = CAST(:id AS UUID)",
+            "UPDATE modcod_tables SET name = 'Sample Standard' WHERE id = CAST(:id AS UUID)",
         ).bindparams(id=SAMPLE_MODCOD_ID),
     )
 
@@ -49,15 +48,16 @@ def downgrade() -> None:
     # Restore seed data version
     op.execute(
         sa.text(
-            "UPDATE modcod_tables SET version = 'sample-1.0.0' "
-            "WHERE id = CAST(:id AS UUID)",
+            "UPDATE modcod_tables SET version = 'sample-1.0.0' WHERE id = CAST(:id AS UUID)",
         ).bindparams(id=SAMPLE_MODCOD_ID),
     )
 
     # Swap constraints
     op.drop_constraint("uq_modcod_waveform_name", "modcod_tables", type_="unique")
     op.create_unique_constraint(
-        "uq_modcod_waveform_version", "modcod_tables", ["waveform", "version"],
+        "uq_modcod_waveform_version",
+        "modcod_tables",
+        ["waveform", "version"],
     )
 
     # Make version NOT NULL again

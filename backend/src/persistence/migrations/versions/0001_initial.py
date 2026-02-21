@@ -440,7 +440,8 @@ def downgrade() -> None:
     op.execute(sa.text("DELETE FROM scenarios WHERE id = :id").bindparams(id=SAMPLE_SCENARIO_ID))
     op.execute(
         sa.text("DELETE FROM earth_stations WHERE id IN (:tx_id, :rx_id)").bindparams(
-            tx_id=SAMPLE_TX_ID, rx_id=SAMPLE_RX_ID,
+            tx_id=SAMPLE_TX_ID,
+            rx_id=SAMPLE_RX_ID,
         ),
     )
     op.execute(sa.text("DELETE FROM satellites WHERE id = :id").bindparams(id=SAMPLE_SAT_ID))

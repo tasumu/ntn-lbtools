@@ -21,16 +21,25 @@ from src.core.strategies.dvbs2x import DvbS2xStrategy, ModcodEntry  # type: igno
 def test_modcod_selection_picks_highest_meeting_threshold():
     table = [
         ModcodEntry(
-            id="low", modulation="QPSK", code_rate="1/4",
-            required_cn0_dbhz=60.0, info_bits_per_symbol=0.5,
+            id="low",
+            modulation="QPSK",
+            code_rate="1/4",
+            required_cn0_dbhz=60.0,
+            info_bits_per_symbol=0.5,
         ),
         ModcodEntry(
-            id="mid", modulation="QPSK", code_rate="1/2",
-            required_cn0_dbhz=70.0, info_bits_per_symbol=1.0,
+            id="mid",
+            modulation="QPSK",
+            code_rate="1/2",
+            required_cn0_dbhz=70.0,
+            info_bits_per_symbol=1.0,
         ),
         ModcodEntry(
-            id="high", modulation="8PSK", code_rate="3/4",
-            required_cn0_dbhz=78.0, info_bits_per_symbol=2.25,
+            id="high",
+            modulation="8PSK",
+            code_rate="3/4",
+            required_cn0_dbhz=78.0,
+            info_bits_per_symbol=2.25,
         ),
     ]
     strat = DvbS2xStrategy(table=table)

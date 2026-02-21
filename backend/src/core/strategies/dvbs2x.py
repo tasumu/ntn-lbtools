@@ -114,16 +114,25 @@ class DvbS2xStrategy(WaveformStrategy):
         if table is None:
             self.table: list[ModcodEntry] = [
                 ModcodEntry(
-                    "qpsk-1/4", "QPSK", "1/4",
-                    required_cn0_dbhz=65.0, info_bits_per_symbol=0.5,
+                    "qpsk-1/4",
+                    "QPSK",
+                    "1/4",
+                    required_cn0_dbhz=65.0,
+                    info_bits_per_symbol=0.5,
                 ),
                 ModcodEntry(
-                    "qpsk-1/2", "QPSK", "1/2",
-                    required_cn0_dbhz=70.0, info_bits_per_symbol=1.0,
+                    "qpsk-1/2",
+                    "QPSK",
+                    "1/2",
+                    required_cn0_dbhz=70.0,
+                    info_bits_per_symbol=1.0,
                 ),
                 ModcodEntry(
-                    "8psk-3/4", "8PSK", "3/4",
-                    required_cn0_dbhz=78.0, info_bits_per_symbol=2.25,
+                    "8psk-3/4",
+                    "8PSK",
+                    "3/4",
+                    required_cn0_dbhz=78.0,
+                    info_bits_per_symbol=2.25,
                 ),
             ]
         else:
@@ -158,8 +167,7 @@ class DvbS2xStrategy(WaveformStrategy):
         for entry in self.table:
             if entry.info_bits_per_symbol is None or entry.info_bits_per_symbol <= 0:
                 raise ValueError(
-                    "info_bits_per_symbol must be provided"
-                    f" and positive for ModCod {entry.id}",
+                    f"info_bits_per_symbol must be provided and positive for ModCod {entry.id}",
                 )
 
     def _resolve_rolloff(self, entry: ModcodEntry, rolloff: float | None) -> float:
@@ -179,7 +187,9 @@ class DvbS2xStrategy(WaveformStrategy):
         return info_bits / (1 + alpha)
 
     def _bitrate_bps(
-        self, entry: ModcodEntry, bandwidth_hz: float | None,
+        self,
+        entry: ModcodEntry,
+        bandwidth_hz: float | None,
         rolloff: float | None,
     ) -> float | None:
         if bandwidth_hz is None:
@@ -193,7 +203,8 @@ class DvbS2xStrategy(WaveformStrategy):
         return None
 
     def select_modcod(
-        self, cn0_dbhz: float,
+        self,
+        cn0_dbhz: float,
         bandwidth_hz: float | None = None,
         rolloff: float | None = None,
     ) -> ModcodEntry | None:
@@ -222,7 +233,10 @@ class DvbS2xStrategy(WaveformStrategy):
         return selected or entries[0]
 
     def select_modcod_with_margin(
-        self, cn0_dbhz: float, bandwidth_hz: float | None = None, rolloff: float | None = None,
+        self,
+        cn0_dbhz: float,
+        bandwidth_hz: float | None = None,
+        rolloff: float | None = None,
     ) -> tuple[ModcodEntry | None, float | None, float | None, float | None, float | None]:
         entry = self.select_modcod(cn0_dbhz, bandwidth_hz, rolloff)
         if entry is None:
@@ -247,7 +261,9 @@ class DvbS2xStrategy(WaveformStrategy):
         return entry, available_ebno, required_ebno, margin, bitrate
 
     def effective_spectral_efficiency(
-        self, entry: ModcodEntry, rolloff: float | None = None,
+        self,
+        entry: ModcodEntry,
+        rolloff: float | None = None,
     ) -> float:
         return self._effective_spectral_efficiency(entry, rolloff)
 

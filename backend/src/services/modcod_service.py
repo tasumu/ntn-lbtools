@@ -35,10 +35,15 @@ class ModcodService:
         return await self.repo.list()
 
     async def list_paginated(
-        self, limit: int = 20, offset: int = 0, waveform: str | None = None,
+        self,
+        limit: int = 20,
+        offset: int = 0,
+        waveform: str | None = None,
     ) -> tuple[list[ModcodTable], int]:
         items, total = await self.repo.list_paginated(
-            limit=limit, offset=offset, waveform=waveform,
+            limit=limit,
+            offset=offset,
+            waveform=waveform,
         )
         return list(items), total
 

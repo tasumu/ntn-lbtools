@@ -84,7 +84,9 @@ class FakeSession:
                 existing_vals = tuple(getattr(item, cn, None) for cn in col_names)
                 if new_vals == existing_vals:
                     raise IntegrityError(
-                        f"UNIQUE constraint failed: {col_names}", params=None, orig=Exception(),
+                        f"UNIQUE constraint failed: {col_names}",
+                        params=None,
+                        orig=Exception(),
                     )
 
     async def get(self, model_cls: type, obj_id: Any) -> Any | None:
@@ -108,7 +110,10 @@ class FakeSession:
         self._store.get(model_cls, {}).pop(getattr(obj, "id", None), None)
 
     async def execute(
-        self, stmt: Any, *args: Any, **kwargs: Any,
+        self,
+        stmt: Any,
+        *args: Any,
+        **kwargs: Any,
     ) -> "FakeResult | FakeScalarResult":
         # Detect COUNT queries by checking the compiled SQL string
         if self._is_count_query(stmt):

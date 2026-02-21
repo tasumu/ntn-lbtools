@@ -171,7 +171,10 @@ class TestSweepEndpoint:
     async def test_sweep_invalid_parameter_path(self, client_factory, fake_db):
         sat_id, es_tx_id, es_rx_id, mc_id = _seed_assets(fake_db)
         body = _make_sweep_body(
-            sat_id, es_tx_id, es_rx_id, mc_id,
+            sat_id,
+            es_tx_id,
+            es_rx_id,
+            mc_id,
             parameter_path="runtime.uplink.nonexistent",
         )
 
@@ -184,7 +187,10 @@ class TestSweepEndpoint:
     async def test_sweep_steps_too_high(self, client_factory, fake_db):
         sat_id, es_tx_id, es_rx_id, mc_id = _seed_assets(fake_db)
         body = _make_sweep_body(
-            sat_id, es_tx_id, es_rx_id, mc_id,
+            sat_id,
+            es_tx_id,
+            es_rx_id,
+            mc_id,
             steps=201,
         )
 
@@ -197,8 +203,13 @@ class TestSweepEndpoint:
     async def test_sweep_values_monotonically_increase(self, client_factory, fake_db):
         sat_id, es_tx_id, es_rx_id, mc_id = _seed_assets(fake_db)
         body = _make_sweep_body(
-            sat_id, es_tx_id, es_rx_id, mc_id,
-            start=0, end=100, steps=5,
+            sat_id,
+            es_tx_id,
+            es_rx_id,
+            mc_id,
+            start=0,
+            end=100,
+            steps=5,
         )
 
         async with client_factory(fake_db) as client:
@@ -214,15 +225,24 @@ class TestSweepEndpoint:
         """As rain rate increases, link margin should decrease."""
         sat_id, es_tx_id, es_rx_id, mc_id = _seed_assets(fake_db)
         body = _make_sweep_body(
-            sat_id, es_tx_id, es_rx_id, mc_id,
-            start=0, end=50, steps=3,
+            sat_id,
+            es_tx_id,
+            es_rx_id,
+            mc_id,
+            start=0,
+            end=50,
+            steps=3,
         )
 
         async with client_factory(fake_db) as client:
             resp = await client.post("/api/v1/link-budgets/sweep", json=body)
 
         data = resp.json()
-        margins = [p["combined_link_margin_db"] for p in data["points"] if p["combined_link_margin_db"] is not None]
+        margins = [
+            p["combined_link_margin_db"]
+            for p in data["points"]
+            if p["combined_link_margin_db"] is not None
+        ]
         # Margins should be non-increasing as rain rate goes up
         assert len(margins) >= 2
         assert margins[0] >= margins[-1]

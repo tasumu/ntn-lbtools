@@ -16,7 +16,9 @@ class SatelliteRepository(BaseRepository[Satellite]):
         return result.scalars().all()
 
     async def list_all_paginated(
-        self, limit: int = 20, offset: int = 0,
+        self,
+        limit: int = 20,
+        offset: int = 0,
     ) -> tuple[Sequence[Satellite], int]:
         count_stmt = select(func.count()).select_from(Satellite)
         count_result = await self.session.execute(count_stmt)
@@ -37,7 +39,9 @@ class EarthStationRepository(BaseRepository[EarthStation]):
         return result.scalars().all()
 
     async def list_all_paginated(
-        self, limit: int = 20, offset: int = 0,
+        self,
+        limit: int = 20,
+        offset: int = 0,
     ) -> tuple[Sequence[EarthStation], int]:
         count_stmt = select(func.count()).select_from(EarthStation)
         count_result = await self.session.execute(count_stmt)

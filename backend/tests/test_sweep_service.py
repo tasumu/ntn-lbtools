@@ -199,7 +199,9 @@ class TestSweepServiceExecute:
         )
 
         with patch.object(
-            __import__("src.services.calculation_service", fromlist=["CalculationService"]).CalculationService,
+            __import__(
+                "src.services.calculation_service", fromlist=["CalculationService"]
+            ).CalculationService,
             "calculate",
             new_callable=AsyncMock,
             return_value=mock_result,
@@ -291,7 +293,11 @@ class TestSweepServiceExecute:
             rain = payload["runtime"]["uplink"]["rain_rate_mm_per_hr"]
             return {
                 "results": {
-                    "uplink": {"cn_db": 15.0, "rain_loss_db": rain * 0.1, "link_margin_db": 10 - rain * 0.1},
+                    "uplink": {
+                        "cn_db": 15.0,
+                        "rain_loss_db": rain * 0.1,
+                        "link_margin_db": 10 - rain * 0.1,
+                    },
                     "downlink": {"cn_db": 14.0, "rain_loss_db": 0.0, "link_margin_db": 5.0},
                     "combined": {},
                 },
