@@ -24,6 +24,7 @@ import {
 } from "recharts";
 
 import { formatDb } from "../../lib/formatters";
+import { downloadCsv, buildSweepCsv } from "../../lib/exportUtils";
 import type { SweepResponse, OutputMetricKey } from "./sweepTypes";
 import { OUTPUT_METRICS } from "./sweepTypes";
 
@@ -55,24 +56,24 @@ function SweepResultChartInner({ data }: Props) {
   }));
 
   const handleCopyCSV = () => {
-    const headers = [
-      data.sweep_label,
-      ...OUTPUT_METRICS.map((m) => m.label),
-      "ModCod",
-      "Viable",
-    ];
-    const rows = data.points.map((pt) => [
-      pt.sweep_value,
-      ...OUTPUT_METRICS.map((m) => pt[m.key] ?? ""),
-      pt.modcod_label ?? pt.modcod_id ?? "",
-      pt.viable,
-    ]);
-    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const csv = buildSweepCsv(data);
     navigator.clipboard.writeText(csv);
     notifications.show({
       title: "Copied",
       message: "CSV data copied to clipboard",
       color: "blue",
+    });
+  };
+
+  const handleDownloadCSV = () => {
+    const csv = buildSweepCsv(data);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
+    const paramName = data.sweep_parameter.split(".").pop() ?? "sweep";
+    downloadCsv(csv, `sweep_${paramName}_${timestamp}.csv`);
+    notifications.show({
+      title: "Downloaded",
+      message: "CSV file downloaded",
+      color: "green",
     });
   };
 
@@ -182,6 +183,9 @@ function SweepResultChartInner({ data }: Props) {
             <Group justify="flex-end" mb="xs">
               <Button size="xs" variant="light" onClick={handleCopyCSV}>
                 Copy CSV
+              </Button>
+              <Button size="xs" variant="filled" onClick={handleDownloadCSV}>
+                Download CSV
               </Button>
             </Group>
             <Table striped highlightOnHover withTableBorder>

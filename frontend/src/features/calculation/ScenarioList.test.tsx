@@ -14,8 +14,11 @@ const defaultProps = {
   detailFetching: false,
   deletePending: false,
   deletingId: undefined,
+  duplicatePending: false,
+  duplicatingId: undefined,
   onSelect: vi.fn(),
   onDelete: vi.fn(),
+  onDuplicate: vi.fn(),
 };
 
 describe("ScenarioList", () => {
@@ -25,16 +28,12 @@ describe("ScenarioList", () => {
   });
 
   it("shows empty state when no scenarios", () => {
-    renderWithProviders(
-      <ScenarioList {...defaultProps} scenarios={[]} />,
-    );
+    renderWithProviders(<ScenarioList {...defaultProps} scenarios={[]} />);
     expect(screen.getByText(/No scenarios saved yet/)).toBeInTheDocument();
   });
 
   it("shows loading indicator", () => {
-    renderWithProviders(
-      <ScenarioList {...defaultProps} isLoading={true} />,
-    );
+    renderWithProviders(<ScenarioList {...defaultProps} isLoading={true} />);
     expect(screen.getByText(/Loading.../)).toBeInTheDocument();
   });
 
@@ -48,9 +47,7 @@ describe("ScenarioList", () => {
   it("calls onSelect when Load is clicked", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    renderWithProviders(
-      <ScenarioList {...defaultProps} onSelect={onSelect} />,
-    );
+    renderWithProviders(<ScenarioList {...defaultProps} onSelect={onSelect} />);
     await user.click(screen.getByRole("button", { name: /Load/ }));
     expect(onSelect).toHaveBeenCalledWith("sc-001", expect.anything());
   });
@@ -58,9 +55,7 @@ describe("ScenarioList", () => {
   it("shows delete confirmation modal", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
-    renderWithProviders(
-      <ScenarioList {...defaultProps} onDelete={onDelete} />,
-    );
+    renderWithProviders(<ScenarioList {...defaultProps} onDelete={onDelete} />);
     await user.click(screen.getByRole("button", { name: /Delete/ }));
     await waitFor(() => {
       expect(screen.getByText(/Confirm deletion/)).toBeInTheDocument();
@@ -71,9 +66,7 @@ describe("ScenarioList", () => {
   it("calls onDelete when modal Delete is clicked", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
-    renderWithProviders(
-      <ScenarioList {...defaultProps} onDelete={onDelete} />,
-    );
+    renderWithProviders(<ScenarioList {...defaultProps} onDelete={onDelete} />);
     await user.click(screen.getByRole("button", { name: /Delete/ }));
     await waitFor(() => {
       expect(screen.getByText(/Confirm deletion/)).toBeInTheDocument();
@@ -95,5 +88,22 @@ describe("ScenarioList", () => {
     await waitFor(() => {
       expect(screen.queryByText(/Confirm deletion/)).not.toBeInTheDocument();
     });
+  });
+
+  it("renders Duplicate button for each scenario", () => {
+    renderWithProviders(<ScenarioList {...defaultProps} />);
+    expect(
+      screen.getByRole("button", { name: /Duplicate/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onDuplicate when Duplicate is clicked", async () => {
+    const user = userEvent.setup();
+    const onDuplicate = vi.fn();
+    renderWithProviders(
+      <ScenarioList {...defaultProps} onDuplicate={onDuplicate} />,
+    );
+    await user.click(screen.getByRole("button", { name: /Duplicate/ }));
+    expect(onDuplicate).toHaveBeenCalledWith("sc-001");
   });
 });

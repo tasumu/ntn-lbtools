@@ -226,6 +226,12 @@ export const handlers = [
   http.delete(`${API_BASE}/scenarios/:id`, () =>
     HttpResponse.json(null, { status: 204 }),
   ),
+  http.post(`${API_BASE}/scenarios/:id/duplicate`, () =>
+    HttpResponse.json(
+      { ...mockScenario, id: "sc-copy-001", name: "Test Scenario (Copy)" },
+      { status: 201 },
+    ),
+  ),
 
   http.post(`${API_BASE}/link-budgets/calculate`, () =>
     HttpResponse.json(mockCalculationResponse),

@@ -71,6 +71,23 @@ async def update_scenario(
     return scenario
 
 
+@router.post(
+    "/{scenario_id}/duplicate",
+    response_model=ScenarioRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="duplicate_scenario",
+)
+async def duplicate_scenario(
+    scenario_id: UUID,
+    session: AsyncSession = Depends(get_db_session),  # noqa: B008
+):
+    service = ScenarioService(session)
+    scenario = await service.duplicate(scenario_id)
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    return scenario
+
+
 @router.delete(
     "/{scenario_id}",
     status_code=status.HTTP_204_NO_CONTENT,

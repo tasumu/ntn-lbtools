@@ -21,6 +21,7 @@ import { queryKeys } from "../../api/queryKeys";
 import type { PaginatedResponse, ScenarioSummary } from "../../api/types";
 import { formatModcod, formatError } from "../../lib/formatters";
 import { loadScenario } from "../../lib/scenarioMapper";
+import { exportCalculationPdf } from "../../lib/exportUtils";
 import { useCalculationAssets } from "../../hooks/useCalculationAssets";
 import { EmptyState } from "../../components/EmptyState";
 import { CalculationForm } from "./CalculationForm";
@@ -46,6 +47,8 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
     initialScenarioId ?? null,
   );
   const [prefill, setPrefill] = useState<CalculationRequest | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const waterfallRef = useRef<HTMLDivElement>(null);
 
   const assets = useCalculationAssets();
 
@@ -77,10 +80,27 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
     },
   });
 
+  const duplicateScenario = useMutation<ScenarioSummary, unknown, string>({
+    mutationFn: (scenarioId) =>
+      request({
+        method: "POST",
+        url: `/scenarios/${scenarioId}/duplicate`,
+      }),
+    onSuccess: (created) => {
+      client.invalidateQueries({ queryKey: queryKeys.scenarios.all });
+      notifications.show({
+        title: "Scenario duplicated",
+        message: `Created "${created.name}"`,
+        color: "green",
+      });
+    },
+  });
+
   const scenarioErrors = [
     scenariosQuery.error,
     scenarioDetailQuery.error,
     deleteScenario.error,
+    duplicateScenario.error,
   ].filter(Boolean);
   const scenarioErrorMessage = scenarioErrors
     .map((err) => formatError(err))
@@ -212,6 +232,9 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
                 navigate(id ? `/scenarios/${id}` : "/", { replace: true });
               }}
               onDelete={(id) => deleteScenario.mutate(id)}
+              onDuplicate={(id) => duplicateScenario.mutate(id)}
+              duplicatePending={duplicateScenario.isPending}
+              duplicatingId={duplicateScenario.variables as string | undefined}
             />
           </Flex>
         </Stack>
@@ -283,6 +306,30 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
                   navigate("/sweep", { state: { baseRequest: lastRequest } });
                 }
               }}
+              onExportPdf={async () => {
+                if (!mutation.data) return;
+                setExportingPdf(true);
+                try {
+                  await exportCalculationPdf(
+                    mutation.data,
+                    waterfallRef.current,
+                  );
+                  notifications.show({
+                    title: "PDF exported",
+                    message: "Link budget report downloaded",
+                    color: "green",
+                  });
+                } catch (err) {
+                  notifications.show({
+                    title: "Export failed",
+                    message: formatError(err),
+                    color: "red",
+                  });
+                } finally {
+                  setExportingPdf(false);
+                }
+              }}
+              exportingPdf={exportingPdf}
             />
           </Flex>
 
@@ -293,10 +340,12 @@ export function CalculationView({ initialScenarioId }: CalculationViewProps) {
                 <Tabs.Tab value="metrics">Detailed Metrics</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="waterfall" pt="md">
-                <LinkBudgetWaterfall
-                  uplink={mutation.data.results.uplink}
-                  downlink={mutation.data.results.downlink}
-                />
+                <div ref={waterfallRef}>
+                  <LinkBudgetWaterfall
+                    uplink={mutation.data.results.uplink}
+                    downlink={mutation.data.results.downlink}
+                  />
+                </div>
               </Tabs.Panel>
               <Tabs.Panel value="metrics" pt="md">
                 <CalculationResultChart

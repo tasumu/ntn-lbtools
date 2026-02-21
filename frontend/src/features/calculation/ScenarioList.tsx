@@ -24,8 +24,11 @@ type Props = {
   detailFetching: boolean;
   deletePending: boolean;
   deletingId: string | undefined;
+  duplicatePending?: boolean;
+  duplicatingId?: string | undefined;
   onSelect: (id: string, prefill: CalculationRequest | null) => void;
   onDelete: (id: string) => void;
+  onDuplicate?: (id: string) => void;
 };
 
 export function ScenarioList({
@@ -36,8 +39,11 @@ export function ScenarioList({
   detailFetching,
   deletePending,
   deletingId,
+  duplicatePending,
+  duplicatingId,
   onSelect,
   onDelete,
+  onDuplicate,
 }: Props) {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
@@ -89,6 +95,16 @@ export function ScenarioList({
                     >
                       Load
                     </Button>
+                    {onDuplicate && (
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        loading={duplicatePending && duplicatingId === s.id}
+                        onClick={() => onDuplicate(s.id)}
+                      >
+                        Duplicate
+                      </Button>
+                    )}
                     <Button
                       size="xs"
                       color="red"

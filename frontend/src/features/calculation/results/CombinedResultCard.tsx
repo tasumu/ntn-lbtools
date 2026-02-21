@@ -19,6 +19,8 @@ type Props = {
   channelBandwidth?: number | null;
   onSave: () => void;
   onSweep?: () => void;
+  onExportPdf?: () => void;
+  exportingPdf?: boolean;
 };
 
 export function CombinedResultCard({
@@ -31,6 +33,8 @@ export function CombinedResultCard({
   channelBandwidth,
   onSave,
   onSweep,
+  onExportPdf,
+  exportingPdf,
 }: Props) {
   const cleanMargin =
     results.combined?.clean_link_margin_db ??
@@ -135,6 +139,16 @@ export function CombinedResultCard({
           {onSweep && (
             <Button variant="light" onClick={onSweep}>
               Sweep
+            </Button>
+          )}
+          {onExportPdf && (
+            <Button
+              variant="light"
+              color="grape"
+              onClick={onExportPdf}
+              loading={exportingPdf}
+            >
+              Export PDF
             </Button>
           )}
         </Group>

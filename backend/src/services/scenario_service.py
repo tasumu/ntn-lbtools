@@ -88,6 +88,27 @@ class ScenarioService:
         items, total = await self.repo.list_recent_paginated(limit=limit, offset=offset)
         return list(items), total
 
+    async def duplicate(self, scenario_id: UUID) -> Scenario | None:
+        original = await self.repo.get(scenario_id)
+        if not original:
+            return None
+        clone = Scenario(
+            name=f"{original.name} (Copy)",
+            description=original.description,
+            waveform_strategy=original.waveform_strategy,
+            transponder_type=original.transponder_type,
+            modcod_table_id=original.modcod_table_id,
+            satellite_id=original.satellite_id,
+            earth_station_tx_id=original.earth_station_tx_id,
+            earth_station_rx_id=original.earth_station_rx_id,
+            schema_version=original.schema_version,
+            status="Draft",
+            payload_snapshot=original.payload_snapshot,
+        )
+        await self.repo.add(clone)
+        await self.repo.session.commit()
+        return clone
+
     async def delete(self, scenario_id: UUID) -> bool:
         scenario = await self.repo.get(scenario_id)
         if not scenario:

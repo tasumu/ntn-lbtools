@@ -212,3 +212,47 @@ class TestDeleteScenario:
             resp = await client.delete("/api/v1/scenarios/not-a-uuid")
 
         assert resp.status_code == 422
+
+
+class TestDuplicateScenario:
+    @pytest.mark.asyncio
+    async def test_duplicate_scenario_success(self, client_factory, fake_db):
+        scenario = _seed_scenario(fake_db, name="Original")
+
+        async with client_factory(fake_db) as client:
+            resp = await client.post(f"/api/v1/scenarios/{scenario.id}/duplicate")
+
+        assert resp.status_code == 201
+        body = resp.json()
+        assert body["name"] == "Original (Copy)"
+        assert body["id"] != str(scenario.id)
+        assert body["waveform_strategy"] == "DVB_S2X"
+        assert body["transponder_type"] == "TRANSPARENT"
+        assert body["status"] == "Draft"
+
+    @pytest.mark.asyncio
+    async def test_duplicate_scenario_preserves_payload(self, client_factory, fake_db):
+        scenario = _seed_scenario(fake_db, name="WithPayload")
+
+        async with client_factory(fake_db) as client:
+            resp = await client.post(f"/api/v1/scenarios/{scenario.id}/duplicate")
+
+        assert resp.status_code == 201
+        body = resp.json()
+        snapshot = body["payload_snapshot"]
+        assert snapshot["runtime"]["sat_longitude_deg"] == 140.0
+        assert snapshot["strategy"]["waveform_strategy"] == "DVB_S2X"
+
+    @pytest.mark.asyncio
+    async def test_duplicate_scenario_not_found(self, client_factory, fake_db):
+        async with client_factory(fake_db) as client:
+            resp = await client.post(f"/api/v1/scenarios/{uuid.uuid4()}/duplicate")
+
+        assert resp.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_duplicate_scenario_invalid_uuid(self, client_factory, fake_db):
+        async with client_factory(fake_db) as client:
+            resp = await client.post("/api/v1/scenarios/not-a-uuid/duplicate")
+
+        assert resp.status_code == 422
