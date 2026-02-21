@@ -26,10 +26,9 @@ async def create_modcod(
     try:
         table = await service.create(body.model_dump())
     except IntegrityError:
-        # Unique constraint on (waveform, version) violated
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="ModCod table with this waveform and version already exists",
+            detail="ModCod table with this waveform and name already exists",
         ) from None
     return table
 
@@ -75,6 +74,9 @@ async def delete_modcod(
     try:
         deleted = await service.delete(table_id)
     except IntegrityError:
-        raise HTTPException(status_code=400, detail="ModCod table is referenced and cannot be deleted") from None
+        raise HTTPException(
+            status_code=400,
+            detail="ModCod table is referenced and cannot be deleted",
+        ) from None
     if not deleted:
         raise HTTPException(status_code=404, detail="ModCod table not found")

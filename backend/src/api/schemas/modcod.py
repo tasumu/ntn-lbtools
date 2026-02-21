@@ -40,10 +40,21 @@ class ModcodEntry(BaseModel):
 
 
 class ModcodTableBase(BaseModel):
+    name: str
     waveform: str
-    version: str
+    version: str | None = None
     description: str | None = None
     entries: list[ModcodEntry]
+
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("name must not be empty")
+        stripped = v.strip()
+        if len(stripped) > 255:
+            raise ValueError("name must not exceed 255 characters")
+        return stripped
 
     @field_validator("entries")
     @classmethod

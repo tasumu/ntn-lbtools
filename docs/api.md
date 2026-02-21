@@ -98,7 +98,7 @@ Delete endpoints return `400` when the asset is referenced by a scenario.
 - `DELETE /api/v1/assets/modcod-tables/{id}`
 
 Table fields:
-- `waveform`, `version` (unique per waveform), `description`.
+- `name` (required, unique per waveform), `waveform`, `version` (optional), `description`.
 - `entries` (array).
 
 Entry fields:
@@ -107,7 +107,7 @@ Entry fields:
 - `required_cn0_dbhz` or `required_ebno_db` (at least one required).
 - `rolloff`, `pilots` (optional).
 
-Create returns `409` if `(waveform, version)` already exists.
+Create returns `409` if `(waveform, name)` already exists.
 
 ## Scenarios
 - `POST /api/v1/scenarios`

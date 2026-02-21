@@ -36,8 +36,9 @@ Location (lat/lon/alt) is not stored on earth stations; it is supplied at runtim
 
 ### ModCod Tables (`modcod_tables`)
 - `id` (UUID, PK)
+- `name` (required, unique per waveform)
 - `waveform` (required)
-- `version` (required, unique per waveform)
+- `version` (optional)
 - `description`
 - `entries` (JSON array)
 - `published_at`
@@ -63,7 +64,7 @@ For regenerative links, per-direction ModCod IDs live inside `payload_snapshot.s
 
 ## Seed Data (Migrations)
 Migrations insert:
-- A sample ModCod table (`DVB_S2X`, version `sample-1.0.0`).
+- A sample ModCod table (`DVB_S2X`, name `Sample Standard`).
 - Sample satellite and earth station assets.
 - A sample scenario that references those assets and the sample ModCod table.
 
@@ -79,9 +80,9 @@ Top-level keys:
 - `overrides`: currently supports satellite overrides only.
 
 `static` fields (examples):
-- `modcod_table_id`, `modcod_table_version`, `modcod_entries`
-- `uplink_modcod_table_id`, `uplink_modcod_table_version`, `uplink_modcod_entries`
-- `downlink_modcod_table_id`, `downlink_modcod_table_version`, `downlink_modcod_entries`
+- `modcod_table_id`, `modcod_table_name`, `modcod_table_version`, `modcod_entries`
+- `uplink_modcod_table_id`, `uplink_modcod_table_name`, `uplink_modcod_table_version`, `uplink_modcod_entries`
+- `downlink_modcod_table_id`, `downlink_modcod_table_name`, `downlink_modcod_table_version`, `downlink_modcod_entries`
 - `itu_constants` (currently empty)
 
 `runtime` fields:

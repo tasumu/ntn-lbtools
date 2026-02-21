@@ -28,8 +28,8 @@ MODCOD_ENTRY_NO_THRESHOLD = {
 }
 
 MODCOD_TABLE_PAYLOAD = {
+    "name": "Standard DVB-S2X",
     "waveform": "DVB_S2X",
-    "version": "1.0",
     "description": "Standard DVB-S2X table",
     "entries": [
         MODCOD_ENTRY_VALID,
@@ -67,16 +67,68 @@ class TestCreateModcod:
 
         assert resp.status_code == 201
         body = resp.json()
+        assert body["name"] == "Standard DVB-S2X"
         assert body["waveform"] == "DVB_S2X"
-        assert body["version"] == "1.0"
+        assert body["version"] is None
         assert len(body["entries"]) == 2
         uuid.UUID(body["id"])
 
     @pytest.mark.asyncio
-    async def test_create_modcod_entry_missing_threshold_rejected(self, client_factory, fake_db):
+    async def test_create_modcod_with_version_succeeds(self, client_factory, fake_db):
+        payload = {**MODCOD_TABLE_PAYLOAD, "name": "Versioned Table", "version": "2.0"}
+        async with client_factory(fake_db) as client:
+            resp = await client.post("/api/v1/assets/modcod-tables", json=payload)
+
+        assert resp.status_code == 201
+        body = resp.json()
+        assert body["name"] == "Versioned Table"
+        assert body["version"] == "2.0"
+
+    @pytest.mark.asyncio
+    async def test_create_modcod_missing_name_rejected(self, client_factory, fake_db):
         payload = {
             "waveform": "DVB_S2X",
-            "version": "2.0",
+            "entries": [MODCOD_ENTRY_VALID],
+        }
+        async with client_factory(fake_db) as client:
+            resp = await client.post("/api/v1/assets/modcod-tables", json=payload)
+
+        assert resp.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_create_modcod_empty_name_rejected(self, client_factory, fake_db):
+        payload = {
+            "name": "   ",
+            "waveform": "DVB_S2X",
+            "entries": [MODCOD_ENTRY_VALID],
+        }
+        async with client_factory(fake_db) as client:
+            resp = await client.post("/api/v1/assets/modcod-tables", json=payload)
+
+        assert resp.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_create_modcod_duplicate_waveform_name_rejected(self, client_factory, fake_db):
+        table = ModcodTable(
+            name="Duplicate Test", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+        )
+        fake_db.seed(table)
+
+        payload = {
+            "name": "Duplicate Test",
+            "waveform": "DVB_S2X",
+            "entries": [MODCOD_ENTRY_VALID],
+        }
+        async with client_factory(fake_db) as client:
+            resp = await client.post("/api/v1/assets/modcod-tables", json=payload)
+
+        assert resp.status_code == 409
+
+    @pytest.mark.asyncio
+    async def test_create_modcod_entry_missing_threshold_rejected(self, client_factory, fake_db):
+        payload = {
+            "name": "Bad Entries",
+            "waveform": "DVB_S2X",
             "entries": [MODCOD_ENTRY_NO_THRESHOLD],
         }
         async with client_factory(fake_db) as client:
@@ -86,7 +138,7 @@ class TestCreateModcod:
 
     @pytest.mark.asyncio
     async def test_create_modcod_missing_waveform_rejected(self, client_factory, fake_db):
-        payload = {"version": "1.0", "entries": [MODCOD_ENTRY_VALID]}
+        payload = {"name": "No waveform", "entries": [MODCOD_ENTRY_VALID]}
         async with client_factory(fake_db) as client:
             resp = await client.post("/api/v1/assets/modcod-tables", json=payload)
 
@@ -95,7 +147,7 @@ class TestCreateModcod:
     @pytest.mark.asyncio
     async def test_create_modcod_invalid_info_bits_rejected(self, client_factory, fake_db):
         bad_entry = dict(MODCOD_ENTRY_VALID, info_bits_per_symbol=0)
-        payload = {"waveform": "DVB_S2X", "version": "3.0", "entries": [bad_entry]}
+        payload = {"name": "Bad info bits", "waveform": "DVB_S2X", "entries": [bad_entry]}
         async with client_factory(fake_db) as client:
             resp = await client.post("/api/v1/assets/modcod-tables", json=payload)
 
@@ -117,7 +169,9 @@ class TestListModcod:
 
     @pytest.mark.asyncio
     async def test_list_modcod_returns_seeded(self, client_factory, fake_db):
-        table = ModcodTable(waveform="DVB_S2X", version="1.0", entries=_make_modcod_entries_json())
+        table = ModcodTable(
+            name="Test Table", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+        )
         fake_db.seed(table)
 
         async with client_factory(fake_db) as client:
@@ -128,12 +182,17 @@ class TestListModcod:
         assert body["total"] == 1
         items = body["items"]
         assert len(items) == 1
+        assert items[0]["name"] == "Test Table"
         assert items[0]["waveform"] == "DVB_S2X"
 
     @pytest.mark.asyncio
     async def test_list_modcod_filter_by_waveform(self, client_factory, fake_db):
-        t1 = ModcodTable(waveform="DVB_S2X", version="1.0", entries=_make_modcod_entries_json())
-        t2 = ModcodTable(waveform="DVB_RCS2", version="1.0", entries=_make_modcod_entries_json())
+        t1 = ModcodTable(
+            name="Table A", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+        )
+        t2 = ModcodTable(
+            name="Table B", waveform="DVB_RCS2", entries=_make_modcod_entries_json(),
+        )
         fake_db.seed(t1)
         fake_db.seed(t2)
 
@@ -151,7 +210,9 @@ class TestListModcod:
 class TestPublishModcod:
     @pytest.mark.asyncio
     async def test_publish_modcod_success(self, client_factory, fake_db):
-        table = ModcodTable(waveform="DVB_S2X", version="1.0", entries=_make_modcod_entries_json())
+        table = ModcodTable(
+            name="Publish Test", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+        )
         fake_db.seed(table)
 
         async with client_factory(fake_db) as client:
@@ -172,7 +233,9 @@ class TestPublishModcod:
 class TestDeleteModcod:
     @pytest.mark.asyncio
     async def test_delete_modcod_success(self, client_factory, fake_db):
-        table = ModcodTable(waveform="DVB_S2X", version="1.0", entries=_make_modcod_entries_json())
+        table = ModcodTable(
+            name="Delete Test", waveform="DVB_S2X", entries=_make_modcod_entries_json(),
+        )
         fake_db.seed(table)
 
         async with client_factory(fake_db) as client:

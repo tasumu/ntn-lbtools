@@ -48,8 +48,9 @@ export interface ModcodEntry {
 
 export interface ModcodTableAsset {
   id: string;
+  name: string;
   waveform: string;
-  version: string;
+  version?: string | null;
   description?: string;
   entries?: ModcodEntry[];
   published_at?: string;

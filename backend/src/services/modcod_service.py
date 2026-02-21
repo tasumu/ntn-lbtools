@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.persistence.models.modcod import ModcodTable
 from src.persistence.repositories.modcod import ModcodRepository
@@ -24,21 +24,21 @@ class ModcodService:
         table = await self.repo.get(table_id)
         if not table:
             return None
-        table.published_at = datetime.now(timezone.utc)
+        table.published_at = datetime.now(UTC)
         await self.repo.session.commit()
         await self.repo.session.refresh(table)
         return table
 
     async def list(self, waveform: str | None = None) -> list[ModcodTable]:
         if waveform:
-            return await self.repo.list_versions(waveform)
+            return await self.repo.list_by_waveform(waveform)
         return await self.repo.list()
 
     async def list_paginated(
-        self, limit: int = 20, offset: int = 0, waveform: str | None = None
+        self, limit: int = 20, offset: int = 0, waveform: str | None = None,
     ) -> tuple[list[ModcodTable], int]:
         items, total = await self.repo.list_paginated(
-            limit=limit, offset=offset, waveform=waveform
+            limit=limit, offset=offset, waveform=waveform,
         )
         return list(items), total
 

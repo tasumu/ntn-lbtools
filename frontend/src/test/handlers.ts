@@ -34,6 +34,7 @@ export const mockEarthStation = {
 
 export const mockModcodTable = {
   id: "mc-001",
+  name: "Sample DVB-S2X",
   waveform: "DVB_S2X",
   version: "1.0.0",
   description: "Test ModCod table",

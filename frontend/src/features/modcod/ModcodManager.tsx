@@ -42,8 +42,8 @@ const entrySchema = z
     { message: "Required C/N0 or Eb/N0 is needed" },
   );
 const schema = z.object({
+  name: z.string().min(1, "Name is required").max(255, "Name must not exceed 255 characters"),
   waveform: z.string().default("DVB_S2X"),
-  version: z.string().min(1),
   description: z.string().optional(),
   entries: z.array(entrySchema).nonempty(),
 });
@@ -59,8 +59,8 @@ export function ModcodManager() {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      name: "",
       waveform: "DVB_S2X",
-      version: "1.0.0",
       entries: [
         {
           id: "qpsk-1/4",
@@ -80,8 +80,8 @@ export function ModcodManager() {
   useEffect(() => {
     if (selected) {
       form.reset({
+        name: selected.name,
         waveform: selected.waveform,
-        version: selected.version,
         description: selected.description ?? "",
         entries: selected.entries ?? [],
       });
@@ -104,10 +104,10 @@ export function ModcodManager() {
     onSuccess: (_, id) => {
       client.invalidateQueries({ queryKey: queryKeys.modcodTables.all });
       if (selected?.id) setSelected(null);
-      const name = data.find((t) => t.id === id)?.waveform ?? "ModCod table";
+      const tableName = data.find((t) => t.id === id)?.name ?? "ModCod table";
       notifications.show({
         title: "ModCod table deleted",
-        message: `'${name}' removed successfully`,
+        message: `'${tableName}' removed successfully`,
         color: "green",
       });
     },
@@ -132,7 +132,7 @@ export function ModcodManager() {
 
   const deleteModalItemName = data.find(
     (t) => t.id === confirmingDeleteId,
-  )?.waveform;
+  )?.name;
 
   return (
     <Stack gap="md">
@@ -143,10 +143,8 @@ export function ModcodManager() {
             onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
           >
             <Stack>
-              <Group grow>
-                <TextInput label="Waveform" {...form.register("waveform")} />
-                <TextInput label="Version" {...form.register("version")} />
-              </Group>
+              <TextInput label="Name" {...form.register("name")} />
+              <TextInput label="Waveform" {...form.register("waveform")} />
               <Textarea
                 label="Description"
                 minRows={2}
@@ -160,8 +158,8 @@ export function ModcodManager() {
                   <PresetSelector
                     onSelect={(preset: ModcodPreset) => {
                       form.reset({
+                        name: form.getValues("name"),
                         waveform: form.getValues("waveform"),
-                        version: form.getValues("version"),
                         description: form.getValues("description"),
                         entries: preset.entries.map((e) => ({
                           ...e,
@@ -263,7 +261,7 @@ export function ModcodManager() {
                 loading={mutation.isPending}
                 aria-busy={mutation.isPending}
               >
-                {selected ? "Save as new version" : "Save ModCod table"}
+                {selected ? "Save as new table" : "Save ModCod table"}
               </Button>
             </Stack>
           </form>
@@ -295,9 +293,9 @@ export function ModcodManager() {
             <Card key={table.id} withBorder>
               <Group justify="space-between" align="flex-start">
                 <div>
-                  <Text fw={600}>{table.waveform}</Text>
+                  <Text fw={600}>{table.name}</Text>
                   <Text size="sm" c="dimmed">
-                    {table.version}
+                    {table.waveform}
                   </Text>
                   {table.description && (
                     <Text size="sm" c="dimmed">

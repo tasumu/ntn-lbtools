@@ -34,7 +34,7 @@ export function useCalculationAssets() {
     () =>
       modcodTables.map((t) => ({
         value: t.id,
-        label: `${t.waveform} v${t.version}`,
+        label: t.name,
         waveform: t.waveform,
       })),
     [modcodTables],

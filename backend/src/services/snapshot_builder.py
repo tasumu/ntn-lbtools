@@ -105,12 +105,15 @@ def build_payload_snapshot(
     return {
         "static": {
             "modcod_table_id": payload.get("modcod_table_id"),
+            "modcod_table_name": getattr(common_modcod_table, "name", None),
             "modcod_table_version": getattr(common_modcod_table, "version", None),
             "modcod_entries": modcod_entries_snapshot,
             "uplink_modcod_table_id": payload.get("uplink_modcod_table_id"),
+            "uplink_modcod_table_name": getattr(uplink_modcod_table, "name", None),
             "uplink_modcod_table_version": getattr(uplink_modcod_table, "version", None),
             "uplink_modcod_entries": uplink_modcod_entries_snapshot,
             "downlink_modcod_table_id": payload.get("downlink_modcod_table_id"),
+            "downlink_modcod_table_name": getattr(downlink_modcod_table, "name", None),
             "downlink_modcod_table_version": getattr(downlink_modcod_table, "version", None),
             "downlink_modcod_entries": downlink_modcod_entries_snapshot,
             "itu_constants": {},
@@ -129,6 +132,7 @@ def build_payload_snapshot(
             "schema_version": "1.1.0",
             "computed_at": datetime.now(UTC),
             "modcod_table_id": payload.get("modcod_table_id"),
+            "modcod_table_name": getattr(common_modcod_table, "name", None),
             "modcod_table_version": getattr(common_modcod_table, "version", None),
             "uplink_modcod_table_id": payload.get("uplink_modcod_table_id"),
             "downlink_modcod_table_id": payload.get("downlink_modcod_table_id"),

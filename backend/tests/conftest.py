@@ -7,6 +7,8 @@ from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import UniqueConstraint
+from sqlalchemy.exc import IntegrityError
 
 # Ensure src is importable when running under uv/pytest
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,8 +63,29 @@ class FakeSession:
             obj.created_at = datetime.now(UTC)
         if hasattr(obj, "updated_at") and obj.updated_at is None:
             obj.updated_at = datetime.now(UTC)
+        self._check_unique_constraints(obj)
         model_cls = type(obj)
         self._store.setdefault(model_cls, {})[obj.id] = obj
+
+    def _check_unique_constraints(self, obj: Any) -> None:
+        model_cls = type(obj)
+        table_args = getattr(model_cls, "__table_args__", ())
+        if not isinstance(table_args, tuple):
+            return
+        existing = list(self._store.get(model_cls, {}).values())
+        for arg in table_args:
+            if not isinstance(arg, UniqueConstraint):
+                continue
+            col_names = [c.name for c in arg.columns]
+            new_vals = tuple(getattr(obj, cn, None) for cn in col_names)
+            for item in existing:
+                if item.id == obj.id:
+                    continue
+                existing_vals = tuple(getattr(item, cn, None) for cn in col_names)
+                if new_vals == existing_vals:
+                    raise IntegrityError(
+                        f"UNIQUE constraint failed: {col_names}", params=None, orig=Exception(),
+                    )
 
     async def get(self, model_cls: type, obj_id: Any) -> Any | None:
         return self._store.get(model_cls, {}).get(obj_id)
@@ -84,7 +107,9 @@ class FakeSession:
         model_cls = type(obj)
         self._store.get(model_cls, {}).pop(getattr(obj, "id", None), None)
 
-    async def execute(self, stmt: Any, *args: Any, **kwargs: Any) -> "FakeResult | FakeScalarResult":
+    async def execute(
+        self, stmt: Any, *args: Any, **kwargs: Any,
+    ) -> "FakeResult | FakeScalarResult":
         # Detect COUNT queries by checking the compiled SQL string
         if self._is_count_query(stmt):
             model_cls = self._model_from_count_stmt(stmt)
