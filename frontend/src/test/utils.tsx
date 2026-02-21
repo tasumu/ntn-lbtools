@@ -19,7 +19,7 @@ function createTestQueryClient() {
 function AllProviders({ children }: { children: ReactNode }) {
   const queryClient = createTestQueryClient();
   return (
-    <MantineProvider theme={theme}>
+    <MantineProvider theme={theme} defaultColorScheme="dark">
       <Notifications position="top-right" />
       <QueryClientProvider client={queryClient}>
         <BrowserRouter

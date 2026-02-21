@@ -18,6 +18,7 @@ import { Notifications } from "@mantine/notifications";
 
 import { theme } from "./theme";
 import { ApiProvider } from "./api/provider";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 const CalculationPage = React.lazy(() =>
   import("./pages/CalculationPage").then((m) => ({
@@ -90,6 +91,9 @@ function NavBar() {
           <Link to="/sweep" style={linkStyle("/sweep")}>
             Sweep
           </Link>
+          <div style={{ marginLeft: "auto" }}>
+            <ThemeToggle />
+          </div>
         </div>
       </Container>
     </nav>
@@ -101,7 +105,7 @@ const root = document.getElementById("root");
 if (root) {
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <MantineProvider theme={theme} defaultColorScheme="dark">
+      <MantineProvider theme={theme} defaultColorScheme="auto">
         <Notifications position="top-right" />
         <ApiProvider>
           <BrowserRouter
