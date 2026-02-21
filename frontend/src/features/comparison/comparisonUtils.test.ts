@@ -5,7 +5,9 @@ import {
   diffResults,
   extractParameters,
   extractResultSummary,
+  resolveAssetNames,
 } from "./comparisonUtils";
+import type { ParameterRow } from "./comparisonUtils";
 import { mockCalculationResponse, mockScenario } from "../../test/handlers";
 import type { ScenarioSummary } from "../../api/types";
 import type { CalculationResponse } from "../../api/schemas";
@@ -91,13 +93,26 @@ describe("diffParameters", () => {
 });
 
 describe("extractResultSummary", () => {
-  it("extracts result metrics from a calculation response", () => {
+  it("formats result values to 2 decimal places", () => {
     const summary = extractResultSummary(
       mockCalculationResponse as unknown as CalculationResponse,
     );
-    expect(summary["uplink.cn_db"]).toBe("12.5");
-    expect(summary["downlink.cn_db"]).toBe("12.5");
-    expect(summary["combined.cn_db"]).toBe("9.5");
+    expect(summary["uplink.cn_db"]).toBe("12.50");
+    expect(summary["downlink.cn_db"]).toBe("12.50");
+    expect(summary["combined.cn_db"]).toBe("9.50");
+    expect(summary["uplink.cn0_dbhz"]).toBe("88.10");
+    expect(summary["combined.link_margin_db"]).toBe("2.00");
+  });
+
+  it("returns dash for missing result values", () => {
+    const minimal = {
+      ...mockCalculationResponse,
+      results: { uplink: {}, downlink: {}, combined: {} },
+    };
+    const summary = extractResultSummary(
+      minimal as unknown as CalculationResponse,
+    );
+    expect(summary["uplink.cn_db"]).toBe("-");
   });
 });
 
@@ -124,5 +139,95 @@ describe("diffResults", () => {
     const diff = diffResults(summary, summary);
     expect(diff.every((r) => !r.isDifferent)).toBe(true);
     expect(diff.every((r) => r.delta === "+0.00")).toBe(true);
+  });
+});
+
+describe("resolveAssetNames", () => {
+  const assetMap: ReadonlyMap<string, string> = new Map([
+    ["sat-001", "GEO Satellite Alpha"],
+    ["sat-002", "GEO Satellite Beta"],
+    ["es-001", "Tokyo Ground Station"],
+    ["es-002", "Osaka Ground Station"],
+    ["mc-001", "DVB-S2X Standard"],
+  ]);
+
+  const rows: ParameterRow[] = [
+    {
+      key: "satellite_id",
+      label: "Satellite",
+      valueA: "sat-001",
+      valueB: "sat-002",
+      isDifferent: true,
+    },
+    {
+      key: "earth_station_tx_id",
+      label: "Earth Station (TX)",
+      valueA: "es-001",
+      valueB: "es-001",
+      isDifferent: false,
+    },
+    {
+      key: "earth_station_rx_id",
+      label: "Earth Station (RX)",
+      valueA: "es-001",
+      valueB: "es-002",
+      isDifferent: true,
+    },
+    {
+      key: "modcod_table_id",
+      label: "ModCod Table",
+      valueA: "mc-001",
+      valueB: "mc-001",
+      isDifferent: false,
+    },
+    {
+      key: "waveform_strategy",
+      label: "Waveform",
+      valueA: "DVB_S2X",
+      valueB: "DVB_S2X",
+      isDifferent: false,
+    },
+  ];
+
+  it("replaces satellite_id UUID with asset name", () => {
+    const resolved = resolveAssetNames(rows, assetMap);
+    const sat = resolved.find((r) => r.key === "satellite_id")!;
+    expect(sat.valueA).toBe("GEO Satellite Alpha");
+    expect(sat.valueB).toBe("GEO Satellite Beta");
+  });
+
+  it("replaces earth_station_tx_id and earth_station_rx_id UUIDs with names", () => {
+    const resolved = resolveAssetNames(rows, assetMap);
+    const tx = resolved.find((r) => r.key === "earth_station_tx_id")!;
+    expect(tx.valueA).toBe("Tokyo Ground Station");
+    const rx = resolved.find((r) => r.key === "earth_station_rx_id")!;
+    expect(rx.valueB).toBe("Osaka Ground Station");
+  });
+
+  it("replaces modcod_table_id UUID with name", () => {
+    const resolved = resolveAssetNames(rows, assetMap);
+    const mc = resolved.find((r) => r.key === "modcod_table_id")!;
+    expect(mc.valueA).toBe("DVB-S2X Standard");
+  });
+
+  it("keeps UUID if asset not found in map", () => {
+    const sparseMap = new Map([["sat-001", "Known Satellite"]]);
+    const resolved = resolveAssetNames(rows, sparseMap);
+    const sat = resolved.find((r) => r.key === "satellite_id")!;
+    expect(sat.valueA).toBe("Known Satellite");
+    expect(sat.valueB).toBe("sat-002"); // not in map, keeps UUID
+  });
+
+  it("does not modify non-asset parameters", () => {
+    const resolved = resolveAssetNames(rows, assetMap);
+    const waveform = resolved.find((r) => r.key === "waveform_strategy")!;
+    expect(waveform.valueA).toBe("DVB_S2X");
+    expect(waveform.valueB).toBe("DVB_S2X");
+  });
+
+  it("returns new array without mutating original", () => {
+    const resolved = resolveAssetNames(rows, assetMap);
+    expect(resolved).not.toBe(rows);
+    expect(rows[0].valueA).toBe("sat-001"); // original unchanged
   });
 });

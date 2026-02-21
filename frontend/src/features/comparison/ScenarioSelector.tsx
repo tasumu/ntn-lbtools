@@ -1,4 +1,4 @@
-import { Button, Group, Select } from "@mantine/core";
+import { Button, Select, SimpleGrid } from "@mantine/core";
 import { useCallback, useState } from "react";
 
 type Props = {
@@ -18,7 +18,7 @@ export function ScenarioSelector({ scenarios, loading, onCompare }: Props) {
   }, [canCompare, idA, idB, onCompare]);
 
   return (
-    <Group grow align="flex-end">
+    <SimpleGrid cols={{ base: 1, sm: 3 }} verticalSpacing="sm">
       <Select
         label="Scenario A"
         placeholder="Select scenario"
@@ -37,13 +37,9 @@ export function ScenarioSelector({ scenarios, loading, onCompare }: Props) {
         searchable
         disabled={loading}
       />
-      <Button
-        onClick={handleCompare}
-        disabled={!canCompare}
-        loading={loading}
-      >
+      <Button onClick={handleCompare} disabled={!canCompare} loading={loading}>
         Compare
       </Button>
-    </Group>
+    </SimpleGrid>
   );
 }

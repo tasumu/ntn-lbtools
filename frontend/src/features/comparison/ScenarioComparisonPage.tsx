@@ -1,19 +1,25 @@
 import { Alert, Container, Loader, Stack, Text, Title } from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { request } from "../../api/client";
 import { queryKeys } from "../../api/queryKeys";
-import type { CalculationRequest, CalculationResponse } from "../../api/schemas";
+import type {
+  CalculationRequest,
+  CalculationResponse,
+} from "../../api/schemas";
 import type { PaginatedResponse, ScenarioSummary } from "../../api/types";
 import { formatError } from "../../lib/formatters";
 import { loadScenario } from "../../lib/scenarioMapper";
+import { useCalculationAssets } from "../../hooks/useCalculationAssets";
 import {
   diffParameters,
   diffResults,
   extractParameters,
   extractResultSummary,
+  resolveAssetNames,
 } from "./comparisonUtils";
+import type { AssetNameMap } from "./comparisonUtils";
 import { ParameterDiffTable } from "./ParameterDiffTable";
 import { ResultComparisonTable } from "./ResultComparisonTable";
 import { ScenarioSelector } from "./ScenarioSelector";
@@ -38,6 +44,14 @@ export function ScenarioComparisonPage() {
   });
 
   const scenarios = paginatedScenarios?.items ?? [];
+
+  const { satellites, earthStations } = useCalculationAssets();
+  const assetMap: AssetNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const s of satellites) m.set(s.id, s.name);
+    for (const e of earthStations) m.set(e.id, e.name);
+    return m;
+  }, [satellites, earthStations]);
 
   const compareMutation = useMutation({
     mutationFn: async ({ idA, idB }: { idA: string; idB: string }) => {
@@ -112,9 +126,12 @@ export function ScenarioComparisonPage() {
           <>
             <Title order={3}>Parameter Differences</Title>
             <ParameterDiffTable
-              rows={diffParameters(
-                extractParameters(comparison.scenarioA),
-                extractParameters(comparison.scenarioB),
+              rows={resolveAssetNames(
+                diffParameters(
+                  extractParameters(comparison.scenarioA),
+                  extractParameters(comparison.scenarioB),
+                ),
+                assetMap,
               )}
               nameA={comparison.scenarioA.name}
               nameB={comparison.scenarioB.name}

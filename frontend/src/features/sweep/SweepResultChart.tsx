@@ -27,6 +27,10 @@ import { formatDb } from "../../lib/formatters";
 import type { SweepResponse, OutputMetricKey } from "./sweepTypes";
 import { OUTPUT_METRICS } from "./sweepTypes";
 
+export function formatTickValue(v: number): string {
+  return Number(v).toFixed(2);
+}
+
 type Props = {
   data: SweepResponse;
 };
@@ -115,6 +119,7 @@ function SweepResultChartInner({ data }: Props) {
                     offset: -5,
                   }}
                   tick={{ fontSize: 12 }}
+                  tickFormatter={formatTickValue}
                 />
                 <YAxis
                   label={{
@@ -125,14 +130,12 @@ function SweepResultChartInner({ data }: Props) {
                   tick={{ fontSize: 12 }}
                 />
                 <RechartsTooltip
-                  formatter={(
-                    value: number | string | (number | string)[],
-                  ) => [
+                  formatter={(value: number | string | (number | string)[]) => [
                     typeof value === "number" ? formatDb(value) : "-",
                     selectedMetricInfo?.label ?? "",
                   ]}
                   labelFormatter={(label: number) =>
-                    `${data.sweep_label}: ${label}`
+                    `${data.sweep_label}: ${formatTickValue(label)}`
                   }
                 />
                 <Legend />

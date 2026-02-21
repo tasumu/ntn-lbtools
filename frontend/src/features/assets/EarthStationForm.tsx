@@ -160,7 +160,7 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
           {...form.register("description")}
           error={form.formState.errors.description?.message}
         />
-        <Group grow>
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Controller
             name="antenna_diameter_m"
             control={form.control}
@@ -183,8 +183,8 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
               />
             )}
           />
-        </Group>
-        <Group grow>
+        </SimpleGrid>
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Controller
             name="antenna_gain_tx_db"
             control={form.control}
@@ -207,8 +207,8 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
               />
             )}
           />
-        </Group>
-        <Group grow>
+        </SimpleGrid>
+        <SimpleGrid cols={{ base: 1, sm: 3 }}>
           <Controller
             name="eirp_dbw"
             control={form.control}
@@ -242,15 +242,15 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
               />
             )}
           />
-        </Group>
-        <Group grow>
+        </SimpleGrid>
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <TextInput
             label="Polarization"
             description="For cross-pol interference check"
             {...form.register("polarization")}
           />
           <Textarea label="Notes" minRows={2} {...form.register("notes")} />
-        </Group>
+        </SimpleGrid>
         <Text size="sm" fw={600} mt="xs">
           Default Location (optional)
         </Text>
@@ -265,7 +265,9 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
                 min={-90}
                 max={90}
                 value={field.value ?? undefined}
-                onChange={(value) => field.onChange(value === "" ? undefined : value)}
+                onChange={(value) =>
+                  field.onChange(value === "" ? undefined : value)
+                }
                 error={form.formState.errors.latitude_deg?.message}
               />
             )}
@@ -280,7 +282,9 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
                 min={-180}
                 max={180}
                 value={field.value ?? undefined}
-                onChange={(value) => field.onChange(value === "" ? undefined : value)}
+                onChange={(value) =>
+                  field.onChange(value === "" ? undefined : value)
+                }
                 error={form.formState.errors.longitude_deg?.message}
               />
             )}
@@ -293,7 +297,9 @@ export function EarthStationForm({ initial, onSaved, onCancelEdit }: Props) {
                 label="Altitude (m)"
                 description="Above sea level"
                 value={field.value ?? undefined}
-                onChange={(value) => field.onChange(value === "" ? undefined : value)}
+                onChange={(value) =>
+                  field.onChange(value === "" ? undefined : value)
+                }
                 error={form.formState.errors.altitude_m?.message}
               />
             )}

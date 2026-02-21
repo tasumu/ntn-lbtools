@@ -5,6 +5,7 @@ import {
   Group,
   NumberInput,
   Select,
+  SimpleGrid,
   Stack,
   TextInput,
   Textarea,
@@ -129,7 +130,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
           error={form.formState.errors.name?.message}
         />
         <Textarea label="Description" {...form.register("description")} />
-        <Group grow>
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Controller
             name="orbit_type"
             control={form.control}
@@ -141,8 +142,8 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
             label="Frequency band"
             {...form.register("frequency_band")}
           />
-        </Group>
-        <Group grow>
+        </SimpleGrid>
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Controller
             name="longitude_deg"
             control={form.control}
@@ -161,8 +162,8 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
               <NumberInput label="Inclination (deg)" {...field} />
             )}
           />
-        </Group>
-        <Group grow>
+        </SimpleGrid>
+        <SimpleGrid cols={{ base: 1, sm: 3 }}>
           <Controller
             name="transponder_bandwidth_mhz"
             control={form.control}
@@ -196,7 +197,7 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
               />
             )}
           />
-        </Group>
+        </SimpleGrid>
         <Group justify="flex-start" gap="sm">
           <Button
             type="submit"

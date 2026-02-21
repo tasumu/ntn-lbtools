@@ -21,8 +21,16 @@ export interface ResultRow {
 
 function fmt(value: unknown): string {
   if (value === undefined || value === null) return "-";
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "-";
+  if (typeof value === "number")
+    return Number.isFinite(value) ? String(value) : "-";
   if (typeof value === "boolean") return value ? "Yes" : "No";
+  return String(value);
+}
+
+function fmtResult(value: unknown): string {
+  if (value === undefined || value === null) return "-";
+  if (typeof value === "number")
+    return Number.isFinite(value) ? value.toFixed(2) : "-";
   return String(value);
 }
 
@@ -116,9 +124,33 @@ export function extractResultSummary(
   const results = response.results as unknown as Record<string, unknown>;
   const summary: Record<string, string> = {};
   for (const key of Object.keys(RESULT_LABELS)) {
-    summary[key] = fmt(getNestedValue(results, key));
+    summary[key] = fmtResult(getNestedValue(results, key));
   }
   return summary;
+}
+
+export type AssetNameMap = ReadonlyMap<string, string>;
+
+const ASSET_ID_KEYS = new Set([
+  "satellite_id",
+  "earth_station_tx_id",
+  "earth_station_rx_id",
+  "modcod_table_id",
+]);
+
+export function resolveAssetNames(
+  rows: readonly ParameterRow[],
+  assetMap: AssetNameMap,
+): ParameterRow[] {
+  return rows.map((row) =>
+    ASSET_ID_KEYS.has(row.key)
+      ? {
+          ...row,
+          valueA: assetMap.get(row.valueA) ?? row.valueA,
+          valueB: assetMap.get(row.valueB) ?? row.valueB,
+        }
+      : row,
+  );
 }
 
 export function diffResults(
