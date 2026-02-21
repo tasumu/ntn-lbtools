@@ -15,7 +15,11 @@ class Settings(BaseSettings):
     api_key: str | None = Field(default=None, repr=False)
 
     cors_origins: list[AnyHttpUrl] = Field(
-        default_factory=lambda: ["http://localhost:5173", "http://localhost:8000"],
+        default_factory=lambda: [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:8000",
+        ],
     )
     cors_allow_credentials: bool = Field(default=True)
     cors_allow_methods: list[str] = Field(
