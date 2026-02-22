@@ -15,7 +15,10 @@ This document describes how link budgets are computed in the current backend imp
 - `sat_longitude_deg` is required unless the satellite asset has `longitude_deg`.
 - For `TRANSPARENT`, `runtime.bandwidth_hz` is required and used for both uplink/downlink.
 - For `REGENERATIVE`, `runtime.bandwidth_hz` is forbidden and each direction must specify `bandwidth_hz`.
-- `elevation_deg` is computed if omitted using GEO geometry (see below).
+- `elevation_deg` is computed if omitted using satellite and ground station geometry (see below).
+- `sat_latitude_deg` (float): required for LEO/HAPS without TLE; defaults to 0 for GEO.
+- `sat_altitude_km` (float): required for LEO/HAPS without TLE; defaults to 35786 for GEO.
+- `computation_datetime` (ISO 8601): time for TLE orbit propagation; defaults to current time.
 
 Asset-derived defaults:
 - Uplink EIRP:
@@ -34,15 +37,28 @@ Default environmental values:
 - Water vapor density defaults to 7.5 g/m3.
 - Pressure defaults to 1013.25 hPa.
 
+## Satellite Position Resolution
+The satellite position is resolved using a priority chain:
+
+1. **TLE propagation** (LEO/HAPS with TLE data): Skyfield `EarthSatellite` propagates the TLE
+   to `computation_datetime` (defaults to now). Returns sub-satellite latitude, longitude, and altitude.
+2. **Manual position** (any orbit): `sat_latitude_deg`, `sat_longitude_deg`, and `sat_altitude_km`
+   from runtime parameters or the satellite asset.
+3. **GEO defaults**: For `orbit_type=GEO`, latitude defaults to 0 and altitude to 35786 km.
+
+For LEO/HAPS without TLE, `sat_latitude_deg` and `sat_altitude_km` are required (400 error if missing).
+
 ## Geometry and Slant Range
-If `elevation_deg` is missing, it is computed with a GEO approximation:
-- Uses Earth radius and GEO altitude (35786 km).
-- `elevation = atan((cos(psi) - Re/Rs) / sin(psi))`, where `psi` is the central angle.
+If `elevation_deg` is missing, it is computed from the satellite and ground station positions:
+- General formula: `cos(psi) = sin(lat_g)*sin(lat_s) + cos(lat_g)*cos(lat_s)*cos(delta_lon)`,
+  where `psi` is the central angle between ground station and sub-satellite point.
+- `elevation = atan((cos(psi) - Re/Rs) / sin(psi))`, where `Rs = Re + sat_altitude_km`.
+- For GEO (`lat_s=0, alt=35786 km`), this reduces to the classic GEO approximation.
 If the computed elevation is below the horizon (negative), the request is rejected.
 
 Slant range is estimated with:
 - Skyfield geometry when available.
-- A spherical fallback when Skyfield is unavailable.
+- A spherical fallback using the generalized central angle and variable satellite altitude.
 
 ## Propagation Losses
 Per direction, the backend computes:
@@ -95,7 +111,8 @@ Regenerative:
 - Response omits combined C/N metrics.
 
 ## Limitations
-- Geometry assumes GEO; non-GEO orbit types are not modeled.
+- TLE propagation accuracy degrades weeks after the TLE epoch.
+- ITU-R atmospheric models (P.618, P.676, P.840) assume the signal traverses the full atmosphere from ground to space. For HAPS (~20 km), which operates within the atmosphere, this overpredicts attenuation.
 - Pointing loss and intermodulation are simplified heuristics.
 - Interference is modeled only through user-supplied C/I inputs.
 - Only DVB-S2X waveform is supported at this time.

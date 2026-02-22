@@ -254,7 +254,7 @@ class LinkBudgetState(TypedDict):
 
 ## Limitations
 
-- GEO satellites only (geometry assumes geostationary orbit)
+- Backend supports GEO, LEO, and HAPS; agentic parser currently targets GEO scenarios
 - DVB-S2X waveform only (extendable)
 - Backend must be running for calculations
 - LLM API key required for natural language parsing

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NTN Link Budget Tools - A GEO satellite link budget calculator with FastAPI backend, React frontend, and FastMCP server for AI tool integration.
+NTN Link Budget Tools - A satellite link budget calculator supporting GEO, LEO, and HAPS orbits, with FastAPI backend, React frontend, and FastMCP server for AI tool integration.
 
 ## Development Commands
 
@@ -89,6 +89,7 @@ docker compose run --rm migrate  # Run migrations
 
 ## Constraints
 
-- Geometry calculations assume GEO satellites only
+- GEO, LEO, and HAPS orbits are supported; MEO uses manual position only (no TLE propagation tested)
+- TLE orbit propagation uses Skyfield; TLE accuracy degrades weeks after epoch
 - No production authentication (development-only)
 - Default Docker credentials for local dev only

@@ -34,6 +34,9 @@ Request fields (top-level):
 
 `runtime` fields:
 - `sat_longitude_deg` (float): required if the satellite asset has no `longitude_deg`.
+- `sat_latitude_deg` (float): required for LEO/HAPS without TLE; defaults to 0 for GEO.
+- `sat_altitude_km` (float): required for LEO/HAPS without TLE; defaults to 35786 for GEO.
+- `computation_datetime` (ISO 8601, optional): time for TLE orbit propagation; defaults to current time.
 - `bandwidth_hz` (float): required for `TRANSPARENT`; forbidden for `REGENERATIVE`.
 - `rolloff` (float, optional).
 - `uplink` and `downlink` (required):
@@ -43,7 +46,7 @@ Request fields (top-level):
   - `ground_alt_m` (float, optional).
   - `rain_rate_mm_per_hr` (float >= 0).
   - `temperature_k`, `pressure_hpa`, `water_vapor_density` (optional).
-  - `elevation_deg` (optional): computed from GEO geometry if omitted.
+  - `elevation_deg` (optional): computed from satellite/ground geometry if omitted.
   - `interference` (optional): `adjacent_sat_ci_db`, `cross_polar_ci_db`, `other_carrier_ci_db`,
     `applied`, `notes`.
 - `intermodulation` (optional): `input_backoff_db`, `output_backoff_db`, `composite_carriers`,
@@ -73,7 +76,10 @@ Errors:
 
 Fields:
 - `name` (required, unique).
-- `orbit_type` (default `"GEO"`), `longitude_deg`, `inclination_deg`.
+- `orbit_type` (default `"GEO"`; supported: `"GEO"`, `"LEO"`, `"HAPS"`).
+- `longitude_deg`, `inclination_deg`.
+- `altitude_km` (orbital altitude; required for LEO/HAPS without TLE).
+- `tle_line1`, `tle_line2` (TLE data for orbit propagation; must be both present or both absent).
 - `transponder_bandwidth_mhz` (> 0), `eirp_dbw`, `gt_db_per_k`, `frequency_band`.
 - `description`, `notes`.
 

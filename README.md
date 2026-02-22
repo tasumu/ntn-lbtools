@@ -1,6 +1,6 @@
 # NTN Link Budget Tools
 
-GEO satellite link budget calculator with a FastAPI backend, React (Vite) frontend, and an optional MCP server.
+Satellite link budget calculator supporting GEO, LEO, and HAPS orbits, with a FastAPI backend, React (Vite) frontend, and an optional MCP server.
 
 ## What It Does
 - Manage satellites, earth stations, and ModCod tables.
@@ -67,7 +67,7 @@ See `docs/README.md` for implementation-aligned specs covering:
 - MCP server configuration and prompts
 
 ## Known Limitations
-- Geometry and slant range assume GEO; non-GEO orbit types are not modeled.
+- LEO/HAPS TLE propagation accuracy degrades weeks after TLE epoch.
 - Interference and intermodulation are simplified (aggregate C/I and backoff heuristic).
 - Pointing loss is a fixed heuristic (0.1 dB above 20 deg, 0.5 dB otherwise).
 

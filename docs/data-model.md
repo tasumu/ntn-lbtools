@@ -7,15 +7,20 @@ This document captures the current database schema and the scenario snapshot str
 - `id` (UUID, PK)
 - `name` (unique, required)
 - `description`
-- `orbit_type` (required)
+- `orbit_type` (required; `"GEO"`, `"LEO"`, `"HAPS"`)
 - `longitude_deg` (range -180..180)
 - `inclination_deg`
+- `altitude_km` (orbital altitude in km; > 0)
+- `tle_line1` (TLE line 1, max 80 chars; must pair with `tle_line2`)
+- `tle_line2` (TLE line 2, max 80 chars; must pair with `tle_line1`)
 - `transponder_bandwidth_mhz` (> 0)
 - `eirp_dbw`
 - `gt_db_per_k`
 - `frequency_band`
 - `notes`
 - `created_at`, `updated_at`
+
+Check constraints: `altitude_km IS NULL OR altitude_km > 0`; TLE lines must be both present or both NULL.
 
 ### Earth Stations (`earth_stations`)
 - `id` (UUID, PK)
@@ -32,7 +37,7 @@ This document captures the current database schema and the scenario snapshot str
 - `notes`
 - `created_at`, `updated_at`
 
-Location (lat/lon/alt) is not stored on earth stations; it is supplied at runtime.
+Earth station location (lat/lon/alt) is stored as defaults but can be overridden at runtime.
 
 ### ModCod Tables (`modcod_tables`)
 - `id` (UUID, PK)
@@ -86,7 +91,8 @@ Top-level keys:
 - `itu_constants` (currently empty)
 
 `runtime` fields:
-- `sat_longitude_deg`, `bandwidth_hz` (transparent only), `rolloff`
+- `sat_longitude_deg`, `sat_latitude_deg`, `sat_altitude_km`, `computation_datetime`
+- `bandwidth_hz` (transparent only), `rolloff`
 - `uplink`, `downlink` each include frequency, bandwidth, elevation, rain rate,
   temperature, pressure, water vapor, ground lat/lon/alt, and interference
 - `intermodulation`
