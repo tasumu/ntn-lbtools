@@ -226,6 +226,71 @@ describe("CombinedResultCard", () => {
     expect(screen.getByText(/Clean margin/)).toBeInTheDocument();
   });
 
+  it("shows separate UL/DL bandwidth for REGENERATIVE", () => {
+    renderWithProviders(
+      <CombinedResultCard
+        results={results}
+        combinedLinkMarginDb={2.0}
+        transponderType="REGENERATIVE"
+        isDirectionalModcod={false}
+        modcodSummary="QPSK 1/4"
+        channelBandwidth={36e6}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/UL BW/)).toBeInTheDocument();
+    expect(screen.getByText(/DL BW/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Channel BW/)).not.toBeInTheDocument();
+  });
+
+  it("shows single Channel BW for TRANSPARENT", () => {
+    renderWithProviders(
+      <CombinedResultCard
+        results={results}
+        combinedLinkMarginDb={2.0}
+        transponderType="TRANSPARENT"
+        isDirectionalModcod={false}
+        modcodSummary="QPSK 1/4"
+        channelBandwidth={36e6}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Channel BW/)).toBeInTheDocument();
+    expect(screen.queryByText(/UL BW/)).not.toBeInTheDocument();
+  });
+
+  it("shows 'Bottleneck margin' label for REGENERATIVE", () => {
+    renderWithProviders(
+      <CombinedResultCard
+        results={results}
+        combinedLinkMarginDb={2.0}
+        transponderType="REGENERATIVE"
+        isDirectionalModcod={false}
+        modcodSummary="QPSK 1/4"
+        channelBandwidth={36e6}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Bottleneck margin/)).toBeInTheDocument();
+    expect(screen.queryByText(/End-to-end margin/)).not.toBeInTheDocument();
+  });
+
+  it("shows 'End-to-end margin' label for TRANSPARENT", () => {
+    renderWithProviders(
+      <CombinedResultCard
+        results={results}
+        combinedLinkMarginDb={2.0}
+        transponderType="TRANSPARENT"
+        isDirectionalModcod={false}
+        modcodSummary="QPSK 1/4"
+        channelBandwidth={36e6}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/End-to-end margin/)).toBeInTheDocument();
+    expect(screen.queryByText(/Bottleneck margin/)).not.toBeInTheDocument();
+  });
+
   it("shows per-direction throughput for REGENERATIVE", () => {
     renderWithProviders(
       <CombinedResultCard

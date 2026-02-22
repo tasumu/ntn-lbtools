@@ -93,7 +93,12 @@ export function CombinedResultCard({
         {cleanMargin != null && (
           <Text size="sm">Clean margin: {formatDb(cleanMargin)} dB</Text>
         )}
-        <Text size="sm">End-to-end margin: {formatDb(e2eMargin)} dB</Text>
+        <Text size="sm">
+          {transponderType === "REGENERATIVE"
+            ? "Bottleneck margin (min of UL/DL)"
+            : "End-to-end margin"}
+          : {formatDb(e2eMargin)} dB
+        </Text>
         {transponderType !== "REGENERATIVE" && (
           <Text size="sm">
             C/(N+I): {formatDb(results.combined?.cni_db)} dB | C/IM:{" "}
@@ -128,7 +133,14 @@ export function CombinedResultCard({
           <Text size="sm">Selected ModCod: {modcodSummary}</Text>
         )}
         {throughput && <Text size="sm">Throughput: {throughput}</Text>}
-        <Text size="sm">Channel BW: {formatHz(channelBandwidth)}</Text>
+        {transponderType === "REGENERATIVE" ? (
+          <Text size="sm">
+            UL BW: {formatHz(results.uplink.bandwidth_hz)} | DL BW:{" "}
+            {formatHz(results.downlink.bandwidth_hz)}
+          </Text>
+        ) : (
+          <Text size="sm">Channel BW: {formatHz(channelBandwidth)}</Text>
+        )}
         <Text size="sm" fw={600} mt="xs">
           C/N Balance
         </Text>

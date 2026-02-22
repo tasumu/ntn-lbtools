@@ -181,7 +181,11 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
             render={({ field }) => (
               <NumberInput
                 label="Longitude (deg)"
-                description={orbitType === "GEO" ? "Required for GEO" : "Sub-satellite point"}
+                description={
+                  orbitType === "GEO"
+                    ? "Required for GEO"
+                    : "Reference value (overridden by TLE at runtime)"
+                }
                 {...field}
               />
             )}
@@ -199,7 +203,11 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
             render={({ field }) => (
               <NumberInput
                 label="Altitude (km)"
-                description={isNonGeo ? "Required for LEO/HAPS" : "Default: 35786 km for GEO"}
+                description={
+                  isNonGeo
+                    ? "Required for LEO/HAPS"
+                    : "Default: 35786 km for GEO"
+                }
                 withAsterisk={isNonGeo}
                 error={form.formState.errors.altitude_km?.message}
                 {...field}

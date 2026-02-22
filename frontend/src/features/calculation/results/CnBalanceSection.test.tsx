@@ -20,7 +20,7 @@ describe("CnBalanceSection", () => {
     expect(screen.getByText("Total")).toBeInTheDocument();
   });
 
-  it("renders with REGENERATIVE transponder", () => {
+  it("shows 'Bottleneck' label for REGENERATIVE C/N balance", () => {
     renderWithProviders(
       <CnBalanceSection
         uplink={mockCalculationResponse.results.uplink}
@@ -30,7 +30,21 @@ describe("CnBalanceSection", () => {
       />,
     );
     expect(screen.getByText("Uplink")).toBeInTheDocument();
+    expect(screen.getByText("Bottleneck")).toBeInTheDocument();
+    expect(screen.queryByText("Total")).not.toBeInTheDocument();
+  });
+
+  it("shows 'Total' label for TRANSPARENT C/N balance", () => {
+    renderWithProviders(
+      <CnBalanceSection
+        uplink={mockCalculationResponse.results.uplink}
+        downlink={mockCalculationResponse.results.downlink}
+        combined={mockCalculationResponse.results.combined}
+        transponderType="TRANSPARENT"
+      />,
+    );
     expect(screen.getByText("Total")).toBeInTheDocument();
+    expect(screen.queryByText("Bottleneck")).not.toBeInTheDocument();
   });
 
   it("renders without combined results", () => {

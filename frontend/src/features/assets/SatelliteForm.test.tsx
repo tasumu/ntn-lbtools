@@ -94,6 +94,21 @@ describe("SatelliteForm", () => {
     });
   });
 
+  it("shows reference value note for LEO longitude", () => {
+    renderWithProviders(
+      <SatelliteForm
+        initial={{
+          id: "sat-leo",
+          name: "LEO Sat",
+          orbit_type: "LEO",
+        }}
+      />,
+    );
+    expect(
+      screen.getByText(/Reference value.*overridden.*TLE/i),
+    ).toBeInTheDocument();
+  });
+
   it("does not require altitude_km for GEO orbit type", async () => {
     const user = userEvent.setup();
     renderWithProviders(

@@ -10,7 +10,12 @@ type Props = {
   transponderType?: string;
 };
 
-export function CnBalanceSection({ uplink, downlink, combined, transponderType }: Props) {
+export function CnBalanceSection({
+  uplink,
+  downlink,
+  combined,
+  transponderType,
+}: Props) {
   const ulDegraded = uplink.cn_db;
   const ulClean = uplink.clean_cn_db ?? ulDegraded;
   const ulDegradation = Math.max(0, ulClean - ulDegraded);
@@ -37,9 +42,27 @@ export function CnBalanceSection({ uplink, downlink, combined, transponderType }
 
   return (
     <Stack gap={4}>
-      <BalanceBar label="Uplink" degraded={ulDegraded} degradation={ulDegradation} color="teal" maxVal={maxVal} />
-      <BalanceBar label="Downlink" degraded={dlDegraded} degradation={dlDegradation} color="blue" maxVal={maxVal} />
-      <BalanceBar label="Total" degraded={totalDegraded} degradation={totalDegradation} color="grape" maxVal={maxVal} />
+      <BalanceBar
+        label="Uplink"
+        degraded={ulDegraded}
+        degradation={ulDegradation}
+        color="teal"
+        maxVal={maxVal}
+      />
+      <BalanceBar
+        label="Downlink"
+        degraded={dlDegraded}
+        degradation={dlDegradation}
+        color="blue"
+        maxVal={maxVal}
+      />
+      <BalanceBar
+        label={transponderType === "REGENERATIVE" ? "Bottleneck" : "Total"}
+        degraded={totalDegraded}
+        degradation={totalDegradation}
+        color="grape"
+        maxVal={maxVal}
+      />
     </Stack>
   );
 }
@@ -63,10 +86,16 @@ function BalanceBar({
 
   return (
     <Group gap="xs" align="center">
-      <Text size="xs" w={60}>{label}</Text>
+      <Text size="xs" w={60}>
+        {label}
+      </Text>
       <Progress.Root size="sm" style={{ flex: 1 }}>
         <Progress.Section value={degPercent} color={color} />
-        <Progress.Section value={cleanPercent} color={color} style={{ opacity: 0.3 }} />
+        <Progress.Section
+          value={cleanPercent}
+          color={color}
+          style={{ opacity: 0.3 }}
+        />
       </Progress.Root>
       <Text size="xs" w={90} ta="right">
         {formatDb(degraded)} / {formatDb(clean)} dB
