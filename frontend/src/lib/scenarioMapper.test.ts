@@ -322,4 +322,66 @@ describe("loadScenario", () => {
     });
     expect(result!.earth_station_tx_id).toBe("es-tx-flat");
   });
+
+  it("resolves sat_latitude_deg from runtime", () => {
+    const result = loadScenario({
+      ...baseScenario,
+      payload_snapshot: {
+        runtime: { sat_latitude_deg: 35.5 },
+      },
+    });
+    expect(result!.runtime.sat_latitude_deg).toBe(35.5);
+  });
+
+  it("resolves sat_altitude_km from runtime", () => {
+    const result = loadScenario({
+      ...baseScenario,
+      payload_snapshot: {
+        runtime: { sat_altitude_km: 550.0 },
+      },
+    });
+    expect(result!.runtime.sat_altitude_km).toBe(550.0);
+  });
+
+  it("resolves computation_datetime from runtime", () => {
+    const result = loadScenario({
+      ...baseScenario,
+      payload_snapshot: {
+        runtime: { computation_datetime: "2024-12-15T10:30:00Z" },
+      },
+    });
+    expect(result!.runtime.computation_datetime).toBe("2024-12-15T10:30:00Z");
+  });
+
+  it("defaults LEO fields to undefined when absent", () => {
+    const result = loadScenario({
+      ...baseScenario,
+      payload_snapshot: {
+        runtime: { sat_longitude_deg: 140.0 },
+      },
+    });
+    expect(result!.runtime.sat_latitude_deg).toBeUndefined();
+    expect(result!.runtime.sat_altitude_km).toBeUndefined();
+    expect(result!.runtime.computation_datetime).toBeUndefined();
+  });
+
+  it("restores all LEO parameters together", () => {
+    const result = loadScenario({
+      ...baseScenario,
+      payload_snapshot: {
+        runtime: {
+          sat_longitude_deg: 45.2,
+          sat_latitude_deg: -12.8,
+          sat_altitude_km: 550.0,
+          computation_datetime: "2024-12-15T10:30:00Z",
+          bandwidth_hz: 50e6,
+        },
+      },
+    });
+    expect(result!.runtime.sat_longitude_deg).toBe(45.2);
+    expect(result!.runtime.sat_latitude_deg).toBe(-12.8);
+    expect(result!.runtime.sat_altitude_km).toBe(550.0);
+    expect(result!.runtime.computation_datetime).toBe("2024-12-15T10:30:00Z");
+    expect(result!.runtime.bandwidth_hz).toBe(50e6);
+  });
 });

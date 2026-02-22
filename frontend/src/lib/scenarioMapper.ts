@@ -7,6 +7,9 @@ type InterferenceBlock =
 type ScenarioPayloadRuntime = {
   bandwidth_hz?: number;
   sat_longitude_deg?: number;
+  sat_latitude_deg?: number;
+  sat_altitude_km?: number;
+  computation_datetime?: string;
   satellite_id?: string;
   modcod_table_id?: string;
   uplink?: DirectionRuntime;
@@ -200,6 +203,9 @@ export function loadScenario(
         runtime?.sat_longitude_deg ??
         entity.satellite?.longitude_deg ??
         (meta.sat_longitude_deg ? Number(meta.sat_longitude_deg) : undefined),
+      sat_latitude_deg: runtime?.sat_latitude_deg ?? undefined,
+      sat_altitude_km: runtime?.sat_altitude_km ?? undefined,
+      computation_datetime: runtime?.computation_datetime ?? undefined,
       intermodulation: {
         input_backoff_db:
           runtime?.intermodulation?.input_backoff_db ?? undefined,

@@ -35,10 +35,14 @@ def build_runtime_echo(
     intermod_block: dict[str, Any] | None,
     shared_bandwidth: float | None,
     is_transparent: bool,
+    computation_datetime: str | None = None,
 ) -> dict[str, Any]:
     """Build the runtime echo section of the response."""
     echo = {
         "sat_longitude_deg": runtime.sat_longitude_deg,
+        "sat_latitude_deg": runtime.sat_latitude_deg,
+        "sat_altitude_km": runtime.sat_altitude_km,
+        "computation_datetime": computation_datetime,
         "rolloff": rolloff,
         "uplink": _runtime_direction_echo(runtime.uplink, uplink_data.get("interference") or {}),
         "downlink": _runtime_direction_echo(

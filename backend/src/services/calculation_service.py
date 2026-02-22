@@ -486,6 +486,9 @@ class CalculationService:
 
         # ---- Build runtime echo ----
         is_transparent = transponder_type == TransponderType.TRANSPARENT
+        comp_dt = runtime_data.get("computation_datetime")
+        if hasattr(comp_dt, "isoformat"):
+            comp_dt = comp_dt.isoformat()
         runtime_echo = build_runtime_echo(
             runtime,
             rolloff,
@@ -494,6 +497,7 @@ class CalculationService:
             intermod_block,
             shared_bandwidth,
             is_transparent,
+            computation_datetime=comp_dt,
         )
 
         # ---- Combine results and select ModCod ----
