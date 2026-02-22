@@ -730,9 +730,7 @@ def nr_payload(nr_modcod_entries):
                 antenna_gain_rx_db=30.0,
                 noise_temperature_k=200.0,
             ),
-            "modcod": FakeModCodTable(
-                id=mc_id, entries=nr_modcod_entries, waveform="5G_NR"
-            ),
+            "modcod": FakeModCodTable(id=mc_id, entries=nr_modcod_entries, waveform="5G_NR"),
         },
     }
 
@@ -794,6 +792,4 @@ async def test_5g_nr_uses_overhead_not_rolloff(nr_calculation_service, nr_payloa
         info_bits = modcod["info_bits_per_symbol"]
         overhead = 0.14
         expected_se = info_bits * (1 - overhead)
-        assert modcod["effective_spectral_efficiency"] == pytest.approx(
-            expected_se, rel=0.01
-        )
+        assert modcod["effective_spectral_efficiency"] == pytest.approx(expected_se, rel=0.01)

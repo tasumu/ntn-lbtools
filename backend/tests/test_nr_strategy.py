@@ -16,6 +16,7 @@ from src.core.strategies.nr import NrStrategy  # type: ignore  # noqa: E402
 # Strategy identity
 # ---------------------------------------------------------------------------
 
+
 def test_nr_strategy_name():
     strat = NrStrategy()
     assert strat.name == "5G_NR"
@@ -24,6 +25,7 @@ def test_nr_strategy_name():
 # ---------------------------------------------------------------------------
 # Overhead / spectral efficiency
 # ---------------------------------------------------------------------------
+
 
 def test_nr_default_overhead_is_0_14():
     assert NrStrategy.default_overhead == 0.14
@@ -104,6 +106,7 @@ def test_nr_overhead_clamped_to_0_1():
 # Spectral efficiency (aggregate)
 # ---------------------------------------------------------------------------
 
+
 def test_nr_spectral_efficiency_uses_highest_entry():
     table = [
         ModcodEntry("low", "QPSK", "1/4", required_cn0_dbhz=60.0, info_bits_per_symbol=0.5),
@@ -117,6 +120,7 @@ def test_nr_spectral_efficiency_uses_highest_entry():
 # ---------------------------------------------------------------------------
 # ModCod selection (uses shared base logic)
 # ---------------------------------------------------------------------------
+
 
 def test_nr_modcod_selection_picks_highest_meeting_threshold():
     table = [
@@ -147,7 +151,9 @@ def test_nr_modcod_selection_with_bandwidth():
 
 def test_nr_select_modcod_with_margin():
     entry = ModcodEntry(
-        "mcs5", "QPSK", "1/2",
+        "mcs5",
+        "QPSK",
+        "1/2",
         required_ebno_db=1.0,
         info_bits_per_symbol=1.0,
     )
@@ -155,8 +161,8 @@ def test_nr_select_modcod_with_margin():
     bandwidth_hz = 10e6
     cn0 = 80.0
 
-    selected, available_ebno, required_ebno, margin, bitrate = (
-        strat.select_modcod_with_margin(cn0, bandwidth_hz, rolloff=0.14)
+    selected, available_ebno, required_ebno, margin, bitrate = strat.select_modcod_with_margin(
+        cn0, bandwidth_hz, rolloff=0.14
     )
     assert selected is not None
     assert selected.id == "mcs5"
@@ -171,6 +177,7 @@ def test_nr_select_modcod_with_margin():
 # ---------------------------------------------------------------------------
 # Table initialization from dicts
 # ---------------------------------------------------------------------------
+
 
 def test_nr_table_from_dicts():
     entries = [
@@ -212,6 +219,7 @@ def test_nr_infers_info_bits_per_symbol():
 # ---------------------------------------------------------------------------
 # DVB-S2X vs NR spectral efficiency comparison
 # ---------------------------------------------------------------------------
+
 
 def test_nr_se_differs_from_dvbs2x():
     """NR uses (1-overhead) multiplication vs DVB-S2X (1+rolloff) division."""
