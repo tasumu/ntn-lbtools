@@ -11,6 +11,7 @@ from pydantic.config import ConfigDict
 
 class WaveformStrategy(str, Enum):
     DVB_S2X = "DVB_S2X"
+    NR_5G = "5G_NR"
 
 
 class TransponderType(str, Enum):

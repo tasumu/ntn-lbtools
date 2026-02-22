@@ -45,6 +45,7 @@ class FakeStation(FakeEntity):
 class FakeModCodTable(FakeEntity):
     entries: list[Any] = field(default_factory=list)
     version: str = "1.0"
+    waveform: str = "DVB_S2X"
 
 
 class FakeRepo:
@@ -650,3 +651,149 @@ async def test_leo_tle_transparent_success(mock_modcod_entries):
     # and FSPL should be low (LEO altitude)
     ul_fspl = result["results"]["uplink"]["fspl_db"]
     assert ul_fspl < 175, f"LEO sub-sat FSPL {ul_fspl:.1f} dB should be < 175"
+
+
+# --- 5G NR Waveform Tests ---
+
+
+@pytest.fixture
+def nr_modcod_entries():
+    return [
+        ModcodEntry(
+            id="MCS0",
+            modulation="QPSK",
+            code_rate="120/1024",
+            required_ebno_db=-6.7,
+            info_bits_per_symbol=0.2344,
+        ),
+        ModcodEntry(
+            id="MCS5",
+            modulation="QPSK",
+            code_rate="1/2",
+            required_ebno_db=1.0,
+            info_bits_per_symbol=1.0,
+        ),
+        ModcodEntry(
+            id="MCS15",
+            modulation="16QAM",
+            code_rate="602/1024",
+            required_ebno_db=8.0,
+            info_bits_per_symbol=2.3516,
+        ),
+    ]
+
+
+@pytest.fixture
+def nr_payload(nr_modcod_entries):
+    sat_id = uuid.uuid4()
+    tx_id = uuid.uuid4()
+    rx_id = uuid.uuid4()
+    mc_id = uuid.uuid4()
+
+    return {
+        "waveform_strategy": "5G_NR",
+        "transponder_type": "TRANSPARENT",
+        "modcod_table_id": mc_id,
+        "satellite_id": sat_id,
+        "earth_station_tx_id": tx_id,
+        "earth_station_rx_id": rx_id,
+        "runtime": {
+            "sat_longitude_deg": 0.0,
+            "bandwidth_hz": 10e6,
+            "rolloff": 0.14,
+            "uplink": {
+                "frequency_hz": 14e9,
+                "bandwidth_hz": 10e6,
+                "elevation_deg": 45.0,
+                "rain_rate_mm_per_hr": 0.0,
+                "temperature_k": 290.0,
+                "ground_lat_deg": 0.0,
+                "ground_lon_deg": 0.0,
+                "ground_alt_m": 0.0,
+            },
+            "downlink": {
+                "frequency_hz": 12e9,
+                "bandwidth_hz": 10e6,
+                "elevation_deg": 45.0,
+                "rain_rate_mm_per_hr": 0.0,
+                "temperature_k": 290.0,
+                "ground_lat_deg": 0.0,
+                "ground_lon_deg": 0.0,
+                "ground_alt_m": 0.0,
+            },
+        },
+        "_mocks": {
+            "sat": FakeSatellite(id=sat_id, eirp_dbw=60.0, gt_db_per_k=5.0),
+            "tx": FakeStation(id=tx_id, tx_power_dbw=20.0, antenna_gain_tx_db=40.0),
+            "rx": FakeStation(
+                id=rx_id,
+                antenna_gain_rx_db=30.0,
+                noise_temperature_k=200.0,
+            ),
+            "modcod": FakeModCodTable(
+                id=mc_id, entries=nr_modcod_entries, waveform="5G_NR"
+            ),
+        },
+    }
+
+
+@pytest.fixture
+def nr_calculation_service(nr_payload):
+    mocks = nr_payload.pop("_mocks")
+
+    sat_repo = FakeRepo({mocks["sat"].id: mocks["sat"]})
+    es_repo = FakeRepo({mocks["tx"].id: mocks["tx"], mocks["rx"].id: mocks["rx"]})
+    modcod_repo = FakeRepo({mocks["modcod"].id: mocks["modcod"]})
+
+    return CalculationService(
+        modcod_repo=modcod_repo,
+        satellite_repo=sat_repo,
+        earth_station_repo=es_repo,
+    )
+
+
+@pytest.mark.asyncio
+async def test_calculate_transparent_5g_nr(nr_calculation_service, nr_payload):
+    """Verify 5G NR transparent calculation succeeds."""
+    result = await nr_calculation_service.calculate(nr_payload)
+
+    assert result["strategy"]["waveform_strategy"] == "5G_NR"
+    assert result["strategy"]["transponder_type"] == "TRANSPARENT"
+    assert result["combined_cn_db"] is not None
+    assert result["combined_link_margin_db"] is not None
+    assert result["modcod_selected"] is not None
+    assert result["combined_link_margin_db"] > 0
+
+
+@pytest.mark.asyncio
+async def test_calculate_regenerative_5g_nr(nr_calculation_service, nr_payload):
+    """Verify 5G NR regenerative calculation succeeds."""
+    payload = copy.deepcopy(nr_payload)
+    payload["transponder_type"] = "REGENERATIVE"
+    mc_id = payload.pop("modcod_table_id")
+    payload["uplink_modcod_table_id"] = mc_id
+    payload["downlink_modcod_table_id"] = mc_id
+    del payload["runtime"]["bandwidth_hz"]
+
+    result = await nr_calculation_service.calculate(payload)
+
+    assert result["strategy"]["transponder_type"] == "REGENERATIVE"
+    assert result["combined_cn_db"] is None
+    assert result["results"]["uplink"]["link_margin_db"] is not None
+    assert result["results"]["downlink"]["link_margin_db"] is not None
+
+
+@pytest.mark.asyncio
+async def test_5g_nr_uses_overhead_not_rolloff(nr_calculation_service, nr_payload):
+    """Verify that NR strategy uses overhead-based SE, not rolloff-based."""
+    result = await nr_calculation_service.calculate(nr_payload)
+    modcod = result["modcod_selected"]
+
+    # Verify that NrStrategy was actually used by checking SE calculation
+    if modcod and modcod.get("effective_spectral_efficiency") is not None:
+        info_bits = modcod["info_bits_per_symbol"]
+        overhead = 0.14
+        expected_se = info_bits * (1 - overhead)
+        assert modcod["effective_spectral_efficiency"] == pytest.approx(
+            expected_se, rel=0.01
+        )

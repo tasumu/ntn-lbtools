@@ -6,7 +6,7 @@ export const optionalNumber = z.preprocess(
   z.number().optional(),
 );
 
-export const waveformStrategySchema = z.enum(["DVB_S2X"]);
+export const waveformStrategySchema = z.enum(["DVB_S2X", "5G_NR"]);
 export const transponderTypeSchema = z.enum(["TRANSPARENT", "REGENERATIVE"]);
 
 const interferenceSchema = z.object({

@@ -218,6 +218,14 @@ export function CalculationForm({
   }, [earthStationRxId, earthStations, setValue]);
 
   useEffect(() => {
+    if (selectedWaveform === "5G_NR") {
+      setValue("runtime.rolloff", 0.14);
+    } else {
+      setValue("runtime.rolloff", 0.2);
+    }
+  }, [selectedWaveform, setValue]);
+
+  useEffect(() => {
     if (initialValues) {
       reset({
         ...initialValues,
@@ -430,7 +438,12 @@ export function CalculationForm({
             control={control}
             render={({ field }) => (
               <NumberInput
-                label={<LabelWithTooltip label="Rolloff (alpha)" fieldKey="rolloff" />}
+                label={
+                  <LabelWithTooltip
+                    label={selectedWaveform === "5G_NR" ? "Overhead fraction" : "Rolloff (alpha)"}
+                    fieldKey="rolloff"
+                  />
+                }
                 min={0}
                 max={1}
                 step={0.01}
