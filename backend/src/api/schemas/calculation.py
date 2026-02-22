@@ -58,6 +58,21 @@ class DirectionRuntimeParametersModel(BaseModel):
 
 class RuntimeParametersModel(BaseModel):
     sat_longitude_deg: float | None = Field(default=None, ge=-180, le=180)
+    sat_latitude_deg: float | None = Field(
+        default=None,
+        ge=-90,
+        le=90,
+        description="Satellite sub-satellite point latitude (required for LEO/HAPS without TLE)",
+    )
+    sat_altitude_km: float | None = Field(
+        default=None,
+        gt=0,
+        description="Satellite altitude in km (overrides asset value)",
+    )
+    computation_datetime: datetime | None = Field(
+        default=None,
+        description="Time for TLE orbit propagation (ISO 8601). Defaults to current time.",
+    )
     bandwidth_hz: float | None = Field(default=None, gt=0)
     rolloff: float | None = Field(default=None, ge=0)
     uplink: DirectionRuntimeParametersModel
@@ -145,6 +160,9 @@ class SatelliteSnapshot(BaseModel):
     orbit_type: str | None = None
     longitude_deg: float | None = None
     inclination_deg: float | None = None
+    altitude_km: float | None = None
+    tle_line1: str | None = None
+    tle_line2: str | None = None
     transponder_bandwidth_mhz: float | None = None
     eirp_dbw: float | None = None
     gt_db_per_k: float | None = None

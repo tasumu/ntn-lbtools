@@ -28,6 +28,8 @@ function SatelliteColumn({ satellite }: { satellite: SatelliteAsset }) {
       <Text size="sm" fw={500}>{satellite.name}</Text>
       <Spec label="Orbit" value={satellite.orbit_type} />
       <Spec label="Longitude" value={satellite.longitude_deg != null ? `${satellite.longitude_deg}°E` : undefined} />
+      <Spec label="Altitude" value={satellite.altitude_km != null ? `${satellite.altitude_km} km` : undefined} />
+      <Spec label="TLE" value={satellite.tle_line1 ? "Available" : undefined} />
       <Spec label="Band" value={satellite.frequency_band} />
       <Spec label="EIRP" value={satellite.eirp_dbw != null ? `${satellite.eirp_dbw} dBW` : undefined} />
       <Spec label="G/T" value={satellite.gt_db_per_k != null ? `${satellite.gt_db_per_k} dB/K` : undefined} />

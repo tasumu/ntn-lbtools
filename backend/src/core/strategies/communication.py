@@ -61,6 +61,8 @@ class TransparentCommunicationStrategy:
             pressure_hpa=(
                 params.pressure_hpa if params.pressure_hpa is not None else DEFAULT_PRESSURE_HPA
             ),
+            sat_latitude_deg=runtime.sat_latitude_deg,
+            sat_altitude_km=runtime.sat_altitude_km,
         )
         stats = compute_link_budget(inputs)
         return CalculationResult(

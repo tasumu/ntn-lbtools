@@ -23,6 +23,8 @@ class RuntimeParameters:
     uplink: LinkDirectionParameters
     downlink: LinkDirectionParameters
     rolloff: float | None = None
+    sat_latitude_deg: float = 0.0
+    sat_altitude_km: float = 35786.0
 
 
 @dataclass

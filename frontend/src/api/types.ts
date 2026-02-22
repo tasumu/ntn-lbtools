@@ -12,6 +12,9 @@ export interface SatelliteAsset {
   orbit_type: string;
   longitude_deg?: number;
   inclination_deg?: number;
+  altitude_km?: number;
+  tle_line1?: string;
+  tle_line2?: string;
   transponder_bandwidth_mhz?: number;
   eirp_dbw?: number;
   gt_db_per_k?: number;

@@ -25,6 +25,10 @@ class FakeSatellite(FakeEntity):
     eirp_dbw: float = 50.0
     gt_db_per_k: float = 10.0
     transponder_bandwidth_mhz: float = 36.0
+    altitude_km: float | None = None
+    tle_line1: str | None = None
+    tle_line2: str | None = None
+    inclination_deg: float | None = None
 
 
 @dataclass
@@ -351,3 +355,295 @@ async def test_validate_bandwidth_mismatch_transparent(calculation_service, base
     # Check for status code 400
     assert exc.value.status_code == 400
     assert "bandwidth" in exc.value.detail.lower()
+
+
+# --- LEO Tests ---
+
+ISS_TLE_LINE1 = "1 25544U 98067A   24001.50000000  .00016717  00000-0  10270-3 0  9003"
+ISS_TLE_LINE2 = "2 25544  51.6400 208.9163 0006703 300.0286  60.0024 15.49560722999999"
+
+
+@pytest.fixture
+def leo_payload(mock_modcod_entries):
+    """Payload for LEO satellite calculation with manual position."""
+    sat_id = uuid.uuid4()
+    tx_id = uuid.uuid4()
+    rx_id = uuid.uuid4()
+    mc_id = uuid.uuid4()
+
+    return {
+        "waveform_strategy": "DVB_S2X",
+        "transponder_type": "TRANSPARENT",
+        "modcod_table_id": mc_id,
+        "satellite_id": sat_id,
+        "earth_station_tx_id": tx_id,
+        "earth_station_rx_id": rx_id,
+        "runtime": {
+            "sat_longitude_deg": 139.0,
+            "sat_latitude_deg": 35.0,
+            "sat_altitude_km": 550.0,
+            "bandwidth_hz": 10e6,
+            "uplink": {
+                "frequency_hz": 14e9,
+                "bandwidth_hz": 10e6,
+                "elevation_deg": 60.0,
+                "rain_rate_mm_per_hr": 0.0,
+                "temperature_k": 290.0,
+                "ground_lat_deg": 35.0,
+                "ground_lon_deg": 139.0,
+                "ground_alt_m": 0.0,
+            },
+            "downlink": {
+                "frequency_hz": 12e9,
+                "bandwidth_hz": 10e6,
+                "elevation_deg": 60.0,
+                "rain_rate_mm_per_hr": 0.0,
+                "temperature_k": 120.0,
+                "ground_lat_deg": 35.0,
+                "ground_lon_deg": 139.0,
+                "ground_alt_m": 0.0,
+            },
+        },
+        "_mocks": {
+            "sat": FakeSatellite(
+                id=sat_id,
+                orbit_type="LEO",
+                longitude_deg=139.0,
+                altitude_km=550.0,
+                eirp_dbw=40.0,
+                gt_db_per_k=5.0,
+            ),
+            "tx": FakeStation(id=tx_id, tx_power_dbw=10.0, antenna_gain_tx_db=30.0),
+            "rx": FakeStation(
+                id=rx_id,
+                antenna_gain_rx_db=25.0,
+                noise_temperature_k=200.0,
+            ),
+            "modcod": FakeModCodTable(id=mc_id, entries=mock_modcod_entries),
+        },
+    }
+
+
+@pytest.fixture
+def leo_service(leo_payload):
+    mocks = leo_payload.pop("_mocks")
+    sat_repo = FakeRepo({mocks["sat"].id: mocks["sat"]})
+    es_repo = FakeRepo({mocks["tx"].id: mocks["tx"], mocks["rx"].id: mocks["rx"]})
+    modcod_repo = FakeRepo({mocks["modcod"].id: mocks["modcod"]})
+    return CalculationService(
+        modcod_repo=modcod_repo,
+        satellite_repo=sat_repo,
+        earth_station_repo=es_repo,
+    )
+
+
+@pytest.mark.asyncio
+async def test_leo_manual_position_success(leo_service, leo_payload):
+    """LEO satellite with manual position (sat_latitude/longitude/altitude) should succeed."""
+    result = await leo_service.calculate(leo_payload)
+
+    assert result["combined_link_margin_db"] is not None
+    assert result["modcod_selected"] is not None
+    # LEO FSPL should be much lower than GEO
+    ul_fspl = result["results"]["uplink"]["fspl_db"]
+    assert ul_fspl < 180, f"LEO FSPL {ul_fspl:.1f} dB should be < 180 (GEO is ~206)"
+
+
+@pytest.mark.asyncio
+async def test_leo_fspl_significantly_lower(
+    leo_service, leo_payload, calculation_service, base_payload,
+):
+    """LEO FSPL should be 20+ dB lower than GEO at similar frequencies."""
+    leo_result = await leo_service.calculate(leo_payload)
+    geo_result = await calculation_service.calculate(base_payload)
+
+    leo_fspl = leo_result["results"]["uplink"]["fspl_db"]
+    geo_fspl = geo_result["results"]["uplink"]["fspl_db"]
+
+    diff = geo_fspl - leo_fspl
+    assert diff > 20, f"LEO-GEO FSPL difference {diff:.1f} dB should be > 20 dB"
+
+
+@pytest.mark.asyncio
+async def test_leo_missing_latitude_returns_400(mock_modcod_entries):
+    """LEO satellite without sat_latitude_deg and no TLE should return 400."""
+    sat_id = uuid.uuid4()
+    mc_id = uuid.uuid4()
+    sat = FakeSatellite(id=sat_id, orbit_type="LEO", altitude_km=550.0)
+    modcod = FakeModCodTable(id=mc_id, entries=mock_modcod_entries)
+
+    service = CalculationService(
+        modcod_repo=FakeRepo({mc_id: modcod}),
+        satellite_repo=FakeRepo({sat_id: sat}),
+        earth_station_repo=FakeRepo({}),
+    )
+
+    payload = {
+        "waveform_strategy": "DVB_S2X",
+        "transponder_type": "TRANSPARENT",
+        "modcod_table_id": mc_id,
+        "satellite_id": sat_id,
+        "runtime": {
+            "sat_longitude_deg": 139.0,
+            # sat_latitude_deg intentionally omitted
+            "bandwidth_hz": 10e6,
+            "uplink": {
+                "frequency_hz": 14e9,
+                "bandwidth_hz": 10e6,
+                "rain_rate_mm_per_hr": 0.0,
+                "ground_lat_deg": 35.0,
+                "ground_lon_deg": 139.0,
+                "ground_alt_m": 0.0,
+            },
+            "downlink": {
+                "frequency_hz": 12e9,
+                "bandwidth_hz": 10e6,
+                "rain_rate_mm_per_hr": 0.0,
+                "ground_lat_deg": 35.0,
+                "ground_lon_deg": 139.0,
+                "ground_alt_m": 0.0,
+            },
+        },
+    }
+
+    with pytest.raises(Exception) as exc:
+        await service.calculate(payload)
+    assert exc.value.status_code == 400
+    assert "latitude" in exc.value.detail.lower()
+
+
+@pytest.mark.asyncio
+async def test_leo_missing_altitude_returns_400(mock_modcod_entries):
+    """LEO satellite without altitude should return 400."""
+    sat_id = uuid.uuid4()
+    mc_id = uuid.uuid4()
+    sat = FakeSatellite(id=sat_id, orbit_type="LEO", altitude_km=None)
+    modcod = FakeModCodTable(id=mc_id, entries=mock_modcod_entries)
+
+    service = CalculationService(
+        modcod_repo=FakeRepo({mc_id: modcod}),
+        satellite_repo=FakeRepo({sat_id: sat}),
+        earth_station_repo=FakeRepo({}),
+    )
+
+    payload = {
+        "waveform_strategy": "DVB_S2X",
+        "transponder_type": "TRANSPARENT",
+        "modcod_table_id": mc_id,
+        "satellite_id": sat_id,
+        "runtime": {
+            "sat_longitude_deg": 139.0,
+            "sat_latitude_deg": 35.0,
+            # sat_altitude_km intentionally omitted; asset also has None
+            "bandwidth_hz": 10e6,
+            "uplink": {
+                "frequency_hz": 14e9,
+                "bandwidth_hz": 10e6,
+                "rain_rate_mm_per_hr": 0.0,
+                "ground_lat_deg": 35.0,
+                "ground_lon_deg": 139.0,
+                "ground_alt_m": 0.0,
+            },
+            "downlink": {
+                "frequency_hz": 12e9,
+                "bandwidth_hz": 10e6,
+                "rain_rate_mm_per_hr": 0.0,
+                "ground_lat_deg": 35.0,
+                "ground_lon_deg": 139.0,
+                "ground_alt_m": 0.0,
+            },
+        },
+    }
+
+    with pytest.raises(Exception) as exc:
+        await service.calculate(payload)
+    assert exc.value.status_code == 400
+    assert "altitude" in exc.value.detail.lower()
+
+
+@pytest.mark.asyncio
+async def test_geo_backward_compatible(calculation_service, base_payload):
+    """Existing GEO calculation should work exactly as before (no new params needed)."""
+    result = await calculation_service.calculate(base_payload)
+    assert result["combined_link_margin_db"] is not None
+    assert result["modcod_selected"] is not None
+
+    # Check GEO-range FSPL (should be ~200-210 dB at Ku-band)
+    ul_fspl = result["results"]["uplink"]["fspl_db"]
+    assert 190 < ul_fspl < 215, f"GEO FSPL {ul_fspl:.1f} dB out of expected range"
+
+
+@pytest.mark.asyncio
+async def test_leo_tle_transparent_success(mock_modcod_entries):
+    """LEO satellite with TLE should propagate position and calculate successfully."""
+    from datetime import UTC, datetime
+
+    sat_id = uuid.uuid4()
+    tx_id = uuid.uuid4()
+    rx_id = uuid.uuid4()
+    mc_id = uuid.uuid4()
+
+    # Use ISS TLE
+    sat = FakeSatellite(
+        id=sat_id,
+        orbit_type="LEO",
+        altitude_km=420.0,
+        tle_line1=ISS_TLE_LINE1,
+        tle_line2=ISS_TLE_LINE2,
+        eirp_dbw=40.0,
+        gt_db_per_k=5.0,
+    )
+    tx = FakeStation(id=tx_id, tx_power_dbw=10.0, antenna_gain_tx_db=30.0)
+    rx = FakeStation(id=rx_id, antenna_gain_rx_db=25.0, noise_temperature_k=200.0)
+    modcod = FakeModCodTable(id=mc_id, entries=mock_modcod_entries)
+
+    service = CalculationService(
+        modcod_repo=FakeRepo({mc_id: modcod}),
+        satellite_repo=FakeRepo({sat_id: sat}),
+        earth_station_repo=FakeRepo({tx_id: tx, rx_id: rx}),
+    )
+
+    # Propagate TLE at a known time and use its sub-satellite point as ground station
+    from src.core.orbit import propagate_tle
+
+    comp_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
+    pos = propagate_tle(ISS_TLE_LINE1, ISS_TLE_LINE2, "ISS", comp_time)
+
+    payload = {
+        "waveform_strategy": "DVB_S2X",
+        "transponder_type": "TRANSPARENT",
+        "modcod_table_id": mc_id,
+        "satellite_id": sat_id,
+        "earth_station_tx_id": tx_id,
+        "earth_station_rx_id": rx_id,
+        "runtime": {
+            "computation_datetime": comp_time.isoformat(),
+            "bandwidth_hz": 10e6,
+            "uplink": {
+                "frequency_hz": 14e9,
+                "bandwidth_hz": 10e6,
+                "rain_rate_mm_per_hr": 0.0,
+                "temperature_k": 290.0,
+                "ground_lat_deg": pos.latitude_deg,
+                "ground_lon_deg": pos.longitude_deg,
+                "ground_alt_m": 0.0,
+            },
+            "downlink": {
+                "frequency_hz": 12e9,
+                "bandwidth_hz": 10e6,
+                "rain_rate_mm_per_hr": 0.0,
+                "temperature_k": 120.0,
+                "ground_lat_deg": pos.latitude_deg,
+                "ground_lon_deg": pos.longitude_deg,
+                "ground_alt_m": 0.0,
+            },
+        },
+    }
+
+    result = await service.calculate(payload)
+
+    assert result["combined_link_margin_db"] is not None
+    # At sub-satellite point, elevation should be very high (~90°)
+    # and FSPL should be low (LEO altitude)
+    ul_fspl = result["results"]["uplink"]["fspl_db"]
+    assert ul_fspl < 175, f"LEO sub-sat FSPL {ul_fspl:.1f} dB should be < 175"

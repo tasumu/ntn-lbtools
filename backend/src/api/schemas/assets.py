@@ -11,6 +11,21 @@ class SatelliteBase(BaseModel):
     orbit_type: str = Field(default="GEO")
     longitude_deg: float | None = None
     inclination_deg: float | None = None
+    altitude_km: float | None = Field(
+        default=None,
+        gt=0,
+        description="Orbital altitude in km (e.g. 550 for LEO, 35786 for GEO)",
+    )
+    tle_line1: str | None = Field(
+        default=None,
+        max_length=80,
+        description="TLE line 1 for orbit propagation (LEO/MEO)",
+    )
+    tle_line2: str | None = Field(
+        default=None,
+        max_length=80,
+        description="TLE line 2 for orbit propagation (LEO/MEO)",
+    )
     transponder_bandwidth_mhz: float | None = Field(
         default=None,
         description="Physical limit for validation against runtime signal bandwidth",

@@ -55,6 +55,9 @@ const directionRuntimeParametersSchema = z.object({
 
 export const runtimeParametersSchema = z.object({
   sat_longitude_deg: z.number().min(-180).max(180).optional().nullable(),
+  sat_latitude_deg: z.number().min(-90).max(90).optional().nullable(),
+  sat_altitude_km: z.number().positive().optional().nullable(),
+  computation_datetime: z.string().optional().nullable(),
   bandwidth_hz: z.number().positive().optional().nullable(),
   rolloff: z.number().min(0).optional().nullable(),
   uplink: directionRuntimeParametersSchema,
@@ -136,6 +139,9 @@ const satelliteSnapshotSchema = z.object({
   orbit_type: z.string().optional().nullable(),
   longitude_deg: z.number().optional().nullable(),
   inclination_deg: z.number().optional().nullable(),
+  altitude_km: z.number().optional().nullable(),
+  tle_line1: z.string().optional().nullable(),
+  tle_line2: z.string().optional().nullable(),
   transponder_bandwidth_mhz: z.number().optional().nullable(),
   eirp_dbw: z.number().optional().nullable(),
   gt_db_per_k: z.number().optional().nullable(),

@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { notifications } from "@mantine/notifications";
@@ -22,12 +22,21 @@ import { queryKeys } from "../../api/queryKeys";
 import { optionalNumber } from "../../api/schemas";
 import { formatError } from "../../lib/formatters";
 
+const optionalString = z.preprocess(
+  (value) =>
+    value === "" || value === null || value === undefined ? undefined : value,
+  z.string().optional(),
+);
+
 const schema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   orbit_type: z.string().default("GEO"),
   longitude_deg: optionalNumber,
   inclination_deg: optionalNumber,
+  altitude_km: optionalNumber,
+  tle_line1: optionalString,
+  tle_line2: optionalString,
   transponder_bandwidth_mhz: optionalNumber,
   eirp_dbw: optionalNumber,
   gt_db_per_k: optionalNumber,
@@ -43,6 +52,9 @@ const SATELLITE_DEFAULTS: FormValues = {
   frequency_band: "Ku",
   longitude_deg: undefined,
   inclination_deg: undefined,
+  altitude_km: undefined,
+  tle_line1: undefined,
+  tle_line2: undefined,
   transponder_bandwidth_mhz: undefined,
   eirp_dbw: undefined,
   gt_db_per_k: undefined,
@@ -65,6 +77,9 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
     defaultValues: SATELLITE_DEFAULTS,
   });
 
+  const orbitType = useWatch({ control: form.control, name: "orbit_type" });
+  const isNonGeo = orbitType === "LEO" || orbitType === "HAPS";
+
   useEffect(() => {
     setEditingId(initial?.id ?? null);
     if (initial) {
@@ -75,6 +90,9 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
         orbit_type: rest.orbit_type ?? "GEO",
         longitude_deg: rest.longitude_deg,
         inclination_deg: rest.inclination_deg,
+        altitude_km: rest.altitude_km,
+        tle_line1: rest.tle_line1,
+        tle_line2: rest.tle_line2,
         transponder_bandwidth_mhz: rest.transponder_bandwidth_mhz,
         eirp_dbw: rest.eirp_dbw,
         gt_db_per_k: rest.gt_db_per_k,
@@ -143,14 +161,14 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
             {...form.register("frequency_band")}
           />
         </SimpleGrid>
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
+        <SimpleGrid cols={{ base: 1, sm: 3 }}>
           <Controller
             name="longitude_deg"
             control={form.control}
             render={({ field }) => (
               <NumberInput
                 label="Longitude (deg)"
-                description="Required for GEO"
+                description={orbitType === "GEO" ? "Required for GEO" : "Sub-satellite point"}
                 {...field}
               />
             )}
@@ -162,7 +180,34 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
               <NumberInput label="Inclination (deg)" {...field} />
             )}
           />
+          <Controller
+            name="altitude_km"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput
+                label="Altitude (km)"
+                description={isNonGeo ? "Required for LEO/HAPS" : "Default: 35786 km for GEO"}
+                {...field}
+              />
+            )}
+          />
         </SimpleGrid>
+        {isNonGeo && (
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <TextInput
+              label="TLE Line 1"
+              description="Two-Line Element set for orbit propagation"
+              placeholder="1 25544U 98067A ..."
+              {...form.register("tle_line1")}
+            />
+            <TextInput
+              label="TLE Line 2"
+              description="Both lines required for propagation"
+              placeholder="2 25544 ..."
+              {...form.register("tle_line2")}
+            />
+          </SimpleGrid>
+        )}
         <SimpleGrid cols={{ base: 1, sm: 3 }}>
           <Controller
             name="transponder_bandwidth_mhz"

@@ -131,6 +131,118 @@ def test_compute_link_budget_math():
         assert math.isclose(results["cn_db"], expected_cn, abs_tol=1e-5)
 
 
+# --- LEO Slant Range Tests ---
+
+
+def test_slant_range_leo_shorter_than_geo():
+    """LEO slant range at sub-sat point should be much shorter than GEO."""
+    geo_range = estimate_slant_range_km(0.0, 0.0, 0.0, 0.0)
+    leo_range = estimate_slant_range_km(
+        0.0, 0.0, 0.0, 0.0, sat_latitude_deg=0.0, sat_altitude_km=550.0
+    )
+    assert leo_range < geo_range / 10, (
+        f"LEO range {leo_range:.0f} should be << GEO range {geo_range:.0f}"
+    )
+    assert math.isclose(leo_range, 550.0, abs_tol=5.0), (
+        f"LEO sub-sat range {leo_range:.1f} should be ~550 km"
+    )
+
+
+def test_slant_range_leo_with_offset():
+    """LEO slant range with ground station offset from sub-sat."""
+    # 5 degrees away
+    range_km = estimate_slant_range_km(
+        5.0, 0.0, 0.0, 0.0, sat_latitude_deg=0.0, sat_altitude_km=550.0
+    )
+    assert range_km > 550.0, "Offset station should have longer range than altitude"
+    assert range_km < 2000.0, "5 degrees offset at LEO should not be too far"
+
+
+def test_slant_range_backward_compat():
+    """Default args should produce same result as explicit GEO parameters."""
+    range_default = estimate_slant_range_km(0.0, 0.0, 0.0, 0.0)
+    range_explicit = estimate_slant_range_km(
+        0.0, 0.0, 0.0, 0.0, sat_latitude_deg=0.0, sat_altitude_km=GEO_ALTITUDE_KM
+    )
+    assert math.isclose(range_default, range_explicit, abs_tol=0.1)
+
+
+def test_link_budget_leo_lower_fspl():
+    """LEO link budget should show significantly lower FSPL than GEO."""
+    geo_inputs = LinkBudgetInputs(
+        frequency_hz=12e9,
+        bandwidth_hz=36e6,
+        elevation_deg=45.0,
+        rain_rate_mm_per_hr=0.0,
+        tx_eirp_dbw=50.0,
+        rx_gt_db_per_k=20.0,
+        ground_lat_deg=0.0,
+        ground_lon_deg=0.0,
+        ground_alt_m=0.0,
+        sat_longitude_deg=0.0,
+        temperature_k=120.0,
+    )
+    leo_inputs = LinkBudgetInputs(
+        frequency_hz=12e9,
+        bandwidth_hz=36e6,
+        elevation_deg=45.0,
+        rain_rate_mm_per_hr=0.0,
+        tx_eirp_dbw=50.0,
+        rx_gt_db_per_k=20.0,
+        ground_lat_deg=0.0,
+        ground_lon_deg=0.0,
+        ground_alt_m=0.0,
+        sat_longitude_deg=0.0,
+        temperature_k=120.0,
+        sat_latitude_deg=0.0,
+        sat_altitude_km=550.0,
+    )
+
+    with (
+        patch("src.core.propagation.rain_loss_db", return_value=0.0),
+        patch("src.core.propagation.gas_loss_db", return_value=0.5),
+        patch("src.core.propagation.cloud_loss_db", return_value=0.0),
+    ):
+        geo_result = compute_link_budget(geo_inputs)
+        leo_result = compute_link_budget(leo_inputs)
+
+    # LEO FSPL should be ~25-35 dB lower than GEO
+    fspl_diff = geo_result["fspl_db"] - leo_result["fspl_db"]
+    assert 20 < fspl_diff < 40, f"FSPL difference {fspl_diff:.1f} dB not in expected range"
+
+    # LEO C/N0 should be correspondingly higher
+    cn0_diff = leo_result["cn0_dbhz"] - geo_result["cn0_dbhz"]
+    assert cn0_diff > 20, f"LEO C/N0 advantage {cn0_diff:.1f} dB less than expected"
+
+
+def test_link_budget_precomputed_slant_range():
+    """When precomputed_slant_range_km is set, use it instead of computing."""
+    inputs = LinkBudgetInputs(
+        frequency_hz=12e9,
+        bandwidth_hz=36e6,
+        elevation_deg=45.0,
+        rain_rate_mm_per_hr=0.0,
+        tx_eirp_dbw=50.0,
+        rx_gt_db_per_k=20.0,
+        ground_lat_deg=0.0,
+        ground_lon_deg=0.0,
+        ground_alt_m=0.0,
+        sat_longitude_deg=0.0,
+        temperature_k=120.0,
+        precomputed_slant_range_km=600.0,
+    )
+    with (
+        patch("src.core.propagation.rain_loss_db", return_value=0.0),
+        patch("src.core.propagation.gas_loss_db", return_value=0.5),
+        patch("src.core.propagation.cloud_loss_db", return_value=0.0),
+    ):
+        result = compute_link_budget(inputs)
+
+    # FSPL should be based on 600 km distance
+    expected_fspl = free_space_path_loss_db(12e9, 600.0)
+    assert math.isclose(result["fspl_db"], expected_fspl, abs_tol=0.1)
+
+
 def test_compute_link_budget_handles_itu_error():
     """
     If ITU models raise error, it should be propagated (or handled).

@@ -37,24 +37,35 @@ def estimate_slant_range_km(
     ground_lon_deg: float,
     ground_alt_m: float,
     sat_longitude_deg: float,
+    sat_latitude_deg: float = 0.0,
+    sat_altitude_km: float = GEO_ALTITUDE_KM,
 ) -> float:
-    """
-    Estimate GEO slant range. Prefer Skyfield geometry; fall back to spherical geometry.
+    """Estimate slant range for any orbit. Prefer Skyfield; fall back to spherical geometry.
+
+    Default parameters (sat_latitude_deg=0, sat_altitude_km=GEO) maintain backward compatibility.
     """
     if wgs84 and _timescale:
         try:
             site = wgs84.latlon(ground_lat_deg, ground_lon_deg, elevation_m=ground_alt_m)
-            sat = wgs84.latlon(0.0, sat_longitude_deg, elevation_m=GEO_ALTITUDE_KM * 1000)
+            sat = wgs84.latlon(
+                sat_latitude_deg, sat_longitude_deg, elevation_m=sat_altitude_km * 1000
+            )
             t = _timescale.now()
             return site.at(t).distance_to(sat.at(t)).km
         except Exception:
             pass
 
-    lat_rad = math.radians(ground_lat_deg)
+    # Spherical fallback with general central angle
+    lat_g_rad = math.radians(ground_lat_deg)
+    lat_s_rad = math.radians(sat_latitude_deg)
     delta_lon_rad = math.radians(sat_longitude_deg - ground_lon_deg)
-    central_angle = math.acos(max(-1.0, min(1.0, math.cos(lat_rad) * math.cos(delta_lon_rad))))
+    cos_central = (
+        math.sin(lat_g_rad) * math.sin(lat_s_rad)
+        + math.cos(lat_g_rad) * math.cos(lat_s_rad) * math.cos(delta_lon_rad)
+    )
+    central_angle = math.acos(max(-1.0, min(1.0, cos_central)))
     r_e = EARTH_RADIUS_KM + (ground_alt_m / 1000)
-    r_s = EARTH_RADIUS_KM + GEO_ALTITUDE_KM
+    r_s = EARTH_RADIUS_KM + sat_altitude_km
     return math.sqrt(r_e**2 + r_s**2 - 2 * r_e * r_s * math.cos(central_angle))
 
 
@@ -154,15 +165,23 @@ class LinkBudgetInputs:
     temperature_k: float
     water_vapor_density: float = DEFAULT_WATER_VAPOR_DENSITY
     pressure_hpa: float = DEFAULT_PRESSURE_HPA
+    sat_latitude_deg: float = 0.0
+    sat_altitude_km: float = GEO_ALTITUDE_KM
+    precomputed_slant_range_km: float | None = None
 
 
 def compute_link_budget(inputs: LinkBudgetInputs) -> dict:
-    slant_range_km = estimate_slant_range_km(
-        inputs.ground_lat_deg,
-        inputs.ground_lon_deg,
-        inputs.ground_alt_m,
-        inputs.sat_longitude_deg,
-    )
+    if inputs.precomputed_slant_range_km is not None:
+        slant_range_km = inputs.precomputed_slant_range_km
+    else:
+        slant_range_km = estimate_slant_range_km(
+            inputs.ground_lat_deg,
+            inputs.ground_lon_deg,
+            inputs.ground_alt_m,
+            inputs.sat_longitude_deg,
+            sat_latitude_deg=inputs.sat_latitude_deg,
+            sat_altitude_km=inputs.sat_altitude_km,
+        )
     fspl = free_space_path_loss_db(inputs.frequency_hz, slant_range_km)
     rain = rain_loss_db(
         inputs.rain_rate_mm_per_hr,

@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 
 from src.api.schemas.calculation import TransponderType
-from src.core.elevation import compute_geo_elevation
+from src.core.elevation import compute_elevation
 from src.core.impairments import (
     apply_impairments,
     combine_cn_db,
@@ -16,6 +16,7 @@ from src.core.impairments import (
     estimate_intermodulation,
 )
 from src.core.models.common import CalculationResult, LinkDirectionParameters, RuntimeParameters
+from src.core.orbit import propagate_tle
 from src.core.strategies.communication import CommunicationContext, TransparentCommunicationStrategy
 from src.core.strategies.dvbs2x import DvbS2xStrategy, ModcodEntry, _clean_modcod_dict
 from src.persistence.repositories.assets import EarthStationRepository, SatelliteRepository
@@ -122,10 +123,74 @@ class CalculationService:
         return sat, tx_es, rx_es
 
     @staticmethod
+    def _resolve_satellite_geometry(
+        sat: Any,
+        runtime_data: dict[str, Any],
+    ) -> tuple[float, float, float]:
+        """Resolve satellite position (longitude, latitude, altitude) from orbit type.
+
+        Returns (sat_longitude, sat_latitude, sat_altitude_km).
+        For TLE satellites, also resolves via orbit propagation.
+        """
+        orbit_type = getattr(sat, "orbit_type", "GEO") or "GEO"
+
+        # 1. TLE propagation (LEO/HAPS with TLE data)
+        tle_line1 = getattr(sat, "tle_line1", None)
+        tle_line2 = getattr(sat, "tle_line2", None)
+        if orbit_type in ("LEO", "HAPS") and tle_line1 and tle_line2:
+            comp_time_str = runtime_data.get("computation_datetime")
+            comp_time = None
+            if comp_time_str:
+                from datetime import UTC, datetime
+                if isinstance(comp_time_str, str):
+                    comp_time = datetime.fromisoformat(comp_time_str)
+                    if comp_time.tzinfo is None:
+                        comp_time = comp_time.replace(tzinfo=UTC)
+                elif isinstance(comp_time_str, datetime):
+                    comp_time = comp_time_str
+            try:
+                pos = propagate_tle(tle_line1, tle_line2, getattr(sat, "name", "SAT"), comp_time)
+            except (ValueError, RuntimeError) as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"TLE propagation failed: {exc}",
+                ) from exc
+            return pos.longitude_deg, pos.latitude_deg, pos.altitude_km
+
+        # 2. Manual position
+        sat_lon = runtime_data.get("sat_longitude_deg") or getattr(sat, "longitude_deg", None)
+        if sat_lon is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Satellite longitude is required (use satellite asset longitude or provide sat_longitude_deg)",
+            )
+
+        if orbit_type == "GEO":
+            sat_lat = 0.0
+            sat_alt = runtime_data.get("sat_altitude_km") or getattr(sat, "altitude_km", None) or 35786.0
+        else:
+            sat_lat = runtime_data.get("sat_latitude_deg")
+            if sat_lat is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Satellite latitude (sat_latitude_deg) is required for LEO/HAPS orbits without TLE",
+                )
+            sat_alt = runtime_data.get("sat_altitude_km") or getattr(sat, "altitude_km", None)
+            if sat_alt is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Satellite altitude (sat_altitude_km or asset altitude_km) is required for LEO/HAPS orbits",
+                )
+
+        return sat_lon, sat_lat, sat_alt
+
+    @staticmethod
     def _build_direction(
         primary: dict[str, Any],
         direction: str,
         sat_longitude: float,
+        sat_latitude: float = 0.0,
+        sat_altitude_km: float = 35786.0,
     ) -> LinkDirectionParameters:
         """Build LinkDirectionParameters from raw direction data."""
         freq = primary.get("frequency_hz")
@@ -145,11 +210,11 @@ class CalculationService:
             )
         elev = primary.get("elevation_deg")
         if elev is None:
-            elev = compute_geo_elevation(sat_longitude, station_lat, station_lon, station_alt or 0)
+            elev = compute_elevation(sat_latitude, sat_longitude, sat_altitude_km, station_lat, station_lon, station_alt or 0)
         if elev < 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Computed elevation for {direction} is below horizon ({elev:.2f} deg); check ground coordinates and satellite longitude",
+                detail=f"Computed elevation for {direction} is below horizon ({elev:.2f} deg); check ground coordinates and satellite position",
             )
         return LinkDirectionParameters(
             frequency_hz=freq,
@@ -338,16 +403,13 @@ class CalculationService:
                 detail="Regenerative transponders require per-link bandwidth_hz values",
             )
 
-        sat_longitude = runtime_data.get("sat_longitude_deg") or getattr(sat, "longitude_deg", None)
-        if sat_longitude is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Satellite longitude is required (use satellite asset longitude or provide sat_longitude_deg)",
-            )
+        sat_longitude, sat_latitude, sat_altitude_km = self._resolve_satellite_geometry(
+            sat, runtime_data
+        )
 
         # ---- Build link parameters ----
-        uplink_params = self._build_direction(uplink_data, "uplink", sat_longitude)
-        downlink_params = self._build_direction(downlink_data, "downlink", sat_longitude)
+        uplink_params = self._build_direction(uplink_data, "uplink", sat_longitude, sat_latitude, sat_altitude_km)
+        downlink_params = self._build_direction(downlink_data, "downlink", sat_longitude, sat_latitude, sat_altitude_km)
 
         context = self._resolve_context(sat, tx_es, rx_es, sat_override)
         self.communication_strategy.context = context
@@ -357,6 +419,8 @@ class CalculationService:
             uplink=uplink_params,
             downlink=downlink_params,
             rolloff=rolloff,
+            sat_latitude_deg=sat_latitude,
+            sat_altitude_km=sat_altitude_km,
         )
 
         # ---- Core calculation ----

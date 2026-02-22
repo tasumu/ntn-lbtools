@@ -7,6 +7,7 @@ import {
   Group,
   NumberInput,
   Stack,
+  TextInput,
 } from "@mantine/core";
 import { useEffect } from "react";
 import { Controller, useForm, useWatch, FieldErrors } from "react-hook-form";
@@ -127,6 +128,10 @@ export function CalculationForm({
   });
 
   const transponderType = useWatch({ control, name: "transponder_type" });
+  const selectedSatelliteId = useWatch({ control, name: "satellite_id" });
+  const selectedSatellite = satellites.find((s) => s.id === selectedSatelliteId);
+  const isNonGeoSat = selectedSatellite?.orbit_type === "LEO" || selectedSatellite?.orbit_type === "HAPS";
+  const hasTle = Boolean(selectedSatellite?.tle_line1);
   const selectedWaveform = useWatch({ control, name: "waveform_strategy" });
   const sharedBandwidth = useWatch({ control, name: "runtime.bandwidth_hz" });
   const uplinkBandwidth = useWatch({
@@ -415,6 +420,55 @@ export function CalculationForm({
             )}
           />
         </Group>
+        {isNonGeoSat && (
+          <Group grow>
+            {hasTle ? (
+              <Controller
+                name="runtime.computation_datetime"
+                control={control}
+                render={({ field }) => (
+                  <TextInput
+                    label="Computation time (ISO 8601)"
+                    description="Time for TLE orbit propagation. Leave empty for current time."
+                    placeholder="2024-01-01T12:00:00Z"
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.currentTarget.value || undefined)}
+                  />
+                )}
+              />
+            ) : (
+              <>
+                <Controller
+                  name="runtime.sat_latitude_deg"
+                  control={control}
+                  render={({ field }) => (
+                    <NumberInput
+                      label="Satellite latitude (deg)"
+                      description="Sub-satellite point latitude"
+                      min={-90}
+                      max={90}
+                      value={field.value ?? undefined}
+                      onChange={(value) => field.onChange(value ?? undefined)}
+                    />
+                  )}
+                />
+                <Controller
+                  name="runtime.sat_altitude_km"
+                  control={control}
+                  render={({ field }) => (
+                    <NumberInput
+                      label="Satellite altitude (km)"
+                      description="Overrides asset value"
+                      min={0}
+                      value={field.value ?? undefined}
+                      onChange={(value) => field.onChange(value ?? undefined)}
+                    />
+                  )}
+                />
+              </>
+            )}
+          </Group>
+        )}
         {transponderType === transponderTypeSchema.enum.TRANSPARENT && (
           <Group grow>
             <Controller
