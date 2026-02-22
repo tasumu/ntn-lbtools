@@ -48,11 +48,68 @@ describe("SatelliteForm", () => {
   it("validates empty name on submit", async () => {
     const user = userEvent.setup();
     renderWithProviders(<SatelliteForm />);
-    await user.click(
-      screen.getByRole("button", { name: /Save satellite/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /Save satellite/ }));
     await waitFor(() => {
-      expect(screen.getByText(/String must contain at least 1 character/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/String must contain at least 1 character/),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("requires altitude_km for LEO orbit type", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <SatelliteForm
+        initial={{
+          id: "sat-leo",
+          name: "LEO Sat",
+          orbit_type: "LEO",
+        }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /Update satellite/ }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Altitude is required for LEO\/HAPS/),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("requires altitude_km for HAPS orbit type", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <SatelliteForm
+        initial={{
+          id: "sat-haps",
+          name: "HAPS Platform",
+          orbit_type: "HAPS",
+        }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /Update satellite/ }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Altitude is required for LEO\/HAPS/),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("does not require altitude_km for GEO orbit type", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <SatelliteForm
+        initial={{
+          id: "sat-geo",
+          name: "GEO Sat",
+          orbit_type: "GEO",
+        }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /Update satellite/ }));
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/Altitude is required for LEO\/HAPS/),
+      ).not.toBeInTheDocument();
     });
   });
 

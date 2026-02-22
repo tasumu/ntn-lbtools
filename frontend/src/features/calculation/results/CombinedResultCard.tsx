@@ -90,12 +90,16 @@ export function CombinedResultCard({
         </Badge>
       </Group>
       <Stack gap={6} mt="sm">
-        <Text size="sm">Clean margin: {formatDb(cleanMargin)} dB</Text>
+        {cleanMargin != null && (
+          <Text size="sm">Clean margin: {formatDb(cleanMargin)} dB</Text>
+        )}
         <Text size="sm">End-to-end margin: {formatDb(e2eMargin)} dB</Text>
-        <Text size="sm">
-          C/(N+I): {formatDb(results.combined?.cni_db)} dB | C/IM:{" "}
-          {formatDb(results.combined?.c_im_db)}
-        </Text>
+        {transponderType !== "REGENERATIVE" && (
+          <Text size="sm">
+            C/(N+I): {formatDb(results.combined?.cni_db)} dB | C/IM:{" "}
+            {formatDb(results.combined?.c_im_db)}
+          </Text>
+        )}
         {transponderType === "REGENERATIVE" && (
           <>
             <Text size="sm">

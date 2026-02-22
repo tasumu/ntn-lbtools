@@ -156,6 +156,76 @@ describe("CombinedResultCard", () => {
     expect(screen.getByText(/Throughput.*18\.00 Mbps/)).toBeInTheDocument();
   });
 
+  it("hides C/(N+I) and C/IM row for REGENERATIVE", () => {
+    const regenResults = {
+      ...results,
+      combined: undefined,
+    };
+    renderWithProviders(
+      <CombinedResultCard
+        results={regenResults}
+        combinedLinkMarginDb={2.0}
+        transponderType="REGENERATIVE"
+        isDirectionalModcod={false}
+        modcodSummary="QPSK 1/4"
+        channelBandwidth={36e6}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/C\/\(N\+I\)/)).not.toBeInTheDocument();
+  });
+
+  it("shows C/(N+I) and C/IM row for TRANSPARENT", () => {
+    renderWithProviders(
+      <CombinedResultCard
+        results={results}
+        combinedLinkMarginDb={2.0}
+        transponderType="TRANSPARENT"
+        isDirectionalModcod={false}
+        modcodSummary="QPSK 1/4"
+        channelBandwidth={36e6}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/C\/\(N\+I\)/)).toBeInTheDocument();
+  });
+
+  it("hides clean margin when null for REGENERATIVE", () => {
+    const regenResults = {
+      ...results,
+      combined: undefined,
+      uplink: { ...results.uplink, clean_link_margin_db: null },
+      downlink: { ...results.downlink, clean_link_margin_db: null },
+    };
+    renderWithProviders(
+      <CombinedResultCard
+        results={regenResults}
+        combinedLinkMarginDb={2.0}
+        transponderType="REGENERATIVE"
+        isDirectionalModcod={false}
+        modcodSummary="QPSK 1/4"
+        channelBandwidth={36e6}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/Clean margin/)).not.toBeInTheDocument();
+  });
+
+  it("shows clean margin for TRANSPARENT", () => {
+    renderWithProviders(
+      <CombinedResultCard
+        results={results}
+        combinedLinkMarginDb={2.0}
+        transponderType="TRANSPARENT"
+        isDirectionalModcod={false}
+        modcodSummary="QPSK 1/4"
+        channelBandwidth={36e6}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Clean margin/)).toBeInTheDocument();
+  });
+
   it("shows per-direction throughput for REGENERATIVE", () => {
     renderWithProviders(
       <CombinedResultCard

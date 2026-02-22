@@ -70,6 +70,7 @@ export function CalculationForm({
     formState: { errors },
     reset,
     setValue,
+    setError,
   } = useForm<CalculationFormValues>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
@@ -375,7 +376,27 @@ export function CalculationForm({
   return (
     <form
       aria-label="Link budget calculation"
-      onSubmit={handleSubmit((values) => onSubmit(prepareData(values)))}
+      onSubmit={handleSubmit((values) => {
+        if (isNonGeoSat && !hasTle) {
+          let hasValidationError = false;
+          if (values.runtime.sat_latitude_deg == null) {
+            setError("runtime.sat_latitude_deg", {
+              type: "manual",
+              message: "Required for LEO/HAPS without TLE",
+            });
+            hasValidationError = true;
+          }
+          if (values.runtime.sat_altitude_km == null) {
+            setError("runtime.sat_altitude_km", {
+              type: "manual",
+              message: "Required for LEO/HAPS without TLE",
+            });
+            hasValidationError = true;
+          }
+          if (hasValidationError) return;
+        }
+        onSubmit(prepareData(values));
+      })}
     >
       <Stack>
         {rootError && (
@@ -445,10 +466,12 @@ export function CalculationForm({
                     <NumberInput
                       label="Satellite latitude (deg)"
                       description="Sub-satellite point latitude"
+                      withAsterisk
                       min={-90}
                       max={90}
                       value={field.value ?? undefined}
                       onChange={(value) => field.onChange(value ?? undefined)}
+                      error={errors.runtime?.sat_latitude_deg?.message}
                     />
                   )}
                 />
@@ -459,9 +482,11 @@ export function CalculationForm({
                     <NumberInput
                       label="Satellite altitude (km)"
                       description="Overrides asset value"
+                      withAsterisk
                       min={0}
                       value={field.value ?? undefined}
                       onChange={(value) => field.onChange(value ?? undefined)}
+                      error={errors.runtime?.sat_altitude_km?.message}
                     />
                   )}
                 />

@@ -28,20 +28,33 @@ const optionalString = z.preprocess(
   z.string().optional(),
 );
 
-const schema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  orbit_type: z.string().default("GEO"),
-  longitude_deg: optionalNumber,
-  inclination_deg: optionalNumber,
-  altitude_km: optionalNumber,
-  tle_line1: optionalString,
-  tle_line2: optionalString,
-  transponder_bandwidth_mhz: optionalNumber,
-  eirp_dbw: optionalNumber,
-  gt_db_per_k: optionalNumber,
-  frequency_band: z.string().optional(),
-});
+const schema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    orbit_type: z.string().default("GEO"),
+    longitude_deg: optionalNumber,
+    inclination_deg: optionalNumber,
+    altitude_km: optionalNumber,
+    tle_line1: optionalString,
+    tle_line2: optionalString,
+    transponder_bandwidth_mhz: optionalNumber,
+    eirp_dbw: optionalNumber,
+    gt_db_per_k: optionalNumber,
+    frequency_band: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      (data.orbit_type === "LEO" || data.orbit_type === "HAPS") &&
+      (data.altitude_km === undefined || data.altitude_km === null)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Altitude is required for LEO/HAPS",
+        path: ["altitude_km"],
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof schema>;
 
@@ -187,6 +200,8 @@ export function SatelliteForm({ initial, onSaved, onCancelEdit }: Props) {
               <NumberInput
                 label="Altitude (km)"
                 description={isNonGeo ? "Required for LEO/HAPS" : "Default: 35786 km for GEO"}
+                withAsterisk={isNonGeo}
+                error={form.formState.errors.altitude_km?.message}
                 {...field}
               />
             )}
