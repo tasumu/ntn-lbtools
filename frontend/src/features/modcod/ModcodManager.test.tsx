@@ -1,10 +1,30 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ModcodManager } from "./ModcodManager";
 import { DVB_S2X_PRESETS } from "../../data/dvbs2xPresets";
 import { renderWithProviders } from "../../test/utils";
+
+// Mock presets with fewer entries to avoid jsdom rendering timeout
+// (28 entries × 6 Controller fields each is too slow in jsdom)
+vi.mock("../../data/dvbs2xPresets", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../data/dvbs2xPresets")>();
+  return {
+    ...actual,
+    DVB_S2X_PRESETS: [
+      {
+        name: "DVB-S2X Normal Frames",
+        entries: actual.DVB_S2X_PRESETS[0].entries.slice(0, 3),
+      },
+    ],
+  };
+});
+
+vi.mock("../../data/nr5gPresets", () => ({
+  NR_5G_PRESETS: [],
+}));
 
 describe("ModcodManager", () => {
   it("renders the form with name and waveform fields", () => {
@@ -92,13 +112,10 @@ describe("ModcodManager", () => {
         `${firstPreset.name} (${firstPreset.entries.length} entries)`,
       ),
     );
-    await waitFor(
-      () => {
-        expect(
-          screen.getAllByRole("button", { name: /Remove/ }).length,
-        ).toBeGreaterThan(1);
-      },
-      { timeout: 10000 },
-    );
-  }, 15000);
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button", { name: /Remove/ }).length,
+      ).toBeGreaterThan(1);
+    });
+  });
 });
