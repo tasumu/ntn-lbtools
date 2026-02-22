@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from abc import abstractmethod
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
@@ -105,36 +106,21 @@ class ModcodEntry:
     pilots: bool | None = None
 
 
-class DvbS2xStrategy(WaveformStrategy):
-    name = "DVB_S2X"
+# ---------------------------------------------------------------------------
+# Base class: shared ModCod table logic
+# ---------------------------------------------------------------------------
 
-    def __init__(self, table: Sequence[ModcodEntry] | Iterable[dict] | None = None):
-        # Default roll-off is only used when callers omit rolloff; it is not baked into table data.
-        self.default_rolloff = 0.2
+
+class BaseModcodStrategy(WaveformStrategy):
+    """Common ModCod selection logic shared by all waveform strategies."""
+
+    def __init__(
+        self,
+        table: Sequence[ModcodEntry] | Iterable[dict] | None = None,
+        default_table: list[ModcodEntry] | None = None,
+    ):
         if table is None:
-            self.table: list[ModcodEntry] = [
-                ModcodEntry(
-                    "qpsk-1/4",
-                    "QPSK",
-                    "1/4",
-                    required_cn0_dbhz=65.0,
-                    info_bits_per_symbol=0.5,
-                ),
-                ModcodEntry(
-                    "qpsk-1/2",
-                    "QPSK",
-                    "1/2",
-                    required_cn0_dbhz=70.0,
-                    info_bits_per_symbol=1.0,
-                ),
-                ModcodEntry(
-                    "8psk-3/4",
-                    "8PSK",
-                    "3/4",
-                    required_cn0_dbhz=78.0,
-                    info_bits_per_symbol=2.25,
-                ),
-            ]
+            self.table: list[ModcodEntry] = default_table or []
         else:
             normalized: list[ModcodEntry] = []
             for entry in table:
@@ -170,21 +156,14 @@ class DvbS2xStrategy(WaveformStrategy):
                     f"info_bits_per_symbol must be provided and positive for ModCod {entry.id}",
                 )
 
-    def _resolve_rolloff(self, entry: ModcodEntry, rolloff: float | None) -> float:
-        alpha = rolloff if rolloff is not None else entry.rolloff
-        if alpha is None:
-            alpha = self.default_rolloff
-        return max(alpha, 0.0)
-
     def _info_bits_per_symbol(self, entry: ModcodEntry, rolloff: float | None) -> float:
         if entry.info_bits_per_symbol is None:
             raise ValueError("info_bits_per_symbol is required for all ModCod entries")
         return entry.info_bits_per_symbol
 
+    @abstractmethod
     def _effective_spectral_efficiency(self, entry: ModcodEntry, rolloff: float | None) -> float:
-        alpha = self._resolve_rolloff(entry, rolloff)
-        info_bits = self._info_bits_per_symbol(entry, rolloff)
-        return info_bits / (1 + alpha)
+        """Calculate effective spectral efficiency (waveform-specific)."""
 
     def _bitrate_bps(
         self,
@@ -266,6 +245,58 @@ class DvbS2xStrategy(WaveformStrategy):
         rolloff: float | None = None,
     ) -> float:
         return self._effective_spectral_efficiency(entry, rolloff)
+
+    @abstractmethod
+    def spectral_efficiency(self) -> float:
+        """Return aggregate spectral efficiency for the waveform."""
+
+
+# ---------------------------------------------------------------------------
+# DVB-S2X strategy
+# ---------------------------------------------------------------------------
+
+_DVB_S2X_DEFAULT_TABLE = [
+    ModcodEntry(
+        "qpsk-1/4",
+        "QPSK",
+        "1/4",
+        required_cn0_dbhz=65.0,
+        info_bits_per_symbol=0.5,
+    ),
+    ModcodEntry(
+        "qpsk-1/2",
+        "QPSK",
+        "1/2",
+        required_cn0_dbhz=70.0,
+        info_bits_per_symbol=1.0,
+    ),
+    ModcodEntry(
+        "8psk-3/4",
+        "8PSK",
+        "3/4",
+        required_cn0_dbhz=78.0,
+        info_bits_per_symbol=2.25,
+    ),
+]
+
+
+class DvbS2xStrategy(BaseModcodStrategy):
+    name = "DVB_S2X"
+
+    def __init__(self, table: Sequence[ModcodEntry] | Iterable[dict] | None = None):
+        self.default_rolloff = 0.2
+        super().__init__(table=table, default_table=_DVB_S2X_DEFAULT_TABLE)
+
+    def _resolve_rolloff(self, entry: ModcodEntry, rolloff: float | None) -> float:
+        alpha = rolloff if rolloff is not None else entry.rolloff
+        if alpha is None:
+            alpha = self.default_rolloff
+        return max(alpha, 0.0)
+
+    def _effective_spectral_efficiency(self, entry: ModcodEntry, rolloff: float | None) -> float:
+        alpha = self._resolve_rolloff(entry, rolloff)
+        info_bits = self._info_bits_per_symbol(entry, rolloff)
+        return info_bits / (1 + alpha)
 
     def spectral_efficiency(self) -> float:
         entries = self._sorted_entries()

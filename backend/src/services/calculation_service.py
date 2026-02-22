@@ -19,6 +19,7 @@ from src.core.models.common import CalculationResult, LinkDirectionParameters, R
 from src.core.orbit import propagate_tle
 from src.core.strategies.communication import CommunicationContext, TransparentCommunicationStrategy
 from src.core.strategies.dvbs2x import DvbS2xStrategy, ModcodEntry, _clean_modcod_dict
+from src.core.strategies.nr import NrStrategy
 from src.persistence.repositories.assets import EarthStationRepository, SatelliteRepository
 from src.persistence.repositories.modcod import ModcodRepository
 from src.services.snapshot_builder import build_payload_snapshot, build_runtime_echo
@@ -86,6 +87,13 @@ class CalculationService:
         self.satellite_repo = satellite_repo
         self.earth_station_repo = earth_station_repo
 
+    @staticmethod
+    def _create_waveform_strategy(waveform_name: str | None, entries):
+        """Create the appropriate waveform strategy based on waveform type."""
+        if waveform_name == "5G_NR":
+            return NrStrategy(table=entries)
+        return DvbS2xStrategy(table=entries)
+
     async def _fetch_modcod(self, modcod_table_id: UUID | str | None):
         if self.modcod_repo and modcod_table_id:
             try:
@@ -98,7 +106,8 @@ class CalculationService:
                 ) from exc
             if table:
                 try:
-                    waveform = DvbS2xStrategy(table=table.entries)
+                    waveform_name = getattr(table, "waveform", None)
+                    waveform = self._create_waveform_strategy(waveform_name, table.entries)
                 except ValueError as exc:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
