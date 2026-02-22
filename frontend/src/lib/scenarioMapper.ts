@@ -104,13 +104,12 @@ function pickDirection(
   dir: DirectionRuntime | undefined,
   fallback: typeof DEFAULT_UPLINK | typeof DEFAULT_DOWNLINK,
   runtimeParent?: ScenarioPayloadRuntime,
+  directionKey?: "uplink" | "downlink",
 ) {
-  const groundLat =
-    dir?.ground_lat_deg ?? runtimeParent?.uplink?.ground_lat_deg ?? 0;
-  const groundLon =
-    dir?.ground_lon_deg ?? runtimeParent?.uplink?.ground_lon_deg ?? 0;
-  const groundAlt =
-    dir?.ground_alt_m ?? runtimeParent?.uplink?.ground_alt_m ?? 0;
+  const parentDir = directionKey ? runtimeParent?.[directionKey] : undefined;
+  const groundLat = dir?.ground_lat_deg ?? parentDir?.ground_lat_deg ?? 0;
+  const groundLon = dir?.ground_lon_deg ?? parentDir?.ground_lon_deg ?? 0;
+  const groundAlt = dir?.ground_alt_m ?? parentDir?.ground_alt_m ?? 0;
 
   return {
     frequency_hz: dir?.frequency_hz ?? fallback.frequency_hz,
@@ -197,8 +196,8 @@ export function loadScenario(
       undefined,
     runtime: {
       bandwidth_hz: sharedBandwidth,
-      uplink: pickDirection(runtime?.uplink, DEFAULT_UPLINK, runtime),
-      downlink: pickDirection(runtime?.downlink, DEFAULT_DOWNLINK, runtime),
+      uplink: pickDirection(runtime?.uplink, DEFAULT_UPLINK, runtime, "uplink"),
+      downlink: pickDirection(runtime?.downlink, DEFAULT_DOWNLINK, runtime, "downlink"),
       sat_longitude_deg:
         runtime?.sat_longitude_deg ??
         entity.satellite?.longitude_deg ??

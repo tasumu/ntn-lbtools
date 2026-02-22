@@ -365,6 +365,67 @@ describe("loadScenario", () => {
     expect(result!.runtime.computation_datetime).toBeUndefined();
   });
 
+  it("downlink falls back to its own ground coords, not uplink's", () => {
+    const result = loadScenario({
+      ...baseScenario,
+      payload_snapshot: {
+        runtime: {
+          uplink: {
+            frequency_hz: 14.25e9,
+            ground_lat_deg: 35.0,
+            ground_lon_deg: 136.0,
+            ground_alt_m: 100,
+          },
+          downlink: {
+            frequency_hz: 12e9,
+            // ground coords are undefined — should NOT fall back to uplink's
+          },
+        },
+      },
+    });
+
+    // Downlink ground coords should be 0 (default), NOT uplink's values
+    expect(result!.runtime.downlink.ground_lat_deg).toBe(0);
+    expect(result!.runtime.downlink.ground_lon_deg).toBe(0);
+    expect(result!.runtime.downlink.ground_alt_m).toBe(0);
+
+    // Uplink should still have its own values
+    expect(result!.runtime.uplink.ground_lat_deg).toBe(35.0);
+    expect(result!.runtime.uplink.ground_lon_deg).toBe(136.0);
+    expect(result!.runtime.uplink.ground_alt_m).toBe(100);
+  });
+
+  it("downlink uses runtimeParent.downlink ground coords as fallback", () => {
+    // Simulate a scenario where dir is undefined but runtimeParent.downlink has coords
+    const result = loadScenario({
+      ...baseScenario,
+      payload_snapshot: {
+        runtime: {
+          uplink: {
+            frequency_hz: 14.25e9,
+            ground_lat_deg: 35.0,
+            ground_lon_deg: 136.0,
+            ground_alt_m: 100,
+          },
+          downlink: {
+            frequency_hz: 12e9,
+            ground_lat_deg: 40.0,
+            ground_lon_deg: -74.0,
+            ground_alt_m: 50,
+          },
+        },
+      },
+    });
+
+    // Each direction should retain its own ground coords
+    expect(result!.runtime.uplink.ground_lat_deg).toBe(35.0);
+    expect(result!.runtime.uplink.ground_lon_deg).toBe(136.0);
+    expect(result!.runtime.uplink.ground_alt_m).toBe(100);
+    expect(result!.runtime.downlink.ground_lat_deg).toBe(40.0);
+    expect(result!.runtime.downlink.ground_lon_deg).toBe(-74.0);
+    expect(result!.runtime.downlink.ground_alt_m).toBe(50);
+  });
+
   it("restores all LEO parameters together", () => {
     const result = loadScenario({
       ...baseScenario,
