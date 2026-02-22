@@ -142,6 +142,7 @@ class CalculationService:
             comp_time = None
             if comp_time_str:
                 from datetime import UTC, datetime
+
                 if isinstance(comp_time_str, str):
                     comp_time = datetime.fromisoformat(comp_time_str)
                     if comp_time.tzinfo is None:
@@ -167,7 +168,9 @@ class CalculationService:
 
         if orbit_type == "GEO":
             sat_lat = 0.0
-            sat_alt = runtime_data.get("sat_altitude_km") or getattr(sat, "altitude_km", None) or 35786.0
+            sat_alt = (
+                runtime_data.get("sat_altitude_km") or getattr(sat, "altitude_km", None) or 35786.0
+            )
         else:
             sat_lat = runtime_data.get("sat_latitude_deg")
             if sat_lat is None:
@@ -210,7 +213,14 @@ class CalculationService:
             )
         elev = primary.get("elevation_deg")
         if elev is None:
-            elev = compute_elevation(sat_latitude, sat_longitude, sat_altitude_km, station_lat, station_lon, station_alt or 0)
+            elev = compute_elevation(
+                sat_latitude,
+                sat_longitude,
+                sat_altitude_km,
+                station_lat,
+                station_lon,
+                station_alt or 0,
+            )
         if elev < 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -408,8 +418,12 @@ class CalculationService:
         )
 
         # ---- Build link parameters ----
-        uplink_params = self._build_direction(uplink_data, "uplink", sat_longitude, sat_latitude, sat_altitude_km)
-        downlink_params = self._build_direction(downlink_data, "downlink", sat_longitude, sat_latitude, sat_altitude_km)
+        uplink_params = self._build_direction(
+            uplink_data, "uplink", sat_longitude, sat_latitude, sat_altitude_km
+        )
+        downlink_params = self._build_direction(
+            downlink_data, "downlink", sat_longitude, sat_latitude, sat_altitude_km
+        )
 
         context = self._resolve_context(sat, tx_es, rx_es, sat_override)
         self.communication_strategy.context = context

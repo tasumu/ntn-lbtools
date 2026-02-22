@@ -451,7 +451,10 @@ async def test_leo_manual_position_success(leo_service, leo_payload):
 
 @pytest.mark.asyncio
 async def test_leo_fspl_significantly_lower(
-    leo_service, leo_payload, calculation_service, base_payload,
+    leo_service,
+    leo_payload,
+    calculation_service,
+    base_payload,
 ):
     """LEO FSPL should be 20+ dB lower than GEO at similar frequencies."""
     leo_result = await leo_service.calculate(leo_payload)

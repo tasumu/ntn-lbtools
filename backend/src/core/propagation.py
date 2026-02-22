@@ -59,10 +59,9 @@ def estimate_slant_range_km(
     lat_g_rad = math.radians(ground_lat_deg)
     lat_s_rad = math.radians(sat_latitude_deg)
     delta_lon_rad = math.radians(sat_longitude_deg - ground_lon_deg)
-    cos_central = (
-        math.sin(lat_g_rad) * math.sin(lat_s_rad)
-        + math.cos(lat_g_rad) * math.cos(lat_s_rad) * math.cos(delta_lon_rad)
-    )
+    cos_central = math.sin(lat_g_rad) * math.sin(lat_s_rad) + math.cos(lat_g_rad) * math.cos(
+        lat_s_rad
+    ) * math.cos(delta_lon_rad)
     central_angle = math.acos(max(-1.0, min(1.0, cos_central)))
     r_e = EARTH_RADIUS_KM + (ground_alt_m / 1000)
     r_s = EARTH_RADIUS_KM + sat_altitude_km

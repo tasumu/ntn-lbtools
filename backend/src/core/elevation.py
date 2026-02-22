@@ -30,10 +30,9 @@ def compute_elevation(
     lat_s_rad = math.radians(sat_lat_deg)
     delta_lon_rad = math.radians(sat_lon_deg - ground_lon_deg)
 
-    cos_psi = (
-        math.sin(lat_g_rad) * math.sin(lat_s_rad)
-        + math.cos(lat_g_rad) * math.cos(lat_s_rad) * math.cos(delta_lon_rad)
-    )
+    cos_psi = math.sin(lat_g_rad) * math.sin(lat_s_rad) + math.cos(lat_g_rad) * math.cos(
+        lat_s_rad
+    ) * math.cos(delta_lon_rad)
     cos_psi = max(-1.0, min(1.0, cos_psi))
     psi = math.acos(cos_psi)
     sin_psi = math.sin(psi)

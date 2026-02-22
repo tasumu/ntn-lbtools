@@ -27,14 +27,19 @@ class TestComputeElevation:
     def test_geo_equivalent_different_locations(self):
         """Test GEO equivalence at different ground station locations."""
         test_cases = [
-            (128.0, 0.0, 100.0, 0.0),      # Equator, near sub-sat
-            (128.0, 50.0, 0.0, 100.0),      # High latitude Europe
-            (128.0, -30.0, 151.0, 0.0),     # Sydney
+            (128.0, 0.0, 100.0, 0.0),  # Equator, near sub-sat
+            (128.0, 50.0, 0.0, 100.0),  # High latitude Europe
+            (128.0, -30.0, 151.0, 0.0),  # Sydney
         ]
         for sat_lon, ground_lat, ground_lon, ground_alt in test_cases:
             geo_elev = compute_geo_elevation(sat_lon, ground_lat, ground_lon, ground_alt)
             gen_elev = compute_elevation(
-                0.0, sat_lon, GEO_ALT_KM, ground_lat, ground_lon, ground_alt,
+                0.0,
+                sat_lon,
+                GEO_ALT_KM,
+                ground_lat,
+                ground_lon,
+                ground_alt,
             )
             assert math.isclose(geo_elev, gen_elev, abs_tol=0.5), (
                 f"Mismatch at ({ground_lat}, {ground_lon}): GEO={geo_elev:.2f}, Gen={gen_elev:.2f}"
