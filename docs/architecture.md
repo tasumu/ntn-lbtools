@@ -58,8 +58,10 @@ flowchart TB
 ```mermaid
 flowchart LR
     subgraph Pages
-        CalcPage[CalculationPage]
-        AssetsPage[AssetsPage]
+        CalcPage[CalculationPage /]
+        AssetsPage[AssetsPage /assets]
+        SweepPage[SweepPage /sweep]
+        ComparePage[ComparisonPage /compare]
     end
 
     subgraph Features
@@ -67,6 +69,8 @@ flowchart LR
         AssetsFeature[assets/]
         ModcodFeature[modcod/]
         ScenariosFeature[scenarios/]
+        SweepFeature[sweep/]
+        CompareFeature[comparison/]
     end
 
     subgraph API Layer
@@ -77,8 +81,12 @@ flowchart LR
     CalcPage --> CalcFeature
     AssetsPage --> AssetsFeature
     AssetsPage --> ModcodFeature
+    SweepPage --> SweepFeature
+    ComparePage --> CompareFeature
     CalcFeature --> ReactQuery
     AssetsFeature --> ReactQuery
+    SweepFeature --> ReactQuery
+    CompareFeature --> ReactQuery
     ReactQuery --> AxiosClient
     AxiosClient --> Backend[Backend API]
 ```
@@ -95,6 +103,7 @@ flowchart TB
 
     subgraph "Service Layer (src/services/)"
         CalcService[CalculationService]
+        SweepService[SweepService]
         AssetsService[AssetsService]
         ModcodService[ModcodService]
         ScenarioService[ScenarioService]
@@ -102,7 +111,7 @@ flowchart TB
 
     subgraph "Core Layer (src/core/)"
         Propagation[Propagation Models<br/>FSPL, Rain, Gas, Cloud]
-        Strategies[Waveform Strategies<br/>DVB-S2X]
+        Strategies[Waveform Strategies<br/>DVB-S2X, 5G NR]
         Communication[Communication Strategies<br/>Transparent, Regenerative]
     end
 
@@ -211,10 +220,15 @@ erDiagram
         string name
         string orbit_type
         float longitude_deg
-        string frequency_band
+        float inclination_deg
+        float altitude_km
+        string tle_line1
+        string tle_line2
+        float transponder_bandwidth_mhz
         float eirp_dbw
         float gt_db_per_k
-        float transponder_bandwidth_mhz
+        string frequency_band
+        string description
         string notes
         datetime created_at
         datetime updated_at
@@ -223,13 +237,18 @@ erDiagram
     EarthStation {
         uuid id PK
         string name
+        float antenna_diameter_m
+        float antenna_gain_tx_db
+        float antenna_gain_rx_db
+        float noise_temperature_k
+        float eirp_dbw
+        float tx_power_dbw
+        float gt_db_per_k
+        string polarization
         float latitude_deg
         float longitude_deg
         float altitude_m
-        float antenna_diameter_m
-        float antenna_gain_db
-        float tx_power_dbw
-        string polarization
+        string description
         string notes
         datetime created_at
         datetime updated_at
@@ -237,27 +256,36 @@ erDiagram
 
     ModcodTable {
         uuid id PK
+        string name
         string waveform
         string version
         string description
-        boolean published
         json entries
+        datetime published_at
         datetime created_at
-        datetime updated_at
     }
 
     Scenario {
         uuid id PK
         string name
         string description
+        string waveform_strategy
+        string transponder_type
+        uuid modcod_table_id FK
+        uuid satellite_id FK
+        uuid earth_station_tx_id FK
+        uuid earth_station_rx_id FK
+        string schema_version
+        string status
         json payload_snapshot
         datetime created_at
         datetime updated_at
     }
 
-    Scenario ||--o{ Satellite : references
-    Scenario ||--o{ EarthStation : references
-    Scenario ||--o{ ModcodTable : references
+    Scenario }o--|| ModcodTable : modcod_table_id
+    Scenario }o--o| Satellite : satellite_id
+    Scenario }o--o| EarthStation : earth_station_tx_id
+    Scenario }o--o| EarthStation : earth_station_rx_id
 ```
 
 ## Agent Architecture (LangGraph)
@@ -360,12 +388,11 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph Docker Compose
-        Frontend[frontend:5173]
+        DB[(db postgres:5432)]
         Backend[backend:8000]
-        MCP[mcp-server]
-        Agents[agents]
-        DB[(postgres:5432)]
-        Migrate[migrate]
+        Frontend[frontend:5173]
+        MCP[mcp-server stdio]
+        Migrate[migrate one-shot]
     end
 
     subgraph Volumes
@@ -373,8 +400,7 @@ flowchart TB
     end
 
     Frontend --> Backend
-    MCP --> Agents
-    Agents --> Backend
+    MCP --> Backend
     Backend --> DB
     DB --> PGData
     Migrate --> DB

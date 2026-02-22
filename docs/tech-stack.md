@@ -14,20 +14,22 @@ This document provides a comprehensive overview of the technologies used in the 
 | ORM | SQLAlchemy | 2.0 | Async database operations |
 | Migrations | Alembic | latest | Database schema migrations |
 | Propagation | itur | latest | ITU-R P.618/P.676/P.840 implementations |
-| Geometry | Skyfield | latest | GEO satellite slant range calculations |
+| Geometry | Skyfield | latest | Satellite geometry and TLE orbit propagation |
+| Rate Limiting | slowapi | latest | Per-endpoint rate limits |
 | Numerics | NumPy, SciPy | latest | Scientific computing |
 
 ### Key Libraries
 
 - **itur**: Implements ITU-R propagation models for rain, gaseous, and cloud attenuation
-- **Skyfield**: High-precision astronomy library for satellite geometry calculations
+- **Skyfield**: High-precision astronomy library for satellite geometry and TLE orbit propagation
+- **slowapi**: Rate limiting (30/min for calculations, 10/min for sweep)
 - **asyncpg**: PostgreSQL async driver for SQLAlchemy
 
 ## Frontend
 
 | Category | Technology | Version | Purpose |
 |----------|------------|---------|---------|
-| Runtime | Node.js | 20 | JavaScript runtime |
+| Runtime | Node.js | 20+ (24 in Docker) | JavaScript runtime |
 | Package Manager | pnpm | 9+ | Fast, disk-efficient package manager |
 | Framework | React | 18 | UI component library |
 | Build Tool | Vite | 5+ | Fast development server and bundler |
@@ -37,12 +39,15 @@ This document provides a comprehensive overview of the technologies used in the 
 | Validation | Zod | latest | Runtime type validation |
 | Language | TypeScript | 5+ | Type-safe JavaScript (strict mode) |
 | Charts | Recharts | latest | Data visualization |
+| PDF Export | jspdf + html2canvas | latest | PDF/CSV report export |
+| Error Boundary | react-error-boundary | latest | Graceful error handling |
 
 ### Key Patterns
 
 - **TypeScript strict mode**: Maximum type safety
 - **react-hook-form + Zod**: Type-safe form validation
 - **React Query**: Caching and synchronization with backend
+- **MSW**: Mock Service Worker for API mocking in tests
 
 ## MCP Server
 
@@ -86,10 +91,11 @@ The MCP server exposes backend functionality as AI-accessible tools:
 
 ```yaml
 services:
-  backend:    # FastAPI application
-  frontend:   # React development server
-  db:         # PostgreSQL database
-  migrate:    # Alembic migrations runner
+  db:         # PostgreSQL 16 database
+  backend:    # FastAPI application (uv 0.8 + Python 3.12)
+  frontend:   # React dev server (Node 24)
+  mcp-server: # FastMCP gateway (stdio, depends on backend)
+  migrate:    # Alembic migrations runner (one-shot)
 ```
 
 ## Development Tools
@@ -99,9 +105,8 @@ services:
 | Python Linting | Ruff | Fast linter (E, F, I, B, UP, ASYNC, A, COM, N) |
 | Python Formatting | Ruff | Code formatting |
 | Python Testing | pytest | Test framework |
-| TypeScript Linting | ESLint | Code quality |
 | TypeScript Testing | Vitest | Fast test runner |
-| Type Checking | mypy / tsc | Static type analysis |
+| Type Checking | tsc | Static type analysis (`--noEmit`) |
 
 ## Version Compatibility
 

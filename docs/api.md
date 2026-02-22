@@ -21,7 +21,7 @@ Response:
 `POST /api/v1/link-budgets/calculate`
 
 Request fields (top-level):
-- `waveform_strategy` (required): `"DVB_S2X"` only.
+- `waveform_strategy` (required): `"DVB_S2X"` or `"5G_NR"`.
 - `transponder_type` (required): `"TRANSPARENT"` or `"REGENERATIVE"`.
 - `modcod_table_id` (UUID): required for `TRANSPARENT`.
 - `uplink_modcod_table_id`, `downlink_modcod_table_id` (UUID): required for `REGENERATIVE`.
@@ -68,9 +68,13 @@ Errors:
 - `422`: validation errors (e.g., malformed UUIDs).
 
 ## Assets
+
+All list endpoints support pagination via `?limit=` (1-100, default 20) and `?offset=` (default 0).
+Responses use `PaginatedResponse` envelope: `{ items, total, limit, offset }`.
+
 ### Satellites
 - `POST /api/v1/assets/satellites`
-- `GET /api/v1/assets/satellites`
+- `GET /api/v1/assets/satellites` (`?limit=&offset=`)
 - `PUT /api/v1/assets/satellites/{id}`
 - `DELETE /api/v1/assets/satellites/{id}`
 
@@ -85,7 +89,7 @@ Fields:
 
 ### Earth Stations
 - `POST /api/v1/assets/earth-stations`
-- `GET /api/v1/assets/earth-stations`
+- `GET /api/v1/assets/earth-stations` (`?limit=&offset=`)
 - `PUT /api/v1/assets/earth-stations/{id}`
 - `DELETE /api/v1/assets/earth-stations/{id}`
 
@@ -93,6 +97,7 @@ Fields:
 - `name` (required, unique).
 - `antenna_diameter_m` (> 0), `antenna_gain_tx_db`, `antenna_gain_rx_db`.
 - `noise_temperature_k` (> 0), `eirp_dbw`, `tx_power_dbw`, `gt_db_per_k`.
+- `latitude_deg` (-90..90), `longitude_deg` (-180..180), `altitude_m` (optional location fields).
 - `polarization`, `description`, `notes`.
 
 Delete endpoints return `400` when the asset is referenced by a scenario.
@@ -117,9 +122,10 @@ Create returns `409` if `(waveform, name)` already exists.
 
 ## Scenarios
 - `POST /api/v1/scenarios`
-- `GET /api/v1/scenarios` (most recent 50)
+- `GET /api/v1/scenarios` (`?limit=&offset=`, default limit=20)
 - `GET /api/v1/scenarios/{id}`
 - `PUT /api/v1/scenarios/{id}`
+- `POST /api/v1/scenarios/{id}/duplicate`
 - `DELETE /api/v1/scenarios/{id}`
 
 Fields:
@@ -129,3 +135,32 @@ Fields:
 - `satellite_id`, `earth_station_tx_id`, `earth_station_rx_id` (optional).
 - `schema_version` (default `"1.1.0"`), `status` (`Draft`, `Saved`, `Archived`).
 - `payload_snapshot` (required; see `docs/data-model.md`).
+
+## Parameter Sweep
+`POST /api/v1/link-budgets/sweep` (rate limit: 10/minute)
+
+Sweeps a single parameter across a range while keeping the rest of the link budget inputs fixed.
+
+Request fields:
+- `base_request` (required): a full `CalculationRequest` payload (same as `/calculate`).
+- `sweep` (required):
+  - `parameter_path` (string): dot-separated path to the parameter to sweep.
+  - `start` (float), `end` (float): range bounds.
+  - `steps` (int, 2-200): number of sample points.
+- `threshold_db` (float, optional, default 3.0): margin threshold for viability.
+
+Sweepable parameters:
+`runtime.uplink.rain_rate_mm_per_hr`, `runtime.downlink.rain_rate_mm_per_hr`,
+`runtime.uplink.frequency_hz`, `runtime.downlink.frequency_hz`,
+`runtime.bandwidth_hz`, `runtime.uplink.bandwidth_hz`, `runtime.downlink.bandwidth_hz`,
+`runtime.uplink.elevation_deg`, `runtime.downlink.elevation_deg`,
+`runtime.uplink.ground_lat_deg`, `runtime.downlink.ground_lat_deg`,
+`runtime.sat_longitude_deg`,
+`overrides.satellite.eirp_dbw`, `overrides.satellite.gt_db_per_k`.
+
+Response fields:
+- `sweep_parameter`, `sweep_label`: the swept parameter path and human-readable label.
+- `threshold_db`: the margin threshold used.
+- `points` (array): each point includes `sweep_value`, margin/C/N metrics per direction and combined, `modcod_id`, `modcod_label`, `viable`, `warnings`.
+- `crossover_value` (float | null): the sweep value where margin crosses the threshold.
+- `strategy`: `{waveform_strategy, transponder_type}`.

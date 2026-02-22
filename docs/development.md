@@ -101,9 +101,6 @@ uv run ruff check .
 
 # Format code
 uv run ruff format .
-
-# Type check
-uv run mypy src/
 ```
 
 ### Frontend Development
@@ -114,11 +111,8 @@ cd frontend
 # Start dev server with hot reload
 pnpm dev
 
-# Run tests
+# Run tests (vitest in watch mode)
 pnpm test
-
-# Run tests in watch mode
-pnpm test:watch
 
 # Type check
 pnpm lint
@@ -152,27 +146,28 @@ uv run alembic history
 
 ### Backend (.env)
 
-```bash
-# Database
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/ntn_lbtools
-
-# Optional
-LOG_LEVEL=INFO
-```
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `DATABASE_URL` | Yes | PostgreSQL async connection string | `postgresql+asyncpg://ntn:ntnpass@localhost:5432/ntn_lbtools` |
+| `APP_ENV` | No | Environment name (default: `development`) | `development`, `production` |
+| `LOG_LEVEL` | No | Logging verbosity (default: `info`) | `debug`, `info`, `warning`, `error` |
+| `API_KEY` | No | API key for protected endpoints | |
+| `CORS_ORIGINS` | No | Allowed CORS origins (JSON array) | `["https://your-domain.com"]` |
 
 ### Frontend (.env)
 
-```bash
-# API Base URL
-VITE_API_BASE_URL=http://localhost:8000
-```
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `VITE_API_BASE_URL` | Yes | Backend API base URL (including `/api/v1`) | `http://localhost:8000/api/v1` |
+
+Note: If the app is served over HTTPS and the base URL is HTTP, it falls back to same-origin `/api/v1` to avoid mixed-content errors.
 
 ### MCP Server (.env)
 
-```bash
-# Backend API URL
-BACKEND_API_URL=http://localhost:8000
-```
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `BACKEND_API_URL` | Yes | Backend root URL (no path suffix) | `http://localhost:8000` |
+| `GEMINI_OPENAPI_WORKAROUND` | No | Enable Gemini schema workaround | `1` |
 
 ## Project Structure
 
@@ -184,24 +179,26 @@ ntn-lbtools/
 │   │   ├── core/           # Calculation logic, propagation
 │   │   ├── services/       # Business logic
 │   │   └── persistence/    # Database models, repositories
-│   ├── tests/
-│   ├── alembic/            # Database migrations
+│   ├── tests/              # Flat test files (test_*.py)
 │   └── pyproject.toml
 │
 ├── frontend/               # React frontend
 │   ├── src/
 │   │   ├── pages/         # Route components
-│   │   ├── features/      # Feature modules
+│   │   ├── features/      # Feature modules (calculation, assets, modcod, scenarios, sweep, comparison)
 │   │   ├── api/           # API client, React Query
-│   │   └── components/    # Shared components
-│   ├── tests/
+│   │   ├── components/    # Shared components
+│   │   ├── hooks/         # Custom hooks
+│   │   ├── lib/           # Utilities (formatters, export, scenarioMapper)
+│   │   ├── data/          # Static data (presets, tooltips)
+│   │   └── test/          # Test setup (MSW handlers, vitest config)
 │   └── package.json
 │
 ├── mcp-server/             # FastMCP server
 │   ├── src/
 │   └── pyproject.toml
 │
-├── agents/                 # LangGraph agents (NEW)
+├── agents/                 # LangGraph agents
 │   ├── src/ntn_agents/
 │   └── pyproject.toml
 │
@@ -223,8 +220,7 @@ ntn-lbtools/
 ### TypeScript
 
 - **Strict mode**: Enabled
-- **ESLint**: Standard React configuration
-- **Formatting**: Prettier (via ESLint)
+- **Type check**: `tsc --noEmit` (via `pnpm lint`)
 
 ### Git Commits
 
@@ -244,24 +240,31 @@ test: add propagation model tests
 
 ### Backend Tests
 
+Tests live in `backend/tests/` as flat files:
+
 ```
 tests/
-├── unit/                   # Unit tests for core logic
-│   ├── test_propagation.py
-│   └── test_strategies.py
-├── integration/            # Integration tests with DB
-│   ├── test_calculation_service.py
-│   └── test_api_endpoints.py
-└── conftest.py            # Pytest fixtures
+├── conftest.py                # Pytest fixtures
+├── test_core.py               # Core calculation logic
+├── test_propagation.py        # Propagation models
+├── test_calculation_logic.py  # Link budget calculations
+└── test_calculation_service.py # Service layer
 ```
 
 ### Frontend Tests
 
+Tests are co-located with source files (`*.test.ts` / `*.test.tsx`):
+
 ```
-tests/
-├── components/            # Component unit tests
-├── features/              # Feature integration tests
-└── setup.ts              # Vitest configuration
+src/
+├── features/calculation/CalculationForm.test.tsx
+├── features/calculation/CalculationView.test.tsx
+├── features/sweep/SweepPage.test.tsx
+├── features/comparison/ScenarioSelector.test.tsx
+├── components/FrequencyInput.test.tsx
+├── lib/formatters.test.ts
+├── lib/scenarioMapper.test.ts
+└── test/setup.ts              # Vitest + MSW setup
 ```
 
 ## Debugging
